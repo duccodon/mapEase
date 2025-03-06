@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">mapease</string>
+    <string name="my_map_api_key"></string>
+</resources>
