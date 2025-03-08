@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "864423763861",
+    "project_id": "mapease22127072",
+    "storage_bucket": "mapease22127072.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:864423763861:android:9d6d357cf616799faa209c",
+        "android_client_info": {
+          "package_name": "com.example.mapease"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRW7PBaik64AJz9HBR5scvwp99rmeA910"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
