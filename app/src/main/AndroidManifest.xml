@@ -29,7 +29,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="$getString{R.string.ggMapAPIKey}" />
+            android:value="@string/my_map_api_key"/>
     </application>
 
 </manifest>
