@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">mapease</string>
     <string name="my_map_api_key"></string>
-    <string name="title_activity_sign_up">signUpActivity</string>
+    <string name="title_activity_sign_up">MapEase</string>
 </resources>
