@@ -66,13 +66,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapSearchView = findViewById(R.id.mapSearch);
         //locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
+
         mapSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 String location = mapSearchView.getQuery().toString();
                 List<Address> addressList = null;
 
-                if(location != null){
+                if (location != null && !location.isEmpty()) {
                     Geocoder geocoder = new Geocoder(MainActivity.this);
                     try {
                         addressList = geocoder.getFromLocationName(location, 1);
@@ -80,13 +81,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         e.printStackTrace();
                     }
 
-                    Address address = addressList.get(0);
-                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                    myMap.addMarker(new MarkerOptions().position(latLng).title(location));
-                    myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+                    if (addressList != null && !addressList.isEmpty()) {
+                        Address address = addressList.get(0);
+                        LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+
+                        // Clear previous markers before adding a new one
+                        myMap.clear();
+
+                        // Add the new marker
+                        myMap.addMarker(new MarkerOptions().position(latLng).title(location));
+                        myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+                    } else {
+                        Toast.makeText(MainActivity.this, "Location not found", Toast.LENGTH_SHORT).show();
+                    }
                 }
                 return false;
             }
+
 
             @Override
             public boolean onQueryTextChange(String newText) {
