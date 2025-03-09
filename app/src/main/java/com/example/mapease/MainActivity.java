@@ -1,23 +1,41 @@
 package com.example.mapease;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,9 +44,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private final int FINE_PERMISSION_CODE = 1;
     private GoogleMap myMap;
-
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LocationCallback locationCallback;
     private SearchView mapSearchView;
-
+    private SupportMapFragment mapFragment;
     Location currentLocation;
     //FusedLocationProviderClient locationProviderClient;
 
@@ -43,14 +62,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });*/
-
+        init();
         mapSearchView = findViewById(R.id.mapSearch);
-
         //locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        SupportMapFragment mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
-
-
-
+        mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         mapSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -78,7 +93,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return false;
             }
         });
-
         mapFragment.getMapAsync(MainActivity.this);
     }
 
@@ -96,8 +110,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         myMap.getUiSettings().setZoomControlsEnabled(true);
         myMap.getUiSettings().setCompassEnabled(true);
-
         myMap.setPadding(0, 220, 0, 0);
+
+        Dexter.withContext(this)  // `requireContext()` can be replaced with `getActivity()` if needed
+                .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                .withListener(new PermissionListener() {
+                    @Override
+                    public void onPermissionGranted(PermissionGrantedResponse response) {
+                        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            myMap.getUiSettings().setMyLocationButtonEnabled(true);
+                            myMap.setMyLocationEnabled(true);
+                            myMap.setOnMyLocationButtonClickListener(() -> {
+                                fusedLocationProviderClient.getLastLocation()
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show())
+                                        .addOnSuccessListener(location -> {
+                                            if (location != null) {
+                                                LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                                                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f));
+                                            } else {
+                                                Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                return true;
+                            });
+                        }
+                        View locationButton = ((View) mapFragment.getView().findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+                        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
+                        params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+                        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+                        params.setMargins(0, 0, 0, 300);
+                    }
+
+                    @Override
+                    public void onPermissionDenied(PermissionDeniedResponse response) {
+                        Toast.makeText(MainActivity.this, "Permission " + response.getPermissionName() + " was denied", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(PermissionRequest request, PermissionToken token) {
+                        token.continuePermissionRequest();
+                    }
+                }).check();
     }
 
     @Override
@@ -130,5 +184,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         return super.onOptionsItemSelected(item);
+    }
+    private void init()
+    {
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
+                .setMinUpdateIntervalMillis(3000)
+                .setMinUpdateDistanceMeters(10f)
+                .build();
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+
+                LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
+                myMap.moveCamera(CameraUpdateFactory.newLatLng(newPosition));
+
+            }
+        };
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        {
+            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+        }
     }
 }
