@@ -44,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
@@ -64,11 +65,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
     // Maps SDK for Android
     implementation("com.google.android.gms:play-services-maps:19.1.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation ("com.karumi:dexter:6.2.3")
+    // Google Places
+    implementation("com.google.android.libraries.places:places:4.1.0")
+    implementation("com.sothree.slidinguppanel:library:3.4.0")
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
