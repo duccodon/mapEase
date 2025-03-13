@@ -2,6 +2,7 @@ package com.example.mapease;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -14,8 +15,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,6 +26,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.mapease.databinding.ActivityMainBinding;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -51,7 +60,12 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -67,6 +81,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SearchView mapSearchView;
     private SupportMapFragment mapFragment;
     private AutocompleteSupportFragment autocompleteSupportFragment;
+
+    private final String url = "https://api.openweathermap.org/data/2.5/weather?";
+    private final String appId = "7b7b6b93a8b58cf10c77b14fc34e06fe";
+
+    private String currentLatitude = "";
+    private String currentLongitude = "";
+    private boolean btnWeatherCheck = false;
+
+    ImageButton btnWeather;
+    TextView weather;
+    DecimalFormat df = new DecimalFormat("#.##");
     Location currentLocation;
     //FusedLocationProviderClient locationProviderClient;
     ActivityMainBinding binding;
@@ -92,6 +117,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert mapFragment != null;
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
+        btnWeather = findViewById(R.id.weather_button);
+        weather = findViewById(R.id.weatherText);
     }
     /*private void getLastLocation() {
         TasK<Location> task = fusedLocationProviderClient.getLastLocation();
@@ -120,6 +147,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                 myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f));
                                                 binding.latitude.setText("Latitude: "+ String.valueOf(location.getLatitude()));
                                                 binding.longitude.setText("Longtitude: "+String.valueOf(location.getLongitude()));
+                                                // Update instance variables
+                                                currentLatitude = String.valueOf(location.getLatitude());
+                                                currentLongitude = String.valueOf(location.getLongitude());
                                             } else {
                                                 Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
                                             }
@@ -171,6 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
         popup.show(); // Display the menu
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_map_type, menu);
@@ -206,7 +237,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void init()
     {
-
         Places.initialize(this, getString(R.string.ggMapAPIKey));
         autocompleteSupportFragment = (AutocompleteSupportFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.autocomplete_fragment);
@@ -219,6 +249,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (place.getLocation() != null) {
                     binding.latitude.setText("Latitude: "+ String.valueOf(place.getLatLng().latitude));
                     binding.longitude.setText("Longtitude: "+String.valueOf(place.getLatLng().longitude));
+                    // Update instance variables
+                    currentLatitude = String.valueOf(place.getLatLng().latitude);
+                    currentLongitude = String.valueOf(place.getLatLng().longitude);
                     updateMapLocation(place.getLatLng(), place.getName());
                 } else {
                     Snackbar.make(findViewById(android.R.id.content),
@@ -279,5 +312,76 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Move the camera to the new location with zoom level
         myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f)); // 15f is zoom level
+    }
+
+    public void getWeatherDetails(View view) {
+        if(btnWeatherCheck)
+        {
+            weather.setVisibility(View.INVISIBLE);
+            btnWeatherCheck = false;
+        }
+        else
+        {
+            weather.setVisibility(View.VISIBLE);
+            btnWeatherCheck = true;
+        }
+        String tempUrl = "";
+        String lat = currentLatitude;
+        String lon = currentLongitude;
+        if(lat.isEmpty() || lon.isEmpty())
+        {
+            weather.setTextColor(Color.BLACK);
+            weather.setText("Please choose the specific location!");
+        }
+        else {
+            //https://api.openweathermap.org/data/2.5/weather?lat=10&lon=10&appid=7b7b6b93a8b58cf10c77b14fc34e06fe
+            tempUrl = url + "lat=" + lat + "&lon=" + lon + "&appid=" + appId;
+
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, tempUrl, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    //Log.d("response", response);
+                    String output = "";
+                    try {
+                        JSONObject jsonResponse = new JSONObject(response);
+                        JSONArray jsonArray = jsonResponse.getJSONArray("weather");
+                        JSONObject jsonObjectWeather = jsonArray.getJSONObject(0);
+                        String description = jsonObjectWeather.getString("description");
+                        JSONObject jsonObjectMain = jsonResponse.getJSONObject("main");
+                        double temp = jsonObjectMain.getDouble("temp") - 273.15;
+                        double feelsLike = jsonObjectMain.getDouble("feels_like") - 273.15;
+                        float pressure = jsonObjectMain.getInt("pressure");
+                        int humidity = jsonObjectMain.getInt("humidity");
+                        JSONObject jsonObjectWind = jsonResponse.getJSONObject("wind");
+                        String wind = jsonObjectWind.getString("speed");
+                        JSONObject jsonObjectClouds = jsonResponse.getJSONObject("clouds");
+                        String clouds = jsonObjectClouds.getString("all");
+                        JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
+                        String countryName = jsonObjectSys.getString("country");
+                        String cityName = jsonResponse.getString("name");
+                        weather.setTextColor(Color.BLACK);
+                        output += "Current weather of " + cityName + " (" + countryName + ")"
+                                + "\n Temp: " + df.format(temp) + " °C"
+                                + "\n Feels Like: " + df.format(feelsLike) + " °C"
+                                + "\n Humidity: " + humidity + "%"
+                                + "\n Description: " + description
+                                + "\n Wind Speed: " + wind + "m/s (meters per second)"
+                                + "\n Cloudiness: " + clouds + "%"
+                                + "\n Pressure: " + pressure + " hPa";
+                        weather.setText(output);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast.makeText(getApplicationContext(), error.toString().trim(), Toast.LENGTH_SHORT).show();
+                }
+            });
+            RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+            requestQueue.add(stringRequest);
+
+        }
     }
 }
