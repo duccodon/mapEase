@@ -7,6 +7,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean btnWeatherCheck = false;
 
     ImageButton btnWeather;
-    TextView weather;
+    TextView weather, weatherNoti;
     DecimalFormat df = new DecimalFormat("#.##");
     Location currentLocation;
     //FusedLocationProviderClient locationProviderClient;
@@ -124,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
         btnWeather = findViewById(R.id.weather_button);
         weather = findViewById(R.id.weatherText);
+        weatherNoti = findViewById(R.id.weatherNoti);
     }
     /*private void getLastLocation() {
         TasK<Location> task = fusedLocationProviderClient.getLastLocation();
@@ -324,11 +326,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         {
             weather.setVisibility(View.INVISIBLE);
             btnWeatherCheck = false;
+            weatherNoti.setVisibility(View.VISIBLE);
+            weatherNoti.setText("Weather");
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                weatherNoti.setVisibility(View.GONE);
+            }, 2000);
         }
         else
         {
             weather.setVisibility(View.VISIBLE);
             btnWeatherCheck = true;
+            // Show weatherNoti and hide it after 5 seconds
+            weatherNoti.setVisibility(View.VISIBLE);
+            weatherNoti.setText("Slide the panel up for other information");
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                weatherNoti.setVisibility(View.GONE);
+            }, 5000);
         }
         String tempUrl = "";
         String lat = currentLatitude;
@@ -337,6 +350,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         {
             weather.setTextColor(Color.BLACK);
             weather.setText("Please choose the specific location!");
+            btnWeatherCheck = false;
         }
         else {
             //https://api.openweathermap.org/data/2.5/weather?lat=10&lon=10&appid=7b7b6b93a8b58cf10c77b14fc34e06fe
