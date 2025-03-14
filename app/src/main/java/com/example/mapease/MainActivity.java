@@ -8,14 +8,18 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -81,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SearchView mapSearchView;
     private SupportMapFragment mapFragment;
     private AutocompleteSupportFragment autocompleteSupportFragment;
-
+    private SlidingUpPanelLayout slidingLayout;
     private final String url = "https://api.openweathermap.org/data/2.5/weather?";
     private final String appId = "7b7b6b93a8b58cf10c77b14fc34e06fe";
 
@@ -102,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        setupSlidingPanel();
         //EdgeToEdge.enable(this);
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
 //        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -383,5 +388,75 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             requestQueue.add(stringRequest);
 
         }
+    }
+    private void setupSlidingPanel() {
+        slidingLayout = findViewById(R.id.sliding_layout);
+        LinearLayout slidingPanel = findViewById(R.id.sliding_panel);
+        if (slidingLayout == null || slidingPanel == null) {
+            Log.e("SlidingPanel", "SlidingUpPanelLayout, panel, or drag handle not found!");
+            return;
+        }
+
+        // Enable touch gestures for dragging
+        slidingLayout.setTouchEnabled(true);
+
+        // Set initial state to COLLAPSED
+        slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+
+        // Calculate 80% of screen height for EXPANDED state
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int screenHeight = displayMetrics.heightPixels;
+        int maxPanelHeight = (int) (screenHeight * 0.9); // 80% of screen height
+
+        // Set the maximum height for the sliding panel
+        ViewGroup.LayoutParams params = slidingPanel.getLayoutParams();
+        params.height = maxPanelHeight; // Cap EXPANDED at 80%
+        slidingPanel.setLayoutParams(params);
+        View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+        if (rootView == null) {
+            Log.e("SlidingPanel", "Root view not found!");
+            return;
+        }
+        // Monitor panel movement (optional, for debugging)
+        slidingLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+                Log.d("SlidingPanel", "Sliding: " + slideOffset);
+            }
+
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+                Log.d("SlidingPanel", "State Changed: " + previousState + " -> " + newState);
+
+                // Handle the three states
+                if (newState == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                    rootView.setEnabled(true); // Enable everything behind the panel
+                    Log.d("SlidingPanel", "COLLAPSED: Background interactive");
+                } else if (newState == SlidingUpPanelLayout.PanelState.ANCHORED) {
+                    rootView.setEnabled(true); // Keep background interactive
+                    Log.d("SlidingPanel", "ANCHORED: Background interactive");
+                } else if (newState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                    rootView.setEnabled(false); // Disable everything behind the panel
+                    Log.d("SlidingPanel", "EXPANDED: Background untouchable");
+                }
+            }
+        });
+
+        // Click on drag_handle: ANCHORED <-> EXPANDED
+        slidingPanel.setOnClickListener(view -> {
+            SlidingUpPanelLayout.PanelState currentState = slidingLayout.getPanelState();
+            Log.d("SlidingPanel", "Clicked! Current State: " + currentState);
+
+            if (currentState == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED); // COLLAPSED -> ANCHORED (40%)
+
+            } else if (currentState == SlidingUpPanelLayout.PanelState.ANCHORED) {
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED); // ANCHORED -> EXPANDED (80%)
+
+            } else if (currentState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED); // EXPANDED -> COLLAPSED (100dp)
+            }
+        });
     }
 }
