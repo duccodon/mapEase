@@ -60,23 +60,17 @@
             app:layout_constraintStart_toStartOf="parent"
             android:onClick="getWeatherDetails"/>
 
-
-        <ScrollView
-            android:id="@+id/weatherView"
-            android:layout_width="150dp"
-            android:layout_height="100dp"
+        <TextView
+            android:id="@+id/weatherNoti"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:textSize="15dp"
+            android:textAlignment="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/weather_button"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/white">
+            android:textColor="@color/black"/>
 
-            <TextView
-                android:id="@+id/weatherText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="15dp"
-                android:textAlignment="center"/>
-        </ScrollView>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
     <!-- Sliding Panel -->
     <LinearLayout
@@ -108,6 +102,21 @@
             android:layout_height="wrap_content"
             android:text="Longitude: "
             android:textSize="16sp" />
+
+        <ScrollView
+            android:id="@+id/weatherView"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/white">
+
+            <TextView
+                android:id="@+id/weatherText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15dp"
+                android:textAlignment="center"/>
+        </ScrollView>
     </LinearLayout>
 
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
