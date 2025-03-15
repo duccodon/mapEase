@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert mapFragment != null;
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
-        binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
+        //binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
         btnWeather = findViewById(R.id.weather_button);
         weather = findViewById(R.id.weatherText);
         weatherNoti = findViewById(R.id.weatherNoti);
@@ -439,12 +439,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } catch (JSONException e) {
                 e.printStackTrace();
                 weather.setText("Error parsing weather data!");
-                weatherIcon.setImageResource(R.drawable.map_type);
+                weatherIcon.setImageResource(R.drawable.ic_cloud);
             }
         }, error -> {
             Toast.makeText(getApplicationContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             weather.setText("Failed to fetch weather data!");
-            weatherIcon.setImageResource(R.drawable.map_type);
+            weatherIcon.setImageResource(R.drawable.ic_cloud);
         });
 
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
