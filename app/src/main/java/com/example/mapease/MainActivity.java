@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert mapFragment != null;
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
-        //binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
+        binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
         btnWeather = findViewById(R.id.weather_button);
         weather = findViewById(R.id.weatherText);
         weatherNoti = findViewById(R.id.weatherNoti);

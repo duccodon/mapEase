@@ -63,7 +63,6 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
     private ActivityRouteBinding binding;
-
     private SendLocationToActivity sendLocationToActivity;
 
     //Routes
