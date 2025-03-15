@@ -142,13 +142,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startActivity(new Intent(getApplicationContext(), yourProfileActivity.class));
                 return true;
             } else if (id == R.id.yourTimeLine) {
-                myMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
                 return true;
             } else if (id == R.id.locationSharing) {
-                myMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
                 return true;
             } else if (id == R.id.setting) {
-                myMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
                 return true;
             }
             return false;
@@ -303,9 +300,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onError(@NonNull Status status) {
             }
         });
-        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
-                .setMinUpdateIntervalMillis(3000)
-                .setMinUpdateDistanceMeters(10f)
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
+                .setMinUpdateIntervalMillis(500)
+                .setMinUpdateDistanceMeters(1f)
                 .build();
         locationCallback = new LocationCallback() {
             @Override
@@ -313,7 +310,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 super.onLocationResult(locationResult);
                 LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
                 currentLatLng = newPosition;
-                myMap.moveCamera(CameraUpdateFactory.newLatLng(newPosition));
+
+                //code cũ
+                //myMap.moveCamera(CameraUpdateFactory.newLatLng(newPosition));
+
+                // Sử dụng animateCamera thay vì moveCamera
+                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, myMap.getCameraPosition().zoom),
+                        1000, // Thời gian animation: 1 giây
+                        null); // Không cần callback
                 setRestrictPlacesInCountry(locationResult.getLastLocation());
             }
         };

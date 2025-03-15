@@ -91,7 +91,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
     <!-- Sliding Panel -->
-
     <LinearLayout
         android:id="@+id/sliding_panel"
         android:layout_width="match_parent"
@@ -111,6 +110,63 @@
             android:layout_gravity="center"
             android:background="@drawable/rounded_drag_handle"
             android:layout_marginBottom="16dp" />
+
+        <!-- Location Title -->
+        <TextView
+            android:id="@+id/location_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected Location"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#2C3E50"
+            android:paddingBottom="12dp" />
+
+        <!-- Latitude and Longitude with Icons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_location"
+                app:tint="#3498DB" />
+            <TextView
+                android:id="@+id/latitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Latitude: "
+                android:textSize="16sp"
+                android:textColor="#34495E"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_location"
+                app:tint="#3498DB" />
+            <TextView
+                android:id="@+id/longitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Longitude: "
+                android:textSize="16sp"
+                android:textColor="#34495E"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+
+        <!-- Weather Information Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -157,66 +213,14 @@
                     android:layout_marginTop="8dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
-        <!-- Location Title -->
-        <TextView
-            android:id="@+id/location_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Selected Location"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#2C3E50"
-            android:paddingBottom="8dp" />
 
-        <!-- Latitude and Longitude with Icons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_location"
-                app:tint="#3498DB" />
-            <TextView
-                android:id="@+id/latitude"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Latitude: "
-                android:textSize="16sp"
-                android:textColor="#34495E"
-                android:paddingStart="8dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_location"
-                app:tint="#3498DB" />
-            <TextView
-                android:id="@+id/longitude"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Longitude: "
-                android:textSize="16sp"
-                android:textColor="#34495E"
-                android:paddingStart="8dp" />
-        </LinearLayout>
-
+        <!-- Direction Button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/direction_button"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center"
             android:background="@drawable/long_button"
             android:drawableStart="@drawable/baseline_assistant_direction_24"
             android:text="Direction"
@@ -226,6 +230,6 @@
             android:drawablePadding="6dp"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            android:onClick="routingFunction"/>
+            android:onClick="routingFunction" />
     </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
