@@ -1,0 +1,13 @@
+<!-- res/drawable/ic_snow.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M18,10h-1.26A8,8 0 1 0 8,18h9a5,5 0 0 0 1,-8z" />
+    <path
+        android:fillColor="#E0F7FA"
+        android:pathData="M12,18l1,2l-1,2l-1,-2l1,-2zM10,19l-2,1l2,1l2,-1zM14,19l2,1l-2,1l-2,-1z" />
+</vector>

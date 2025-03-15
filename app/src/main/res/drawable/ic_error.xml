@@ -1,0 +1,13 @@
+<!-- res/drawable/ic_error.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#E74C3C"
+        android:pathData="M12,2l10,20H2L12,2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,8v6m0,2v2" />
+</vector>

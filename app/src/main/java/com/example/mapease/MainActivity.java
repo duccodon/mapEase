@@ -21,6 +21,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
@@ -80,8 +81,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
-
-
     private final int FINE_PERMISSION_CODE = 1;
     private GoogleMap myMap;
     private Marker currentMarker = null;
@@ -127,10 +126,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert mapFragment != null;
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
+        binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
         btnWeather = findViewById(R.id.weather_button);
         weather = findViewById(R.id.weatherText);
         weatherNoti = findViewById(R.id.weatherNoti);
     }
+
+    private void showProfileMenu(View view) {
+        PopupMenu popup = new PopupMenu(this, view);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.profile_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.yourProfile) {
+                myMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+                return true;
+            } else if (id == R.id.yourTimeLine) {
+                myMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                return true;
+            } else if (id == R.id.locationSharing) {
+                myMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                return true;
+            } else if (id == R.id.setting) {
+                myMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                return true;
+            }
+            return false;
+        });
+        popup.show(); // Display the menu
+    }
+
+
     /*private void getLastLocation() {
         TasK<Location> task = fusedLocationProviderClient.getLastLocation();
     }*/
@@ -324,72 +350,105 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void getWeatherDetails(View view) {
-        if(btnWeatherCheck)
-        {
-            weather.setVisibility(View.INVISIBLE);
-            btnWeatherCheck = false;
-            weatherNoti.setVisibility(View.VISIBLE);
-            weatherNoti.setText("Weather");
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                weatherNoti.setVisibility(View.GONE);
-            }, 2000);
-        }
-        else
-        {
+        if (!btnWeatherCheck) {
             weather.setVisibility(View.VISIBLE);
             btnWeatherCheck = true;
-            // Show weatherNoti and hide it after 5 seconds
             weatherNoti.setVisibility(View.VISIBLE);
-            weatherNoti.setText("Slide the panel up for other information");
+            weatherNoti.setText("Slide up for more details");
+            weatherNoti.setTextColor(Color.parseColor("#E74C3C")); // Red color for noti
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 weatherNoti.setVisibility(View.GONE);
-            }, 5000);
+            }, 3000);
         }
+
         String tempUrl = "";
         String lat = currentLatitude;
         String lon = currentLongitude;
-        if(lat.isEmpty() || lon.isEmpty())
-        {
-            weather.setTextColor(Color.BLACK);
-            weather.setText("Please choose the specific location!");
+        ImageView weatherIcon = findViewById(R.id.weather_icon);
+        TextView weatherCity = findViewById(R.id.weather_city);
+
+        if (lat.isEmpty() || lon.isEmpty()) {
+            weather.setTextColor(Color.RED);
+            weather.setText("Please select a specific location!");
             btnWeatherCheck = false;
+            weatherIcon.setImageResource(R.drawable.ic_error); // Error icon
+            weatherCity.setText("No Location");
+            return;
         }
-        else {
-            //https://api.openweathermap.org/data/2.5/weather?lat=10&lon=10&appid=7b7b6b93a8b58cf10c77b14fc34e06fe
-            tempUrl = url + "lat=" + lat + "&lon=" + lon + "&appid=" + appId;
 
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, tempUrl, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    //Log.d("response", response);
-                    String output = "";
-                    try {
-                        JSONObject jsonResponse = new JSONObject(response);
-                        JSONObject jsonObjectMain = jsonResponse.getJSONObject("main");
-                        double temp = jsonObjectMain.getDouble("temp") - 273.15;
-                        int humidity = jsonObjectMain.getInt("humidity");
-                        JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
-                        String countryName = jsonObjectSys.getString("country");
-                        String cityName = jsonResponse.getString("name");
-                        weather.setTextColor(Color.BLACK);
-                        output += "Current weather of " + cityName + " (" + countryName + ")"
-                                + "\n Temp: " + df.format(temp) + " °C"
-                                + "\n Humidity: " + humidity + "%";
-                        weather.setText(output);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Toast.makeText(getApplicationContext(), error.toString().trim(), Toast.LENGTH_SHORT).show();
-                }
-            });
-            RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-            requestQueue.add(stringRequest);
+        tempUrl = url + "lat=" + lat + "&lon=" + lon + "&appid=" + appId;
 
-        }
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, tempUrl, response -> {
+            try {
+                JSONObject jsonResponse = new JSONObject(response);
+                JSONArray jsonArray = jsonResponse.getJSONArray("weather");
+                JSONObject jsonObjectWeather = jsonArray.getJSONObject(0);
+                String description = jsonObjectWeather.getString("description");
+                String weatherCode = jsonObjectWeather.getString("icon"); // Weather icon code
+                JSONObject jsonObjectMain = jsonResponse.getJSONObject("main");
+                double temp = jsonObjectMain.getDouble("temp") - 273.15;
+                double feelsLike = jsonObjectMain.getDouble("feels_like") - 273.15;
+                int humidity = jsonObjectMain.getInt("humidity");
+                float pressure = jsonObjectMain.getInt("pressure");
+                JSONObject jsonObjectWind = jsonResponse.getJSONObject("wind");
+                String wind = jsonObjectWind.getString("speed");
+                JSONObject jsonObjectClouds = jsonResponse.getJSONObject("clouds");
+                String clouds = jsonObjectClouds.getString("all");
+                JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
+                String countryName = jsonObjectSys.getString("country");
+                String cityName = jsonResponse.getString("name");
+
+                // Update city name
+                weatherCity.setText(cityName + " (" + countryName + ")");
+
+                // Set weather icon based on weatherCode
+                switch (weatherCode) {
+                    case "01d": case "01n":
+                        weatherIcon.setImageResource(R.drawable.ic_sunny);
+                        break;
+                    case "02d": case "02n":
+                        weatherIcon.setImageResource(R.drawable.ic_partly_cloudy);
+                        break;
+                    case "03d": case "03n": case "04d": case "04n":
+                        weatherIcon.setImageResource(R.drawable.ic_cloudy);
+                        break;
+                    case "09d": case "09n": case "10d": case "10n":
+                        weatherIcon.setImageResource(R.drawable.ic_rain);
+                        break;
+                    case "11d": case "11n":
+                        weatherIcon.setImageResource(R.drawable.ic_thunderstorm);
+                        break;
+                    case "13d": case "13n":
+                        weatherIcon.setImageResource(R.drawable.ic_snow);
+                        break;
+                    default:
+                        weatherIcon.setImageResource(R.drawable.ic_weather_default);
+                }
+
+                // Format weather output
+                String output = "Temp: " + df.format(temp) + " °C\n" +
+                        "Feels Like: " + df.format(feelsLike) + " °C\n" +
+                        "Humidity: " + humidity + "%\n" +
+                        "Description: " + description + "\n" +
+                        "Wind Speed: " + wind + " m/s\n" +
+                        "Cloudiness: " + clouds + "%\n" +
+                        "Pressure: " + pressure + " hPa";
+                weather.setTextColor(Color.parseColor("#34495E"));
+                weather.setText(output);
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+                weather.setText("Error parsing weather data!");
+                weatherIcon.setImageResource(R.drawable.map_type);
+            }
+        }, error -> {
+            Toast.makeText(getApplicationContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            weather.setText("Failed to fetch weather data!");
+            weatherIcon.setImageResource(R.drawable.map_type);
+        });
+
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.add(stringRequest);
     }
     private void setupSlidingPanel() {
         slidingLayout = findViewById(R.id.sliding_layout);
