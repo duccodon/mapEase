@@ -29,8 +29,10 @@
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
 
         <fragment
             android:id="@+id/autocomplete_fragment"
@@ -75,6 +77,18 @@
             app:layout_constraintTop_toBottomOf="@id/weather_button"
             android:textColor="@color/black"/>
 
+        <ImageButton
+            android:id="@+id/profile_button"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/round_button"
+            android:src="@drawable/map_type"
+            android:scaleType="centerInside"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/map_type_button"
+            android:onClick="getWeatherDetails"/>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
     <!-- Sliding Panel -->
@@ -89,50 +103,120 @@
         android:elevation="8dp"
         android:clickable="true"
         android:focusable="true">
+
+        <!-- Drag Handle -->
         <View
             android:id="@+id/drag_handle"
             android:layout_width="80dp"
             android:layout_height="4dp"
             android:layout_gravity="center"
-            android:background="@android:color/darker_gray"
-            android:layout_marginBottom="8dp" />
+            android:background="@drawable/rounded_drag_handle"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Location Title -->
         <TextView
             android:id="@+id/location_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Selected Location"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#2C3E50"
+            android:paddingBottom="8dp" />
 
-        <TextView
-            android:id="@+id/latitude"
+        <!-- Latitude and Longitude with Icons -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Latitude: "
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/longitude"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Longitude: "
-            android:textSize="16sp" />
-
-
-        <ScrollView
-            android:id="@+id/weatherView"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/white">
-
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_location"
+                app:tint="#3498DB" />
             <TextView
-                android:id="@+id/weatherText"
+                android:id="@+id/latitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Latitude: "
+                android:textSize="16sp"
+                android:textColor="#34495E"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_location"
+                app:tint="#3498DB" />
+            <TextView
+                android:id="@+id/longitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Longitude: "
+                android:textSize="16sp"
+                android:textColor="#34495E"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+
+        <!-- Weather Information Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#F9FAFB">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="15dp"
-                android:textAlignment="center"/>
-        </ScrollView>
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Weather Icon and City -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/weather_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_weather_default" />
+                    <TextView
+                        android:id="@+id/weather_city"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="City Name"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#2C3E50"
+                        android:paddingStart="8dp" />
+                </LinearLayout>
+
+                <!-- Weather Details -->
+                <TextView
+                    android:id="@+id/weatherText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="#34495E"
+                    android:lineSpacingExtra="4dp"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
 
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
