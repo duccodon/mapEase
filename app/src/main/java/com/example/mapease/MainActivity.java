@@ -1,6 +1,7 @@
 package com.example.mapease;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -135,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.yourProfile) {
-                myMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+                startActivity(new Intent(getApplicationContext(), yourProfileActivity.class));
                 return true;
             } else if (id == R.id.yourTimeLine) {
                 myMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);

@@ -3,4 +3,9 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="mocha">#926441</color>
+    <color name="pink">#C2185B</color>
+    <color name="light_cyan">#E0F7FA</color>
+    <color name="teal">#00695C</color>
+    <color name="gray">#757575</color>
+    <color name="light_gray">#F5F5F5</color>
 </resources>
