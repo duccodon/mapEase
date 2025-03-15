@@ -7,6 +7,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.mapease.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class RoutesAPIHelper {
 
     private static final String TAG = "RoutesAPI";
-    private static final String API_KEY = "AIzaSyCA5knLPv0MEOst0QX1v7QZFXe2pqqFdjU";
+    private static final String API_KEY = "";
     private static final String ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
 
     public static void requestRoute(Context context, double originLat, double originLng, double destLat, double destLng, Response.Listener<JSONObject> listener) {
