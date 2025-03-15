@@ -3,4 +3,16 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="mocha">#926441</color>
+
+    <!-- Thêm 10 màu mới -->
+    <color name="red">#FFFF0000</color>         <!-- Đỏ -->
+    <color name="green">#FF00FF00</color>       <!-- Xanh lá -->
+    <color name="blue">#FF0000FF</color>        <!-- Xanh dương -->
+    <color name="yellow">#FFFFFF00</color>      <!-- Vàng -->
+    <color name="purple">#FF800080</color>      <!-- Tím -->
+    <color name="orange">#FFFFA500</color>      <!-- Cam -->
+    <color name="pink">#FFFFC1CC</color>        <!-- Hồng -->
+    <color name="gray">#FF808080</color>        <!-- Xám -->
+    <color name="teal">#FF008080</color>        <!-- Xanh ngọc -->
+    <color name="lime">#FF00FF00</color>        <!-- Xanh chanh -->
 </resources>

@@ -1,6 +1,7 @@
 package com.example.mapease;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -30,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -38,6 +40,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.mapease.databinding.ActivityMainBinding;
+import com.example.mapease.events.SendLocationToActivity;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -65,6 +68,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -92,12 +96,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private String currentLatitude = "";
     private String currentLongitude = "";
+    private LatLng currentLatLng = null;
+    private LatLng selectedLatLng = null;
     private boolean btnWeatherCheck = false;
-
     ImageButton btnWeather;
     TextView weather, weatherNoti;
     DecimalFormat df = new DecimalFormat("#.##");
-    Location currentLocation;
     //FusedLocationProviderClient locationProviderClient;
     ActivityMainBinding binding;
 
@@ -141,10 +145,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .withListener(new PermissionListener() {
                     @Override
                     public void onPermissionGranted(PermissionGrantedResponse response) {
-                        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                            myMap.getUiSettings().setMyLocationButtonEnabled(true);
-                            myMap.setMyLocationEnabled(true);
-                            myMap.setOnMyLocationButtonClickListener(() -> {
+                        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            return;
+                        }
+                        myMap.setMyLocationEnabled(true);
+                        myMap.getUiSettings().setMyLocationButtonEnabled(true);
+                        myMap.setOnMyLocationButtonClickListener(() -> {
                                 fusedLocationProviderClient.getLastLocation()
                                         .addOnFailureListener(e ->
                                                 Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show())
@@ -157,13 +165,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                 // Update instance variables
                                                 currentLatitude = String.valueOf(location.getLatitude());
                                                 currentLongitude = String.valueOf(location.getLongitude());
+                                                currentLatLng = userLatLng;
                                             } else {
                                                 Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
                                             }
                                         });
                                 return true;
                             });
-                        }
                         View locationButton = ((View) mapFragment.getView().findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
                         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
                         params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
@@ -240,8 +248,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         return super.onOptionsItemSelected(item);
     }
-
-
     private void init()
     {
         Places.initialize(this, getString(R.string.ggMapAPIKey));
@@ -256,9 +262,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (place.getLocation() != null) {
                     binding.latitude.setText("Latitude: "+ String.valueOf(place.getLatLng().latitude));
                     binding.longitude.setText("Longtitude: "+String.valueOf(place.getLatLng().longitude));
-                    // Update instance variables
                     currentLatitude = String.valueOf(place.getLatLng().latitude);
                     currentLongitude = String.valueOf(place.getLatLng().longitude);
+                    selectedLatLng = place.getLatLng();
+
                     updateMapLocation(place.getLatLng(), place.getName());
                 } else {
                     Snackbar.make(findViewById(android.R.id.content),
@@ -268,9 +275,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             @Override
             public void onError(@NonNull Status status) {
-                Snackbar.make(findViewById(android.R.id.content),
-                        "Error: " + status.getStatusMessage(),
-                        Snackbar.LENGTH_LONG).show();
             }
         });
         LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
@@ -282,9 +286,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
                 LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
+                currentLatLng = newPosition;
                 myMap.moveCamera(CameraUpdateFactory.newLatLng(newPosition));
                 setRestrictPlacesInCountry(locationResult.getLastLocation());
-
             }
         };
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -311,12 +315,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (currentMarker != null) {
             currentMarker.remove();
         }
-
         // Add a new marker
         currentMarker = myMap.addMarker(new MarkerOptions()
                 .position(latLng)
                 .title(placeName));
-
         // Move the camera to the new location with zoom level
         myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f)); // 15f is zoom level
     }
@@ -363,30 +365,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String output = "";
                     try {
                         JSONObject jsonResponse = new JSONObject(response);
-                        JSONArray jsonArray = jsonResponse.getJSONArray("weather");
-                        JSONObject jsonObjectWeather = jsonArray.getJSONObject(0);
-                        String description = jsonObjectWeather.getString("description");
                         JSONObject jsonObjectMain = jsonResponse.getJSONObject("main");
                         double temp = jsonObjectMain.getDouble("temp") - 273.15;
-                        double feelsLike = jsonObjectMain.getDouble("feels_like") - 273.15;
-                        float pressure = jsonObjectMain.getInt("pressure");
                         int humidity = jsonObjectMain.getInt("humidity");
-                        JSONObject jsonObjectWind = jsonResponse.getJSONObject("wind");
-                        String wind = jsonObjectWind.getString("speed");
-                        JSONObject jsonObjectClouds = jsonResponse.getJSONObject("clouds");
-                        String clouds = jsonObjectClouds.getString("all");
                         JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
                         String countryName = jsonObjectSys.getString("country");
                         String cityName = jsonResponse.getString("name");
                         weather.setTextColor(Color.BLACK);
                         output += "Current weather of " + cityName + " (" + countryName + ")"
                                 + "\n Temp: " + df.format(temp) + " °C"
-                                + "\n Feels Like: " + df.format(feelsLike) + " °C"
-                                + "\n Humidity: " + humidity + "%"
-                                + "\n Description: " + description
-                                + "\n Wind Speed: " + wind + "m/s (meters per second)"
-                                + "\n Cloudiness: " + clouds + "%"
-                                + "\n Pressure: " + pressure + " hPa";
+                                + "\n Humidity: " + humidity + "%";
                         weather.setText(output);
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -472,5 +460,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED); // EXPANDED -> COLLAPSED (100dp)
             }
         });
+    }
+
+    public void routingFunction(View view) {
+        // Kiểm tra null trước để tránh crash
+        if (currentLatLng == null || selectedLatLng == null) {
+            Toast.makeText(this, "Missing location data: " +
+                            (currentLatLng == null ? "Current is null" : "") + " " +
+                            (selectedLatLng == null ? "Selected is null" : ""),
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Parse LatLng thành String và hiển thị qua Toast
+        String currentStr = "Current: " + currentLatLng.latitude + ", " + currentLatLng.longitude;
+        String selectedStr = "Selected: " + selectedLatLng.latitude + ", " + selectedLatLng.longitude;
+        Toast.makeText(this, currentStr + "\n" + selectedStr, Toast.LENGTH_LONG).show();
+
+        // Gửi dữ liệu và chuyển Activity
+        Intent intent = new Intent(this, RouteActivity.class);
+        EventBus.getDefault().postSticky(new SendLocationToActivity(currentLatLng, selectedLatLng));
+        startActivity(intent);
     }
 }
