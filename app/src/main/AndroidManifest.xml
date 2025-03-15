@@ -32,11 +32,15 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value= "AIzaSyCA5knLPv0MEOst0QX1v7QZFXe2pqqFdjU" />
+            android:value= "" />
         <activity
             android:name=".RouteActivity"
             android:exported="false"
             android:label="@string/title_activity_route" />
+        <activity
+            android:name=".yourProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"/>
         <activity
             android:name=".loginActivity"
             android:exported="false" />
@@ -63,6 +67,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/ggMapAPIKey" />
     </application>
 
 </manifest>
