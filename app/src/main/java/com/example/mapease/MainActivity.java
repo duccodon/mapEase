@@ -3,6 +3,7 @@ package com.example.mapease;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -33,6 +34,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -57,7 +59,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.FetchPhotoRequest;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.snackbar.Snackbar;
@@ -93,6 +99,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String url = "https://api.openweathermap.org/data/2.5/weather?";
     private final String appId = "7b7b6b93a8b58cf10c77b14fc34e06fe";
 
+    private  View searchView;
+
+    private TextView placeName;
+    private TextView placeAddress;
+    private ImageView placeImage;
     private String currentLatitude = "";
     private String currentLongitude = "";
     private LatLng currentLatLng = null;
@@ -176,25 +187,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         myMap.setMyLocationEnabled(true);
                         myMap.getUiSettings().setMyLocationButtonEnabled(true);
                         myMap.setOnMyLocationButtonClickListener(() -> {
-                                fusedLocationProviderClient.getLastLocation()
-                                        .addOnFailureListener(e ->
-                                                Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show())
-                                        .addOnSuccessListener(location -> {
-                                            if (location != null) {
-                                                LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f));
-                                                binding.latitude.setText("Latitude: "+ String.valueOf(location.getLatitude()));
-                                                binding.longitude.setText("Longtitude: "+String.valueOf(location.getLongitude()));
-                                                // Update instance variables
-                                                currentLatitude = String.valueOf(location.getLatitude());
-                                                currentLongitude = String.valueOf(location.getLongitude());
-                                                currentLatLng = userLatLng;
-                                            } else {
-                                                Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                                return true;
-                            });
+                            fusedLocationProviderClient.getLastLocation()
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show())
+                                    .addOnSuccessListener(location -> {
+                                        if (location != null) {
+                                            LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                                            myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f));
+
+                                            // Update instance variables
+                                            currentLatitude = String.valueOf(location.getLatitude());
+                                            currentLongitude = String.valueOf(location.getLongitude());
+                                            currentLatLng = userLatLng;
+                                        } else {
+                                            Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                            return true;
+                        });
                         View locationButton = ((View) mapFragment.getView().findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
                         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
                         params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
@@ -279,15 +289,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert autocompleteSupportFragment != null;
         autocompleteSupportFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.FORMATTED_ADDRESS, Place.Field.DISPLAY_NAME, Place.Field.LAT_LNG));
         autocompleteSupportFragment.setHint(getString(R.string.search_here));
+
+        if (autocompleteSupportFragment != null) {
+        searchView = autocompleteSupportFragment.getView();
+        if (searchView != null) {
+            searchView.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_search_view));
+        }
+    }
         autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(@NonNull Place place) {
                 if (place.getLocation() != null) {
-                    binding.latitude.setText("Latitude: "+ String.valueOf(place.getLatLng().latitude));
-                    binding.longitude.setText("Longtitude: "+String.valueOf(place.getLatLng().longitude));
-                    currentLatitude = String.valueOf(place.getLatLng().latitude);
-                    currentLongitude = String.valueOf(place.getLatLng().longitude);
-                    selectedLatLng = place.getLatLng();
+                    placeName = findViewById(R.id.location_title);
+                    placeAddress = findViewById(R.id.place_address);
+                    placeImage = findViewById(R.id.place_image);
+
+                    // Update instance variables
+                    placeName.setText(place.getName());
+                    placeAddress.setText("Address: " + place.getAddress());
+
+                    // Show place image
+                    getPlacePhoto(place.getId(), placeImage);
+
+                    // Expand the sliding panel
+                    slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
 
                     updateMapLocation(place.getLatLng(), place.getName());
                 } else {
@@ -326,6 +351,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         {
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
         }
+    }
+
+    private void getPlacePhoto(String placeId, ImageView placeImage) {
+        PlacesClient placesClient = Places.createClient(this);
+
+        List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
+        FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
+
+        placesClient.fetchPlace(placeRequest).addOnSuccessListener((response) -> {
+            Place place = response.getPlace();
+            List<PhotoMetadata> photoMetadataList = place.getPhotoMetadatas();
+
+            if (photoMetadataList == null || photoMetadataList.isEmpty()) {
+                Log.e("PlacePhoto", "No photo metadata found for this place.");
+                placeImage.setVisibility(View.GONE);
+                return;
+            }
+
+            PhotoMetadata photoMetadata = photoMetadataList.get(0);
+
+            FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
+                    .setMaxWidth(500)
+                    .setMaxHeight(300)
+                    .build();
+
+            placesClient.fetchPhoto(photoRequest).addOnSuccessListener(fetchPhotoResponse -> {
+                Bitmap bitmap = fetchPhotoResponse.getBitmap();
+                placeImage.setImageBitmap(bitmap);
+                placeImage.setVisibility(View.VISIBLE);
+            }).addOnFailureListener(exception -> {
+                Log.e("PlacePhoto", "Photo fetch failed: " + exception.getMessage());
+                placeImage.setVisibility(View.GONE);
+            });
+
+        }).addOnFailureListener(exception -> {
+            Log.e("PlacePhoto", "Place details fetch failed: " + exception.getMessage());
+            placeImage.setVisibility(View.GONE);
+
+         });
+
     }
 
     private void setRestrictPlacesInCountry(Location location) {

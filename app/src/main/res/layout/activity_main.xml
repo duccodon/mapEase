@@ -111,6 +111,8 @@
             android:background="@drawable/rounded_drag_handle"
             android:layout_marginBottom="16dp" />
 
+
+
         <!-- Location Title -->
         <TextView
             android:id="@+id/location_title"
@@ -122,49 +124,25 @@
             android:textColor="#2C3E50"
             android:paddingBottom="12dp" />
 
-        <!-- Latitude and Longitude with Icons -->
-        <LinearLayout
+        <!-- Location Address -->
+        <TextView
+            android:id="@+id/place_address"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_location"
-                app:tint="#3498DB" />
-            <TextView
-                android:id="@+id/latitude"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Latitude: "
-                android:textSize="16sp"
-                android:textColor="#34495E"
-                android:paddingStart="8dp" />
-        </LinearLayout>
+            android:text="Address: "
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#2C3E50"
+            android:paddingBottom="8dp"/>
 
-        <LinearLayout
+        <!-- Location Image -->
+        <ImageView
+            android:id="@+id/place_image"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_location"
-                app:tint="#3498DB" />
-            <TextView
-                android:id="@+id/longitude"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Longitude: "
-                android:textSize="16sp"
-                android:textColor="#34495E"
-                android:paddingStart="8dp" />
-        </LinearLayout>
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"/>
+
 
         <!-- Weather Information Card -->
         <androidx.cardview.widget.CardView
