@@ -291,15 +291,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         autocompleteSupportFragment.setHint(getString(R.string.search_here));
 
         if (autocompleteSupportFragment != null) {
-        searchView = autocompleteSupportFragment.getView();
-        if (searchView != null) {
-            searchView.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_search_view));
+            searchView = autocompleteSupportFragment.getView();
+            if (searchView != null) {
+                searchView.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_search_view));
+            }
         }
-    }
+
         autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(@NonNull Place place) {
                 if (place.getLocation() != null) {
+                    currentLatitude = String.valueOf(place.getLatLng().latitude);
+
+                    currentLongitude = String.valueOf(place.getLatLng().longitude);
+
+                    selectedLatLng = place.getLatLng();
+
                     placeName = findViewById(R.id.location_title);
                     placeAddress = findViewById(R.id.place_address);
                     placeImage = findViewById(R.id.place_image);
