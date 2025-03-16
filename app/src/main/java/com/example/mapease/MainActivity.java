@@ -108,9 +108,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String currentLongitude = "";
     private LatLng currentLatLng = null;
     private LatLng selectedLatLng = null;
-    private boolean btnWeatherCheck = false;
-    ImageButton btnWeather;
-    TextView weather, weatherNoti;
+    TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
     //FusedLocationProviderClient locationProviderClient;
     ActivityMainBinding binding;
@@ -138,9 +136,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
         binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
-        btnWeather = findViewById(R.id.weather_button);
         weather = findViewById(R.id.weatherText);
-        weatherNoti = findViewById(R.id.weatherNoti);
     }
 
     private void showProfileMenu(View view) {
@@ -198,6 +194,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                             // Update instance variables
                                             currentLatitude = String.valueOf(location.getLatitude());
                                             currentLongitude = String.valueOf(location.getLongitude());
+                                            getWeatherDetails();
                                             currentLatLng = userLatLng;
                                         } else {
                                             Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
@@ -302,8 +299,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onPlaceSelected(@NonNull Place place) {
                 if (place.getLocation() != null) {
                     currentLatitude = String.valueOf(place.getLatLng().latitude);
-
                     currentLongitude = String.valueOf(place.getLatLng().longitude);
+                    getWeatherDetails();
 
                     selectedLatLng = place.getLatLng();
 
@@ -425,18 +422,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f)); // 15f is zoom level
     }
 
-    public void getWeatherDetails(View view) {
-        if (!btnWeatherCheck) {
-            weather.setVisibility(View.VISIBLE);
-            btnWeatherCheck = true;
-            weatherNoti.setVisibility(View.VISIBLE);
-            weatherNoti.setText("Slide up for more details");
-            weatherNoti.setTextColor(Color.parseColor("#E74C3C")); // Red color for noti
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                weatherNoti.setVisibility(View.GONE);
-            }, 3000);
-        }
-
+    public void getWeatherDetails() {
         String tempUrl = "";
         String lat = currentLatitude;
         String lon = currentLongitude;
@@ -446,7 +432,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (lat.isEmpty() || lon.isEmpty()) {
             weather.setTextColor(Color.RED);
             weather.setText("Please select a specific location!");
-            btnWeatherCheck = false;
             weatherIcon.setImageResource(R.drawable.ic_error); // Error icon
             weatherCity.setText("No Location");
             return;
