@@ -3,6 +3,5 @@
     <string name="title_activity_sign_up">MapEase</string>
     <string name="search_here">Search here</string>
     <string name="title_activity_route">RouteActivity</string>
-    <string name="ggMapAPIKey">AIzaSyArgkyxBvuUS3XXHI9AP7LQ1pARrHJyJtk</string>
 
 </resources>
