@@ -58,7 +58,7 @@ public class RoutesAPIHelper {
             public Map<String, String> getHeaders() {
                 Map<String, String> headers = new HashMap<>();
                 headers.put("Content-Type", "application/json");
-                headers.put("X-Goog-Api-Key", API_KEY); // API Key
+                headers.put("X-Goog-Api-Key", context.getString(R.string.ggMapAPIKey)); // API Key
                 headers.put("X-Goog-FieldMask", "*"); // Nhận toàn bộ dữ liệu (có thể chỉnh nếu cần)
                 return headers;
             }
