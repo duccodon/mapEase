@@ -90,4 +90,7 @@ dependencies {
     implementation("com.squareup.retrofit2:adapter-rxjava2:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+
+    //Splash screen
+    implementation("com.airbnb.android:lottie:4.2.2")
 }
