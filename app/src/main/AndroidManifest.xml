@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -17,7 +18,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mapease"
         tools:targetApi="31">
+        <activity
+            android:name=".SplashScreen"
+            android:exported="true"
+            android:theme="@style/Theme.Mapease1">
 
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <!--
              TODO: Before you run your application, you need a Google Maps API key.
 
@@ -31,7 +42,11 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value= "@string/ggMapAPIKey" />
+            android:value="@string/ggMapAPIKey" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/ggMapAPIKey" />
+
         <activity
             android:name=".RouteActivity"
             android:exported="false"
@@ -39,18 +54,12 @@
         <activity
             android:name=".yourProfileActivity"
             android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"/>
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
             android:name=".loginActivity"
             android:exported="true">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
-
         <activity
             android:name=".signUpActivity"
             android:exported="false"
@@ -67,13 +76,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar">
-
-        </activity>
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/ggMapAPIKey" />
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"></activity>
     </application>
 
 </manifest>
