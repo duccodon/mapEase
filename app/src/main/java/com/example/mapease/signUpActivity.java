@@ -15,10 +15,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.mapease.model.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class signUpActivity extends AppCompatActivity {
 
@@ -26,6 +29,9 @@ public class signUpActivity extends AppCompatActivity {
     private EditText signupEmail, signupUsername, signupPassword;
     private Button signupButton;
     private TextView signinRedirect;
+
+    private FirebaseDatabase database;
+    private DatabaseReference myRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +45,9 @@ public class signUpActivity extends AppCompatActivity {
         });*/
 
         auth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
+        myRef = database.getReference("user");
+
         signupEmail = findViewById(R.id.signup_email);
         signupUsername = findViewById(R.id.signup_username);
         signupPassword = findViewById(R.id.signup_password);
@@ -65,10 +74,29 @@ public class signUpActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(signUpActivity.this, "Sign up successfully", Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(signUpActivity.this, loginActivity.class));
-                            }else{
-                                Toast.makeText(signUpActivity.this, "Sign up failed" + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                String userId = auth.getCurrentUser().getUid();
+
+                                User user = new User();
+                                user.setEmail(email);
+                                user.setUsername(username);
+                                user.setBio("Did not add");
+                                user.setAvatar("@drawable/profile_user");
+                                user.setRole("user");
+
+                                // Save user data to Firebase Realtime Database
+                                myRef.child(userId).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()) {
+                                            Toast.makeText(signUpActivity.this, "Sign up successfully", Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(signUpActivity.this, loginActivity.class));
+                                        } else {
+                                            Toast.makeText(signUpActivity.this, "Failed to save user data: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+                            } else {
+                                Toast.makeText(signUpActivity.this, "Sign up failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });

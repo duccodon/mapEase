@@ -28,9 +28,9 @@
 
         <!-- Profile Image -->
         <ImageView
+            android:id="@+id/avatar"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:background="#C2185B"
             android:src="@android:drawable/ic_menu_myplaces"
             android:contentDescription="Profile Image"
             android:gravity="center"
@@ -46,6 +46,7 @@
             android:layout_gravity="center_vertical">
 
             <TextView
+                android:id="@+id/username"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Your name"
@@ -54,6 +55,7 @@
                 android:textColor="#000000" />
 
             <TextView
+                android:id="@+id/bio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="LOCAL GUIDE LEVEL 2 • 37 points"

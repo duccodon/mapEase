@@ -67,6 +67,7 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -153,6 +154,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else if (id == R.id.locationSharing) {
                 return true;
             } else if (id == R.id.setting) {
+                return true;
+            }else if (id == R.id.logout) {
+                FirebaseAuth.getInstance().signOut();
+                Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(this, loginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
                 return true;
             }
             return false;
