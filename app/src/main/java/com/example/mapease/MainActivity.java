@@ -26,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +36,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -75,6 +77,8 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
@@ -240,13 +244,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // POI click listener
         myMap.setOnPoiClickListener(poi -> {
-            Log.d("DetailInfor", "POI click");
+            Log.d("DetailInfor", "POI click" + poi.placeId);
             selectedLatLng = poi.latLng;
             currentLatitude = String.valueOf(poi.latLng.latitude);
             currentLongitude = String.valueOf(poi.latLng.longitude);
             getWeatherDetails();
 
-            findPlaceDetailsFromLocation(poi.latLng, poi.name);
+            findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
         });
 
         // Normal map click listener
@@ -257,11 +261,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentLongitude = String.valueOf(latLng.longitude);
             getWeatherDetails();
 
-            findPlaceDetailsFromLocation(latLng, null);
+            findPlaceDetailsFromLocation(latLng, null, null);
         });
     }
 
-    private void findPlaceDetailsFromLocation(LatLng latLng, String placeName) {
+    private void findPlaceDetailsFromLocation(LatLng latLng, String placeName, String placeID) {
         List<Place.Field> fields = Arrays.asList(
                 Place.Field.ID,
                 Place.Field.NAME,
@@ -277,10 +281,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Place.Field.LAT_LNG,
                 Place.Field.PHOTO_METADATAS,
                 Place.Field.INTERNATIONAL_PHONE_NUMBER,
-                Place.Field.WEBSITE_URI
+                Place.Field.WEBSITE_URI,
+                Place.Field.OPENING_HOURS,
+                Place.Field.PRICE_LEVEL,
+                Place.Field.BUSINESS_STATUS
         );
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED){
+            if (placeID != null) {
+                FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
+
+                placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
+                    Log.d("DetailInfor", "Place ID: " + placeID);
+
+                    FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(placeID, fullFields).build();
+                    Task<FetchPlaceResponse> fetchPlaceTask = placesClient.fetchPlace(fullRequest);
+                    fetchPlaceTask.addOnSuccessListener(fullResponse -> {
+                        Place place = fullResponse.getPlace();
+                        Log.d("DetailInfor", "Full information: " + place);
+                        updatePlaceUI(place, null, null);
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("DetailInfor", "Error finding place: " + e.getMessage());
+                    });
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("DetailInfor", "Error finding place: " + e.getMessage());
+                    getAddressFromLatLng(latLng);
+                });
+            }else{
+                getAddressFromLatLng(latLng);
+            }
+        }else{
+            Toast.makeText(MainActivity.this, "Error: Do not have access fine location permission", Toast.LENGTH_SHORT).show();
+        }
+
+        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
 
             FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
@@ -313,11 +350,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         // Get the place object
                         Place place = fullResponse.getPlace();
                         // Do something with the place object
-                        Log.d("DetailInfor", "Full information: " + fullResponse.getPlace().getWebsiteUri());
-                        Log.d("DetailInfor", "Full information: " + fullResponse.toString());
+                        Log.d("DetailInfor", "Full information: " + fullResponse.getPlace());
                     });
 
-                    Log.d("DetailInfor", "Full Place Info: " + bestMatch.getId());
                     updatePlaceUI(bestMatch);
                 } else {
                     // Fallback to reverse geocoding
@@ -328,93 +363,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 getAddressFromLatLng(latLng, placeName);
             });
         } else {
+            Log.d("DetailInfor", " Not permitted");
             getAddressFromLatLng(latLng, placeName);
+        }*/
+    }
+
+    private void getAddressFromLatLng(LatLng latLng) {
+        Log.d("DetailInfor", "Normal Address");
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                String address = addresses.get(0).getAddressLine(0);
+                Log.d("DetailInfor", "Address: " + address);
+                updatePlaceUI(null, addresses.get(0), latLng);
+            }
+        } catch (IOException e) {
+            Log.e("DetailInfor", "Error: " + e.getMessage());
+            updatePlaceUI(null, null, latLng);
         }
     }
 
-    private boolean isLocationClose(LatLng loc1, LatLng loc2, float maxDistanceMeters) {
-        float[] results = new float[1];
-        Location.distanceBetween(
-                loc1.latitude, loc1.longitude,
-                loc2.latitude, loc2.longitude,
-                results
-        );
-        return results[0] <= maxDistanceMeters;
-    }
-
-    private void findPlaceIdFromPoi(PointOfInterest poi) {
-        List<Place.Field> fields = Arrays.asList(Place.Field.ID);
-
-        FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
-                for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
-                    Place place = placeLikelihood.getPlace();
-                    if (isLocationClose(place.getLatLng(), poi.latLng, 50)) {
-                        Log.d("DetailInfor", place.getId());
-                        return;
-                    }
-                }
-                Log.e("DetailInfor", "ID not found");
-            }).addOnFailureListener(e -> {
-                Log.e("DetailInfor", "Cannot search");
-            });
-        }
-    }
-
-    private void findCurrentPlaceDetails(LatLng latLng, String placeName) {
-        List<Place.Field> placeFields = Arrays.asList(
-                Place.Field.ID,
-                Place.Field.NAME,
-                Place.Field.ADDRESS,
-                Place.Field.PHONE_NUMBER,
-                Place.Field.WEBSITE_URI,
-                Place.Field.RATING,
-                Place.Field.PHOTO_METADATAS,
-                Place.Field.LAT_LNG
-        );
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
-
-            placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
-                Place bestMatch = null;
-                float bestDistance = Float.MAX_VALUE;
-
-                for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
-                    Place place = placeLikelihood.getPlace();
-                    float[] results = new float[1];
-                    Location.distanceBetween(
-                            place.getLatLng().latitude, place.getLatLng().longitude,
-                            latLng.latitude, latLng.longitude,
-                            results
-                    );
-
-                    if (results[0] < bestDistance) {
-                        bestDistance = results[0];
-                        bestMatch = place;
-                    }
-                }
-
-                if (bestMatch != null && bestDistance < 100) { // Within 100 meters
-                    updatePlaceUI(bestMatch);
-                } else {
-                    // Fallback to reverse geocoding
-                    getAddressFromLatLng(latLng, placeName);
-                }
-            }).addOnFailureListener(e -> {
-                Log.e("PlacesAPI", "Error finding places: " + e.getMessage());
-                getAddressFromLatLng(latLng, placeName);
-            });
-        } else {
-            getAddressFromLatLng(latLng, placeName);
-        }
-    }
-
-    private void getAddressFromLatLng(LatLng latLng, String placeName) {
+    /*private void getAddressFromLatLng(LatLng latLng, String placeName) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
             List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
@@ -434,19 +404,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             updatePlaceUI(placeBuilder.build());
         } catch (IOException e) {
-            Log.e("Geocoder", "Geocoder error: " + e.getMessage());
+            Log.e("DetailInfor", "Geocoder error: " + e.getMessage());
             updatePlaceUI(Place.builder()
                     .setName(placeName != null ? placeName : "Selected Location")
                     .setAddress(latLng.latitude + ", " + latLng.longitude)
                     .setLatLng(latLng)
                     .build());
         }
-    }
+    }*/
 
-    private void updatePlaceUI(Place place) {
+    private void updatePlaceUI(Place place, Address address, LatLng latLng) {
         runOnUiThread(() -> {
-            Log.d("DetailInfor", place.toString());
-
             TextView placeName = findViewById(R.id.location_title);
             TextView placeAddress = findViewById(R.id.place_address);
             ImageView placeImage = findViewById(R.id.place_image);
@@ -454,49 +422,81 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             TextView placeWebsite = findViewById(R.id.place_website);
             TextView placeRating = findViewById(R.id.place_rating);
 
-            placeName.setText(place.getName() != null ? place.getName() : "Selected Location");
-            placeAddress.setText(place.getAddress() != null ? place.getAddress() : "Address not available");
+            if (place != null && address == null && latLng == null) {
+                Log.d("DetailInfor", "Update UI" + place.toString());
 
-            // Handle optional fields
-            placePhone.setVisibility(place.getPhoneNumber() != null ? View.VISIBLE : View.GONE);
-            if (place.getPhoneNumber() != null) {
-                placePhone.setText("Phone: " + place.getPhoneNumber());
+                placeName.setText(place.getName() != null ? place.getName() : "Selected Location");
+                placeAddress.setText(place.getAddress() != null ? place.getAddress() : "Address not available");
+
+                // Handle optional fields
+                placePhone.setVisibility(place.getPhoneNumber() != null ? View.VISIBLE : View.GONE);
+                if (place.getPhoneNumber() != null) {
+                    placePhone.setText("Phone: " + place.getPhoneNumber());
+                }
+
+                placeWebsite.setVisibility(place.getWebsiteUri() != null ? View.VISIBLE : View.GONE);
+                if (place.getWebsiteUri() != null) {
+                    placeWebsite.setText("Website: " + place.getWebsiteUri());
+                }
+
+                placeRating.setVisibility(place.getRating() != null ? View.VISIBLE : View.GONE);
+                if (place.getRating() != null) {
+                    placeRating.setText(String.format(Locale.getDefault(),
+                            "Rating: %.1f (%d reviews)",
+                            place.getRating(),
+                            place.getUserRatingsTotal() != null ? place.getUserRatingsTotal() : 0));
+                }
+
+                // Handle photos
+                if (place.getPhotoMetadatas() != null && !place.getPhotoMetadatas().isEmpty()) {
+                    loadPlacePhoto(place.getPhotoMetadatas().get(0), placeImage);
+                } else {
+                    placeImage.setVisibility(View.GONE);
+                }
+
+                // Update marker
+                if (currentMarker != null) {
+                    currentMarker.remove();
+                }
+                currentMarker = myMap.addMarker(new MarkerOptions()
+                        .position(place.getLatLng())
+                        .title(place.getName()));
+
+                // Expand panel
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+            }else{
+                String fullAddress = address.getAddressLine(0);
+
+                // Update UI with address info
+                placeName.setText("Selected Location");
+                placeAddress.setText(fullAddress);
+
+                // Hide optional fields
+                placePhone.setVisibility(View.GONE);
+                placeWebsite.setVisibility(View.GONE);
+                placeRating.setVisibility(View.GONE);
+
+                // Set default photo
+                placeImage.setVisibility(View.VISIBLE);
+                placeImage.setImageResource(R.drawable.default_location);
+
+                // Update marker
+                if (currentMarker != null) {
+                    currentMarker.remove();
+                }
+                currentMarker = myMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .title("Selected Location"));
+
+                // Expand panel
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+
+                Log.d("DetailInfor", "Address: " + fullAddress);
             }
-
-            placeWebsite.setVisibility(place.getWebsiteUri() != null ? View.VISIBLE : View.GONE);
-            if (place.getWebsiteUri() != null) {
-                placeWebsite.setText("Website: " + place.getWebsiteUri());
-            }
-
-            placeRating.setVisibility(place.getRating() != null ? View.VISIBLE : View.GONE);
-            if (place.getRating() != null) {
-                placeRating.setText(String.format(Locale.getDefault(),
-                        "Rating: %.1f (%d reviews)",
-                        place.getRating(),
-                        place.getUserRatingsTotal() != null ? place.getUserRatingsTotal() : 0));
-            }
-
-            // Handle photos
-            if (place.getPhotoMetadatas() != null && !place.getPhotoMetadatas().isEmpty()) {
-                loadPlacePhoto(place.getPhotoMetadatas().get(0), placeImage);
-            } else {
-                placeImage.setVisibility(View.GONE);
-            }
-
-            // Update marker
-            if (currentMarker != null) {
-                currentMarker.remove();
-            }
-            currentMarker = myMap.addMarker(new MarkerOptions()
-                    .position(place.getLatLng())
-                    .title(place.getName()));
-
-            // Expand panel
-            slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
         });
     }
 
-    private void loadPlacePhoto(PhotoMetadata photoMetadata, ImageView imageView) {
+    public void loadPlacePhoto(PhotoMetadata photoMetadata, ImageView imageView) {
         FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
                 .setMaxWidth(500)
                 .setMaxHeight(300)
@@ -721,6 +721,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         String lon = currentLongitude;
         ImageView weatherIcon = findViewById(R.id.weather_icon);
         TextView weatherCity = findViewById(R.id.weather_city);
+
+        if (weather == null) {
+            weather = findViewById(R.id.weatherText);
+            if (weather == null) return;
+        }
 
         if (lat.isEmpty() || lon.isEmpty()) {
             weather.setTextColor(Color.RED);
