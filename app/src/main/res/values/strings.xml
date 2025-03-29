@@ -3,5 +3,6 @@
     <string name="title_activity_sign_up">MapEase</string>
     <string name="search_here">Search here</string>
     <string name="title_activity_route">RouteActivity</string>
+    <string name="search_review">Find a place to review</string>
 
 </resources>

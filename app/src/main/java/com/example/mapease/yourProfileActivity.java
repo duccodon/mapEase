@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -41,6 +42,8 @@ public class yourProfileActivity extends AppCompatActivity {
 
     private ImageView avatar;
     private TextView username, bio;
+    private Button writeReviewBtn;
+    private ImageButton backToHomeButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +51,22 @@ public class yourProfileActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_your_profile);
         // Find the back to home button (ImageButton)
-        ImageButton backToHomeButton = findViewById(R.id.backToHomeButton);
+        backToHomeButton = findViewById(R.id.backToHomeButton);
+        writeReviewBtn = findViewById(R.id.writeReview);
+
         backToHomeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Intent to go to Home Screen
                 startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            }
+        });
+
+        writeReviewBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Toast.makeText(getApplicationContext(), "Navigating to ReviewSearch", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(getApplicationContext(), ReviewSearch.class));
             }
         });
 
@@ -162,4 +175,5 @@ public class yourProfileActivity extends AppCompatActivity {
             }
         }
     }
+
 }
