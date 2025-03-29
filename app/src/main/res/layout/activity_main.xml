@@ -115,6 +115,32 @@
             android:textColor="#2C3E50"
             android:paddingBottom="8dp"/>
 
+        <!-- Detailed information -->
+        <TextView
+            android:id="@+id/place_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Phone: Not available"
+            android:visibility="gone"
+            android:textColor="#2C3E50"
+            android:paddingBottom="4dp"/>
+        <TextView
+            android:id="@+id/place_website"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Website: Not available"
+            android:visibility="gone"
+            android:textColor="#2C3E50"
+            android:paddingBottom="4dp"/>
+        <TextView
+            android:id="@+id/place_rating"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rating: Not rated"
+            android:visibility="gone"
+            android:textColor="#2C3E50"
+            android:paddingBottom="8dp"/>
+
         <!-- Location Image -->
         <ImageView
             android:id="@+id/place_image"

@@ -58,11 +58,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.PlaceLikelihood;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
+import com.google.android.libraries.places.api.model.RectangularBounds;
+import com.google.android.libraries.places.api.net.FetchPlaceResponse;
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
+import com.google.android.gms.maps.model.PointOfInterest;
 import com.google.android.libraries.places.api.net.FetchPhotoRequest;
 import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
@@ -90,6 +98,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private final int FINE_PERMISSION_CODE = 1;
     private GoogleMap myMap;
+    private PlacesClient placesClient;
     private Marker currentMarker = null;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
@@ -228,6 +237,279 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         token.continuePermissionRequest();
                     }
                 }).check();
+
+        // POI click listener
+        myMap.setOnPoiClickListener(poi -> {
+            Log.d("DetailInfor", "POI click");
+            selectedLatLng = poi.latLng;
+            currentLatitude = String.valueOf(poi.latLng.latitude);
+            currentLongitude = String.valueOf(poi.latLng.longitude);
+            getWeatherDetails();
+
+            findPlaceDetailsFromLocation(poi.latLng, poi.name);
+        });
+
+        // Normal map click listener
+        myMap.setOnMapClickListener(latLng -> {
+            Log.d("DetailInfor", "Normal click");
+            selectedLatLng = latLng;
+            currentLatitude = String.valueOf(latLng.latitude);
+            currentLongitude = String.valueOf(latLng.longitude);
+            getWeatherDetails();
+
+            findPlaceDetailsFromLocation(latLng, null);
+        });
+    }
+
+    private void findPlaceDetailsFromLocation(LatLng latLng, String placeName) {
+        List<Place.Field> fields = Arrays.asList(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.ADDRESS,
+                Place.Field.LAT_LNG,
+                Place.Field.PHOTO_METADATAS
+        );
+
+        List<Place.Field> fullFields = Arrays.asList(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.ADDRESS,
+                Place.Field.LAT_LNG,
+                Place.Field.PHOTO_METADATAS,
+                Place.Field.INTERNATIONAL_PHONE_NUMBER,
+                Place.Field.WEBSITE_URI
+        );
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
+
+            placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
+                Place bestMatch = null;
+                float minDistance = Float.MAX_VALUE;
+
+                for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
+                    Place place = placeLikelihood.getPlace();
+                    float[] results = new float[1];
+                    Location.distanceBetween(
+                            place.getLatLng().latitude, place.getLatLng().longitude,
+                            latLng.latitude, latLng.longitude,
+                            results
+                    );
+
+                    if (results[0] < minDistance) {
+                        minDistance = results[0];
+                        bestMatch = place;
+                    }
+                }
+
+                if (bestMatch != null && minDistance < 50) { // Within 50 meters
+                    Log.d("DetailInfor", "Found Place ID: " + bestMatch.getId());
+
+                    FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(bestMatch.getId(), fullFields).build();
+                    Task<FetchPlaceResponse> fetchPlaceTask = placesClient.fetchPlace(fullRequest);
+                    fetchPlaceTask.addOnSuccessListener(fullResponse -> {
+                        // Get the place object
+                        Place place = fullResponse.getPlace();
+                        // Do something with the place object
+                        Log.d("DetailInfor", "Full information: " + fullResponse.getPlace().getWebsiteUri());
+                        Log.d("DetailInfor", "Full information: " + fullResponse.toString());
+                    });
+
+                    Log.d("DetailInfor", "Full Place Info: " + bestMatch.getId());
+                    updatePlaceUI(bestMatch);
+                } else {
+                    // Fallback to reverse geocoding
+                    getAddressFromLatLng(latLng, placeName);
+                }
+            }).addOnFailureListener(e -> {
+                Log.e("DetailInfor", "Error finding place: " + e.getMessage());
+                getAddressFromLatLng(latLng, placeName);
+            });
+        } else {
+            getAddressFromLatLng(latLng, placeName);
+        }
+    }
+
+    private boolean isLocationClose(LatLng loc1, LatLng loc2, float maxDistanceMeters) {
+        float[] results = new float[1];
+        Location.distanceBetween(
+                loc1.latitude, loc1.longitude,
+                loc2.latitude, loc2.longitude,
+                results
+        );
+        return results[0] <= maxDistanceMeters;
+    }
+
+    private void findPlaceIdFromPoi(PointOfInterest poi) {
+        List<Place.Field> fields = Arrays.asList(Place.Field.ID);
+
+        FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
+                for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
+                    Place place = placeLikelihood.getPlace();
+                    if (isLocationClose(place.getLatLng(), poi.latLng, 50)) {
+                        Log.d("DetailInfor", place.getId());
+                        return;
+                    }
+                }
+                Log.e("DetailInfor", "ID not found");
+            }).addOnFailureListener(e -> {
+                Log.e("DetailInfor", "Cannot search");
+            });
+        }
+    }
+
+    private void findCurrentPlaceDetails(LatLng latLng, String placeName) {
+        List<Place.Field> placeFields = Arrays.asList(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.ADDRESS,
+                Place.Field.PHONE_NUMBER,
+                Place.Field.WEBSITE_URI,
+                Place.Field.RATING,
+                Place.Field.PHOTO_METADATAS,
+                Place.Field.LAT_LNG
+        );
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
+
+            placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
+                Place bestMatch = null;
+                float bestDistance = Float.MAX_VALUE;
+
+                for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
+                    Place place = placeLikelihood.getPlace();
+                    float[] results = new float[1];
+                    Location.distanceBetween(
+                            place.getLatLng().latitude, place.getLatLng().longitude,
+                            latLng.latitude, latLng.longitude,
+                            results
+                    );
+
+                    if (results[0] < bestDistance) {
+                        bestDistance = results[0];
+                        bestMatch = place;
+                    }
+                }
+
+                if (bestMatch != null && bestDistance < 100) { // Within 100 meters
+                    updatePlaceUI(bestMatch);
+                } else {
+                    // Fallback to reverse geocoding
+                    getAddressFromLatLng(latLng, placeName);
+                }
+            }).addOnFailureListener(e -> {
+                Log.e("PlacesAPI", "Error finding places: " + e.getMessage());
+                getAddressFromLatLng(latLng, placeName);
+            });
+        } else {
+            getAddressFromLatLng(latLng, placeName);
+        }
+    }
+
+    private void getAddressFromLatLng(LatLng latLng, String placeName) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+
+            Place.Builder placeBuilder = Place.builder()
+                    .setLatLng(latLng);
+
+            if (placeName != null) {
+                placeBuilder.setName(placeName);
+            } else if (!addresses.isEmpty()) {
+                placeBuilder.setName(addresses.get(0).getFeatureName())
+                        .setAddress(addresses.get(0).getAddressLine(0));
+            } else {
+                placeBuilder.setName("Selected Location")
+                        .setAddress(latLng.latitude + ", " + latLng.longitude);
+            }
+
+            updatePlaceUI(placeBuilder.build());
+        } catch (IOException e) {
+            Log.e("Geocoder", "Geocoder error: " + e.getMessage());
+            updatePlaceUI(Place.builder()
+                    .setName(placeName != null ? placeName : "Selected Location")
+                    .setAddress(latLng.latitude + ", " + latLng.longitude)
+                    .setLatLng(latLng)
+                    .build());
+        }
+    }
+
+    private void updatePlaceUI(Place place) {
+        runOnUiThread(() -> {
+            Log.d("DetailInfor", place.toString());
+
+            TextView placeName = findViewById(R.id.location_title);
+            TextView placeAddress = findViewById(R.id.place_address);
+            ImageView placeImage = findViewById(R.id.place_image);
+            TextView placePhone = findViewById(R.id.place_phone);
+            TextView placeWebsite = findViewById(R.id.place_website);
+            TextView placeRating = findViewById(R.id.place_rating);
+
+            placeName.setText(place.getName() != null ? place.getName() : "Selected Location");
+            placeAddress.setText(place.getAddress() != null ? place.getAddress() : "Address not available");
+
+            // Handle optional fields
+            placePhone.setVisibility(place.getPhoneNumber() != null ? View.VISIBLE : View.GONE);
+            if (place.getPhoneNumber() != null) {
+                placePhone.setText("Phone: " + place.getPhoneNumber());
+            }
+
+            placeWebsite.setVisibility(place.getWebsiteUri() != null ? View.VISIBLE : View.GONE);
+            if (place.getWebsiteUri() != null) {
+                placeWebsite.setText("Website: " + place.getWebsiteUri());
+            }
+
+            placeRating.setVisibility(place.getRating() != null ? View.VISIBLE : View.GONE);
+            if (place.getRating() != null) {
+                placeRating.setText(String.format(Locale.getDefault(),
+                        "Rating: %.1f (%d reviews)",
+                        place.getRating(),
+                        place.getUserRatingsTotal() != null ? place.getUserRatingsTotal() : 0));
+            }
+
+            // Handle photos
+            if (place.getPhotoMetadatas() != null && !place.getPhotoMetadatas().isEmpty()) {
+                loadPlacePhoto(place.getPhotoMetadatas().get(0), placeImage);
+            } else {
+                placeImage.setVisibility(View.GONE);
+            }
+
+            // Update marker
+            if (currentMarker != null) {
+                currentMarker.remove();
+            }
+            currentMarker = myMap.addMarker(new MarkerOptions()
+                    .position(place.getLatLng())
+                    .title(place.getName()));
+
+            // Expand panel
+            slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+        });
+    }
+
+    private void loadPlacePhoto(PhotoMetadata photoMetadata, ImageView imageView) {
+        FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
+                .setMaxWidth(500)
+                .setMaxHeight(300)
+                .build();
+
+        placesClient.fetchPhoto(photoRequest).addOnSuccessListener(fetchPhotoResponse -> {
+            Bitmap bitmap = fetchPhotoResponse.getBitmap();
+            imageView.setImageBitmap(bitmap);
+            imageView.setVisibility(View.VISIBLE);
+        }).addOnFailureListener(exception -> {
+            Log.e("PlacePhoto", "Error loading photo: " + exception.getMessage());
+            imageView.setVisibility(View.GONE);
+        });
     }
 
     private void showMapTypeMenu(View view) {
@@ -291,6 +573,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void init()
     {
         Places.initialize(this, getString(R.string.ggMapAPIKey));
+        placesClient = Places.createClient(this);
+
         autocompleteSupportFragment = (AutocompleteSupportFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.autocomplete_fragment);
         assert autocompleteSupportFragment != null;
@@ -368,7 +652,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getPlacePhoto(String placeId, ImageView placeImage) {
-        PlacesClient placesClient = Places.createClient(this);
 
         List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
         FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
@@ -403,7 +686,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.e("PlacePhoto", "Place details fetch failed: " + exception.getMessage());
             placeImage.setVisibility(View.GONE);
 
-         });
+        });
 
     }
 
@@ -521,6 +804,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         requestQueue.add(stringRequest);
     }
+
     private void setupSlidingPanel() {
         slidingLayout = findViewById(R.id.sliding_layout);
         LinearLayout slidingPanel = findViewById(R.id.sliding_panel);
