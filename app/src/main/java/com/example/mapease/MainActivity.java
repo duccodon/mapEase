@@ -127,6 +127,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //FusedLocationProviderClient locationProviderClient;
     ActivityMainBinding binding;
 
+    //tab layout
+    private TabLayout tabLayout;
+    private LinearLayout overviewTab;
+    private LinearLayout reviewsTab;
+    //
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -151,6 +157,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
         binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
         weather = findViewById(R.id.weatherText);
+
+        //tab layout
+        tabLayout = findViewById(R.id.tab_layout);
+        overviewTab = findViewById(R.id.overview_tab);
+        reviewsTab = findViewById(R.id.reviews_tab);
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                switch (tab.getPosition()) {
+                    case 0: // Overview tab
+                        overviewTab.setVisibility(View.VISIBLE);
+                        reviewsTab.setVisibility(View.GONE);
+                        break;
+                    case 1: // Reviews tab
+                        overviewTab.setVisibility(View.GONE);
+                        reviewsTab.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
     }
 
     private void showProfileMenu(View view) {

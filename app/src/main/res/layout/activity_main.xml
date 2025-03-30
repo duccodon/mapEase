@@ -91,127 +91,203 @@
             android:background="@drawable/rounded_drag_handle"
             android:layout_marginBottom="16dp" />
 
-        <!-- Location Title -->
-        <TextView
-            android:id="@+id/location_title"
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Selected Location"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#2C3E50"
-            android:paddingBottom="12dp" />
+            android:background="#FFFFFF"
+            app:tabIndicatorColor="#2C3E50"
+            app:tabTextColor="#2C3E50"
+            app:tabSelectedTextColor="#2C3E50"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="fixed"
+            app:tabGravity="fill">
 
-        <!-- Location Address -->
-        <TextView
-            android:id="@+id/place_address"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Address: "
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#2C3E50"
-            android:paddingBottom="8dp"/>
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Overview" />
 
-        <!-- Detailed information -->
-        <TextView
-            android:id="@+id/place_phone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Phone: Not available"
-            android:visibility="gone"
-            android:textColor="#2C3E50"
-            android:paddingBottom="4dp"/>
-        <TextView
-            android:id="@+id/place_website"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Website: Not available"
-            android:visibility="gone"
-            android:textColor="#2C3E50"
-            android:paddingBottom="4dp"/>
-        <TextView
-            android:id="@+id/place_rating"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Rating: Not rated"
-            android:visibility="gone"
-            android:textColor="#2C3E50"
-            android:paddingBottom="8dp"/>
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reviews" />
+        </com.google.android.material.tabs.TabLayout>
 
-        <!-- Location Image -->
-        <ImageView
-            android:id="@+id/place_image"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"/>
+        <LinearLayout
+        android:id="@+id/overview_tab"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
+            <!-- Location Title -->
+            <TextView
+                android:id="@+id/location_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selected Location"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#2C3E50"
+                android:paddingBottom="12dp" />
+
+            <!-- Location Address -->
+            <TextView
+                android:id="@+id/place_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Address: "
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#2C3E50"
+                android:paddingBottom="8dp"/>
+
+            <!-- Detailed information -->
+            <TextView
+                android:id="@+id/place_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phone: Not available"
+                android:visibility="gone"
+                android:textColor="#2C3E50"
+                android:paddingBottom="4dp"/>
+            <TextView
+                android:id="@+id/place_website"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Website: Not available"
+                android:visibility="gone"
+                android:textColor="#2C3E50"
+                android:paddingBottom="4dp"/>
+            <TextView
+                android:id="@+id/place_rating"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Rating: Not rated"
+                android:visibility="gone"
+                android:textColor="#2C3E50"
+                android:paddingBottom="8dp"/>
+
+            <!-- Location Image -->
+            <ImageView
+                android:id="@+id/place_image"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:visibility="gone"/>
 
 
-        <!-- Weather Information Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#F9FAFB">
+            <!-- Weather Information Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#F9FAFB">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <!-- Weather Icon and City -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <ImageView
+                            android:id="@+id/weather_icon"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_weather_default" />
+                        <TextView
+                            android:id="@+id/weather_city"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="City Name"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#2C3E50"
+                            android:paddingStart="8dp" />
+                    </LinearLayout>
+                    <!-- Weather Details -->
+                    <TextView
+                        android:id="@+id/weatherText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textColor="#34495E"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-                <!-- Weather Icon and City -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    <ImageView
-                        android:id="@+id/weather_icon"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_weather_default" />
-                    <TextView
-                        android:id="@+id/weather_city"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="City Name"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#2C3E50"
-                        android:paddingStart="8dp" />
-                </LinearLayout>
-                <!-- Weather Details -->
-                <TextView
-                    android:id="@+id/weatherText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textColor="#34495E"
-                    android:lineSpacingExtra="4dp"
-                    android:layout_marginTop="8dp" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:weightSum="2">
+                <!-- Direction Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/direction_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/long_button"
+                    android:drawableStart="@drawable/baseline_assistant_direction_24"
+                    android:text="Direction"
+                    android:textColor="#000000"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:drawablePadding="6dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:onClick="routingFunction" />
 
-        <!-- Direction Button -->
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/direction_button"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginTop="16dp"
-            android:layout_gravity="center"
-            android:background="@drawable/long_button"
-            android:drawableStart="@drawable/baseline_assistant_direction_24"
-            android:text="Direction"
-            android:textColor="#000000"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:drawablePadding="6dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:onClick="routingFunction" />
+                <!-- Save Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/save_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/long_button"
+                    android:drawableStart="@drawable/baseline_assistant_direction_24"
+                    android:text="Save"
+                    android:textColor="#000000"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:drawablePadding="6dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Reviews tab -->
+        <LinearLayout
+            android:id="@+id/reviews_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Reviews"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#2C3E50"
+                android:gravity="center"
+                android:padding="16dp"/>
+        </LinearLayout>
     </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
