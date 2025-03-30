@@ -227,44 +227,43 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
+                android:layout_height="80dp"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:weightSum="2">
+                android:gravity="center">
+
                 <!-- Direction Button -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/direction_button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_gravity="center"
+                    android:layout_weight="1"
                     android:background="@drawable/long_button"
                     android:drawableStart="@drawable/baseline_assistant_direction_24"
                     android:text="Direction"
+                    android:layout_marginEnd="10dp"
                     android:textColor="#000000"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
                     android:drawablePadding="6dp"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:onClick="routingFunction" />
+                    android:onClick="routingFunction"/>
 
                 <!-- Save Button -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/save_button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
                     android:background="@drawable/long_button"
-                    android:drawableStart="@drawable/baseline_assistant_direction_24"
+                    android:drawableStart="@drawable/save_button"
                     android:text="Save"
+                    android:layout_marginEnd="10dp"
                     android:textColor="#000000"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
-                    android:drawablePadding="6dp"
+                    android:drawablePadding="8dp"
                     android:minWidth="0dp"
                     android:minHeight="0dp"/>
             </LinearLayout>

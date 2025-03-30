@@ -2,20 +2,56 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#F5F5F5"
-    android:layout_marginBottom="16dp">
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/reviewTitle"
-        android:layout_width="wrap_content"
+    <!-- User and Rating Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#000000" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <TextView
+        <TextView
+            android:id="@+id/reviewUser"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            tools:text="John Doe" />
+        <TextView
+            android:id="@+id/reviewLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="New York, USA" />
+
+        <RatingBar
+            android:id="@+id/reviewRating"
+            style="@style/Widget.AppCompat.RatingBar.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:numStars="5"
+            android:rating="4.5"
+            android:isIndicator="true"
+            android:stepSize="0.5" />
+        <TextView
+            android:id="@+id/reviewTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            tools:text="2 days ago" />
+    </LinearLayout>
+
+
+    <!-- <TextView
         android:id="@+id/reviewSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -38,8 +74,9 @@
         android:isIndicator="true"
         android:stepSize="1.0"
         android:layout_marginTop="8dp" />
+    -->
 
-    <TextView
+    <!--<TextView
         android:id="@+id/reviewTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -69,9 +106,66 @@
         android:textSize="14sp"
         android:textColor="#757575"
         android:layout_marginTop="8dp" />
+     -->
+
+    <!-- Review Content -->
+    <TextView
+        android:id="@+id/reviewComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="#424242"
+        android:layout_marginTop="12dp"
+        android:lineSpacingExtra="2dp"
+        tools:text="This place has amazing food and great service. Highly recommended!" />
+
+    <!-- Image Gallery -->
+    <!--<androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/reviewImagesRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:orientation="horizontal"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:reverseLayout="false"
+        app:stackFromEnd="false"
+        tools:listitem="@layout/item_review_image" />
+     -->
+
+    <!-- Like Section -->
+    <LinearLayout
+        android:id="@+id/reviewLikeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:gravity="end">
+
+        <ImageView
+            android:id="@+id/reviewLikeIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/heart"
+            app:tint="#757575"
+            android:contentDescription="Like" />
+
+        <TextView
+            android:id="@+id/reviewLikeCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#757575"
+            android:layout_marginStart="4dp"
+            tools:text="24" />
+    </LinearLayout>
+
+
 
     <!-- Section for Restaurant-specific details (e.g., likes) -->
-    <LinearLayout
+    <!--<LinearLayout
         android:id="@+id/reviewLikeLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -94,5 +188,5 @@
             android:textColor="#757575"
             android:layout_marginStart="8dp" />
     </LinearLayout>
-
+    -->
 </LinearLayout>

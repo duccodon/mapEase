@@ -17,10 +17,8 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
+import com.example.mapease.model.Review;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -85,25 +83,19 @@ public class yourProfileActivity extends AppCompatActivity {
         // Sample data for reviews
         List<Review> reviews = new ArrayList<>();
         reviews.add(new Review(
-                "Center Le Hong Phong FastCare",
-                "Mobile phone repair shop",
-                "Ho Chi Minh City • 0.9 mi",
+                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                "Greate service, nice staff",
+                "ChIJzfOsShkvdTERSeoX_lSUTOk",
                 5.0f,
-                "6 months ago",
-                "Great service!",
-                "89 views",
-                "Press and hold to react",
-                null
+                "yyyy-MM-dd'T'HH:mm:ssZ",
+                0
         ));
         reviews.add(new Review(
-                "Vua Bít Tết Tawaza Lý Thái Tổ",
-                "Restaurant • ₫100–200K",
-                "Ho Chi Minh City • 0.7 mi",
-                5.0f,
-                "6 months ago",
-                "Food: 5 | Service: 5 | Atmosphere: 5",
-                "",
-                "",
+                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
+                "ChIJzfOsShkvdTERSeoX_lSUTOk",
+                4.0f,
+                "yyyy-MM-dd'T'HH:mm:ssZ",
                 1
         ));
 
