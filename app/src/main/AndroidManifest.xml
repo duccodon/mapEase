@@ -53,10 +53,6 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/ggMapAPIKey" />
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/ggMapAPIKey" />
-
         <activity
             android:name=".RouteActivity"
             android:exported="false"
