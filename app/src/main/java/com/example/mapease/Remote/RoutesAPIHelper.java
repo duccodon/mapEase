@@ -47,7 +47,6 @@ public class RoutesAPIHelper {
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, ROUTES_API_URL, jsonRequest,
                 response -> {
                     Log.d(TAG , "Response: " + response.toString());
-
                     // Gửi response về listener
                     listener.onResponse(response);
                 },

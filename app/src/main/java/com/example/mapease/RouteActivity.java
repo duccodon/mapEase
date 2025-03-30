@@ -1,10 +1,13 @@
 package com.example.mapease;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
@@ -17,16 +20,21 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.events.SendLocationToActivity;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -42,7 +50,10 @@ import com.example.mapease.databinding.ActivityRouteBinding;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.maps.android.PolyUtil;
 
 import org.greenrobot.eventbus.EventBus;
@@ -54,13 +65,14 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import io.reactivex.disposables.CompositeDisposable;
 
 public class RouteActivity extends FragmentActivity implements OnMapReadyCallback {
-
+    private static final double LOCATION_THRESHOLD = 0.0001; // Adjust based on accuracy needs
     private GoogleMap mMap;
     private ActivityRouteBinding binding;
     private SendLocationToActivity sendLocationToActivity;
@@ -72,7 +84,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private PolylineOptions polylineOptions, blackPolylineOptions;
     private List<LatLng> polylineList;
     private Marker originMarker, destinationMarker;
-
+    private AutocompleteSupportFragment autocompleteOrigin, autocompleteDestination;
+    private LatLng currentLocation;
     @Override
     protected void onStart() {
         super.onStart();
@@ -98,30 +111,31 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
         binding = ActivityRouteBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_route);
-        if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), getString(R.string.ggMapAPIKey));
-        }
-        PlacesClient placesClient = Places.createClient(this);
-
-        init();
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        // Thêm SupportMapFragment động
+        setupAutocomplete();
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.map_container, mapFragment, "MAP_FRAGMENT")
                 .commit();
         mapFragment.getMapAsync(this);
+
         ImageButton btnBack = findViewById(R.id.btn_back);
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Quay về MainActivity
                 finish(); // Đóng Activity hiện tại
             }
         });
-
     }
+    @Override
+    protected void onDestroy() {
+        if (mMap != null) {
+            mMap.clear();  // Xóa tất cả đối tượng khỏi bản đồ
+            mMap.setMapType(GoogleMap.MAP_TYPE_NONE);  // Giải phóng tài nguyên
+        }
+        super.onDestroy();
+    }
+
 
     /**
      * Manipulates the map once available.
@@ -132,26 +146,32 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-    private void init() {
-    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
+            // ActivityCompat#requestPermissions
             return;
         }
         mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.setPadding(0, 200, 0, 420); // Dịch chuyển nút Zoom lên trên 150px
         if (sendLocationToActivity != null) {
+
+            currentLocation = sendLocationToActivity.getOrigin();
+
             mMap.setOnMyLocationButtonClickListener(() -> {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(sendLocationToActivity.getOrigin(), 18.0f));
                 return true;
             });
-            // Vẽ đường đi
+
             try {
-                drawPath(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());
+                setAutocompleteText(R.id.autocomplete_origin, "Your Location");
+                setAutocompleteText(R.id.autocomplete_destination, sendLocationToActivity.getDestinationName());
+                drawPath(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());// Vẽ đường đi
+
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }
@@ -171,9 +191,10 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             Toast.makeText(this, "Origin or Destination is null", Toast.LENGTH_SHORT).show();
             return;
         }
+        clearPreviousRoutes();
 
         Log.d("RouteActivity", "Requesting path: " + origin.toString() + " to " + destination.toString());
-
+        mMap.clear();
         // Gửi request và nhận `JSONObject`
         RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, response -> {
             try {
@@ -196,7 +217,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
                 polylineList.clear();
 
-// Lấy tuyến đường đầu tiên
+                // Lấy tuyến đường đầu tiên
                 JSONObject route = routesArray.getJSONObject(0);
                 JSONArray legs = route.getJSONArray("legs");
 
@@ -222,7 +243,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                     return;
                 }
 
-// Vẽ Polyline trên bản đồ
+                // Vẽ Polyline trên bản đồ
                 polylineOptions = new PolylineOptions()
                         .color(Color.GRAY)
                         .width(12)
@@ -242,8 +263,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 blackPolyline = mMap.addPolyline(blackPolylineOptions);
 
                 ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 100);
-                valueAnimator.setDuration(1000);
-                valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
+                valueAnimator.setDuration(1);
+                valueAnimator.setRepeatCount(3);
                 valueAnimator.setInterpolator(new LinearInterpolator());
                 valueAnimator.addUpdateListener(value -> {
                     List<LatLng> points = greyPolyline.getPoints();
@@ -261,7 +282,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                         .include(destination)
                         .build();
 
-// Hiển thị thông tin khoảng cách & thời gian
+                // Hiển thị thông tin khoảng cách & thời gian
                 JSONObject legInfo = legs.getJSONObject(0);
                 JSONObject duration = legInfo.getJSONObject("localizedValues").getJSONObject("duration");
                 JSONObject distance = legInfo.getJSONObject("localizedValues").getJSONObject("distance");
@@ -269,7 +290,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 String durationText = duration.getString("text");
                 String distanceText = distance.getString("text");
 
-// Lấy vị trí bắt đầu/kết thúc từ JSON của Route API
+                // Lấy vị trí bắt đầu/kết thúc từ JSON của Route API
                 JSONObject startLocation = legInfo.getJSONObject("startLocation").getJSONObject("latLng");
                 JSONObject endLocation = legInfo.getJSONObject("endLocation").getJSONObject("latLng");
 
@@ -278,7 +299,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 addDestinationMarker();
 
-                updateRouteInfo(origin, destination, durationText, distanceText);
+                updateRouteInfo(durationText, distanceText);
+
                 mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 160));
                 mMap.moveCamera(CameraUpdateFactory.zoomTo(mMap.getCameraPosition().zoom - 1));
 
@@ -287,6 +309,69 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 Toast.makeText(this, "Error parsing JSON", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private void setupAutocomplete() {
+        Places.initialize(this, getString(R.string.ggMapAPIKey));
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        AutocompleteSupportFragment autocompleteOrigin = AutocompleteSupportFragment.newInstance();
+        AutocompleteSupportFragment autocompleteDestination = AutocompleteSupportFragment.newInstance();
+
+        transaction.replace(R.id.autocomplete_origin, autocompleteOrigin, "autocomplete_origin");
+        transaction.replace(R.id.autocomplete_destination, autocompleteDestination, "autocomplete_destination");
+        transaction.commit();
+
+        autocompleteOrigin.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG));
+        autocompleteOrigin.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                Log.d("Autocomplete", "Origin: " + place.getDisplayName() + "Origin: " + place.getDisplayName());
+                LatLng newLocation = place.getLatLng();
+                if (newLocation != null) {
+                    sendLocationToActivity.setOrigin(newLocation, place.getDisplayName());
+                    // Update route only when both points are available
+                    updateRoute(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());
+                }
+
+            }
+            @Override
+            public void onError(@NonNull Status status) {
+                Log.e("Autocomplete", "Error selecting origin: " + status);
+            }
+        });
+
+        autocompleteDestination.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG));
+        autocompleteDestination.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                Log.d("Autocomplete", "Destination: " + place.getDisplayName());
+                LatLng newLocation = place.getLatLng();
+                if (newLocation != null) {
+                    sendLocationToActivity.setDestination(newLocation, place.getDisplayName());
+                    // Update route only when both points are available
+                    updateRoute(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());
+                }
+            }
+            @Override
+            public void onError(@NonNull Status status) {
+                Log.e("Autocomplete", "Error selecting destination: " + status);
+            }
+        });
+    }
+
+
+    /**
+     * Cập nhật lại tuyến đường khi chọn điểm đi hoặc điểm đến
+     */
+    private void updateRoute(LatLng newOrigin, LatLng newDestination) {
+        if (newOrigin != null && newDestination != null) {
+            try {
+                drawPath(newOrigin, newDestination);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
     private BitmapDescriptor getBitmapDescriptorFromVector(Context context, @DrawableRes int vectorResId) {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
@@ -350,29 +435,92 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             Log.e("MarkerError", "Không thể tải icon cho marker");
         }
     }
-    private void getPlaceName(LatLng latLng, TextView textView) {
+    private String getPlaceName(LatLng latLng) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
         try {
             List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
             if (addresses != null && !addresses.isEmpty()) {
-                textView.setText(addresses.get(0).getAddressLine(0)); // Cập nhật TextView
+                return addresses.get(0).getAddressLine(0); // Cập nhật TextView
             } else {
-                textView.setText("Unknown location");
+                return "Unknown Location";
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    private void updateRouteInfo(LatLng origin, LatLng destination, String durationText, String distanceText) {
-        TextView tvOrigin = findViewById(R.id.tv_origin);
-        TextView tvDestination = findViewById(R.id.tv_destination);
+    private void updateRouteInfo(String durationText, String distanceText) {
         TextView tvDurationDistance = findViewById(R.id.tv_duration_distance);
-
-        //getPlaceName(origin, tvOrigin);
-        getPlaceName(destination, tvDestination);
         tvDurationDistance.setText(durationText + " (" + distanceText + ")");
     }
+    private void setAutocompleteText(int fragmentId, String text) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            Fragment fragment = fragmentManager.findFragmentById(fragmentId);
 
+            if (fragment instanceof AutocompleteSupportFragment) {
+                ((AutocompleteSupportFragment) fragment).setText(text);
+            } else {
+                Log.e("Autocomplete", "Fragment not found or not an AutocompleteSupportFragment!");
+            }
+        });
+    }
+    private void clearPreviousRoutes() {
+        if (blackPolyline != null) {
+            blackPolyline.remove();
+            blackPolyline = null;
+        }
+        if (greyPolyline != null) {
+            greyPolyline.remove();
+            greyPolyline = null;
+        }
+        if (polylineList != null) {
+            polylineList.clear();
+        }
+    }
+    public void swapLocations(View view) {
+        // Lấy dữ liệu vị trí hiện tại
+        LatLng currentOrigin = sendLocationToActivity.getOrigin();
+        LatLng currentDestination = sendLocationToActivity.getDestination();
+        String originName = sendLocationToActivity.getOriginName();
+        String destinationName = sendLocationToActivity.getDestinationName();
 
+        // Kiểm tra nếu cả hai vị trí đều hợp lệ
+        if (currentOrigin != null && currentDestination != null) {
+            // Hoán đổi vị trí
+            sendLocationToActivity.setOrigin(currentDestination, destinationName);
+            sendLocationToActivity.setDestination(currentOrigin, originName);
+
+            // Cập nhật giao diện (nếu có ô nhập liệu hiển thị địa chỉ)
+            String origin_text = sendLocationToActivity.getOriginName();
+            String destination_text = sendLocationToActivity.getDestinationName();
+
+            if (isCurrentLocation(sendLocationToActivity.getOrigin()))
+            {
+                origin_text = "Your Location";
+            }
+            else if (isCurrentLocation(sendLocationToActivity.getDestination()))
+            {
+                destination_text = "Your Location";
+            }
+
+            setAutocompleteText(R.id.autocomplete_origin, origin_text);
+            setAutocompleteText(R.id.autocomplete_destination, destination_text);
+
+            // Cập nhật tuyến đường
+            updateRoute(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());
+        } else {
+            Toast.makeText(this, "Please select both locations first", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public boolean isCurrentLocation(LatLng location) {
+
+        if (location == null || currentLocation == null) {
+            return false;
+        }
+        // Compare latitude and longitude with a small threshold
+        return Math.abs(location.latitude - currentLocation.latitude) < LOCATION_THRESHOLD &&
+                Math.abs(location.longitude - currentLocation.longitude) < LOCATION_THRESHOLD;
+    }
 }

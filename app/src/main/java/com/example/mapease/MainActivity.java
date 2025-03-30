@@ -122,6 +122,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String currentLongitude = "";
     private LatLng currentLatLng = null;
     private LatLng selectedLatLng = null;
+    private String currentName = "";
+    private String selectedName = "";
     TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
     //FusedLocationProviderClient locationProviderClient;
@@ -606,9 +608,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Places.initialize(this, getString(R.string.ggMapAPIKey));
         placesClient = Places.createClient(this);
 
+
         autocompleteSupportFragment = (AutocompleteSupportFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.autocomplete_fragment);
         assert autocompleteSupportFragment != null;
+
         autocompleteSupportFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.FORMATTED_ADDRESS, Place.Field.DISPLAY_NAME, Place.Field.LAT_LNG));
         autocompleteSupportFragment.setHint(getString(R.string.search_here));
 
@@ -625,6 +629,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (place.getLocation() != null) {
                     currentLatitude = String.valueOf(place.getLatLng().latitude);
                     currentLongitude = String.valueOf(place.getLatLng().longitude);
+                    currentName = place.getDisplayName();
+                    selectedName = place.getDisplayName();
                     getWeatherDetails();
 
                     selectedLatLng = place.getLatLng();
@@ -683,6 +689,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getPlacePhoto(String placeId, ImageView placeImage) {
+        PlacesClient placesClient = Places.createClient(this);
 
         List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
         FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
@@ -752,11 +759,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         String lon = currentLongitude;
         ImageView weatherIcon = findViewById(R.id.weather_icon);
         TextView weatherCity = findViewById(R.id.weather_city);
-
-        if (weather == null) {
-            weather = findViewById(R.id.weatherText);
-            if (weather == null) return;
-        }
 
         if (lat.isEmpty() || lon.isEmpty()) {
             weather.setTextColor(Color.RED);
@@ -929,7 +931,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Gửi dữ liệu và chuyển Activity
         Intent intent = new Intent(this, RouteActivity.class);
-        EventBus.getDefault().postSticky(new SendLocationToActivity(currentLatLng, selectedLatLng));
+        EventBus.getDefault().postSticky(new SendLocationToActivity(currentLatLng, selectedLatLng, currentName, selectedName));
         startActivity(intent);
     }
 }
