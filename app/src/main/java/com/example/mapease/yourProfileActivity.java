@@ -29,7 +29,10 @@ import com.google.firebase.database.ValueEventListener;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class yourProfileActivity extends AppCompatActivity {
 
@@ -80,23 +83,36 @@ public class yourProfileActivity extends AppCompatActivity {
 
         loadUserProfile();
 
-        // Sample data for reviews
+        // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
+        //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
+        List<String> images1 = Arrays.asList(
+                "https://example.com/image1.jpg",
+                "https://example.com/image2.jpg"
+        );
+
+        Map<String, Boolean> likesForReview2 = new HashMap<>();
+        likesForReview2.put("ZbfpPC8DkegTta8kYEjdORcw6cs2", true);
+
         List<Review> reviews = new ArrayList<>();
         reviews.add(new Review(
+                "1",
                 "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                "LocationID",
                 "Greate service, nice staff",
-                "ChIJzfOsShkvdTERSeoX_lSUTOk",
                 5.0f,
                 "yyyy-MM-dd'T'HH:mm:ssZ",
-                0
+                images1,
+                new HashMap<>()
         ));
         reviews.add(new Review(
+                "2",
                 "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                "LocationID",
                 "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
-                "ChIJzfOsShkvdTERSeoX_lSUTOk",
                 4.0f,
                 "yyyy-MM-dd'T'HH:mm:ssZ",
-                1
+                images1,
+                likesForReview2
         ));
 
         // Set up ListView

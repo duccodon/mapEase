@@ -195,87 +195,12 @@
     </LinearLayout>
 
     <!-- ListView for Reviews -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:text="Username"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="#757575"
-            android:maxLines="1"
-            android:ellipsize="end"
-            tools:text="New York, USA" />
-
-        <RatingBar
-            style="@style/Widget.AppCompat.RatingBar.Small"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:numStars="5"
-            android:rating="4.5"
-            android:isIndicator="true"
-            android:stepSize="0.5" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="#757575"
-            android:text="2 days ago" />
-    </LinearLayout>
-
-    <!-- Review Content -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:textColor="#424242"
-        android:layout_marginTop="12dp"
-        android:lineSpacingExtra="2dp"
-        android:text="This place has amazing food and great service. Highly recommended!" />
-
-    <!-- Like Section -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="12dp"
-        android:gravity="end">
-
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/heart"
-            app:tint="#757575"
-            android:contentDescription="Like" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="#757575"
-            android:layout_marginStart="4dp"
-            android:text="24" />
-    </LinearLayout>
-
     <ListView
         android:id="@+id/reviewListView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_weight="1"
-        android:padding="16dp"
-        android:clipToPadding="false"
         android:divider="@null"
         android:dividerHeight="0dp" />
 
