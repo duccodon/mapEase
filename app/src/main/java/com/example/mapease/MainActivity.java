@@ -44,6 +44,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.databinding.ActivityMainBinding;
 import com.example.mapease.events.SendLocationToActivity;
 import com.google.android.gms.common.api.Status;
@@ -454,7 +455,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             TextView placePhone = findViewById(R.id.place_phone);
             TextView placeWebsite = findViewById(R.id.place_website);
             TextView placeRating = findViewById(R.id.place_rating);
-
+            TextView duration_calc = findViewById(R.id.duration_calc);
+            TextView distance_calc = findViewById(R.id.distance_calc);
+            ImageView car_icon = findViewById(R.id.car_icon);
             if (place != null && address == null && latLng == null) {
                 Log.d("DetailInfor", "Update UI" + place.toString());
 
@@ -497,7 +500,61 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 // Expand panel
                 slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
-            }else{
+                //CALCULATE DISTANCE AND DURATION
+                if (currentLatLng != null && place.getLatLng() != null) {
+                    RoutesAPIHelper.requestRoute(this, currentLatLng.latitude , currentLatLng.longitude, place.getLatLng().latitude, place.getLatLng().longitude,
+                            "routes.distanceMeters,routes.duration", // ✅ Get distance and duration
+                            response -> {
+                                try {
+                                    // Lấy data từ response JSON
+                                    Log.d("API_RETURN", "Response JSON: " + response.toString());
+                                    // Extract routes array
+                                    JSONArray routesArray = response.getJSONArray("routes");
+                                    JSONObject firstRoute = routesArray.getJSONObject(0);
+
+                                    // Extract distance and duration
+                                    int distance = firstRoute.getInt("distanceMeters"); // Distance in meters
+                                    String durationString = firstRoute.getString("duration"); // Duration as "174s"
+
+                                    // Convert duration string (e.g., "174s") to an integer value (in seconds)
+                                    int duration = 0;
+                                    if (durationString.endsWith("s")) {
+                                        duration = Integer.parseInt(durationString.replace("s", "")); // Remove the "s" and convert to integer
+                                    }
+
+                                    // Log values for debugging
+                                    Log.d("RouteInfo", "Distance: " + distance + " Duration: " + duration);
+
+                                    // Kiểm tra nếu có dữ liệu thì hiển thị TextView
+                                    if (distance > 0 && duration > 0) {
+                                        distance_calc.setVisibility(View.VISIBLE);
+                                        duration_calc.setVisibility(View.VISIBLE);
+                                        car_icon.setVisibility(View.VISIBLE);
+                                        if (distance < 1000) { // If distance is less than 1 km, show in meters
+                                            distance_calc.setText(distance + " m");
+                                        } else { // If distance is more than or equal to 1 km, show in kilometers
+                                            double distanceInKm = distance / 1000.0;
+                                            distance_calc.setText(String.format("%.2f km", distanceInKm));
+                                        }
+
+                                        if (duration < 60) { // If duration is less than 1 minute, show in seconds
+                                            duration_calc.setText(duration + " sec");
+                                        } else { // If duration is more than or equal to 1 minute, show in minutes
+                                            int minutes = duration / 60;
+                                            duration_calc.setText(minutes + " min");
+                                        }
+
+                                    } else {
+                                        Log.d("RouteError", "Invalid distance or duration");
+                                    }
+                                } catch (JSONException e) {
+                                    Log.d("RouteError", "Error parsing response: " + e.getMessage());
+                                }
+                            });
+                }
+            }
+            else {
+
                 String fullAddress = address.getAddressLine(0);
 
                 // Update UI with address info
@@ -671,9 +728,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
                 currentLatLng = newPosition;
 
-                //code cũ
-                //myMap.moveCamera(CameraUpdateFactory.newLatLng(newPosition));
-
                 // Sử dụng animateCamera thay vì moveCamera
                 myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, myMap.getCameraPosition().zoom),
                         1000, // Thời gian animation: 1 giây
@@ -689,8 +743,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getPlacePhoto(String placeId, ImageView placeImage) {
-        PlacesClient placesClient = Places.createClient(this);
-
         List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
         FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
 

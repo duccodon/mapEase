@@ -20,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -63,6 +64,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -196,10 +199,10 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         Log.d("RouteActivity", "Requesting path: " + origin.toString() + " to " + destination.toString());
         mMap.clear();
         // Gửi request và nhận `JSONObject`
-        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, response -> {
+        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", response -> {
             try {
                 Log.d("API_RETURN", "Response JSON: " + response.toString());
-
+                saveJsonToExternalStorage(response.toString(), "api_response.txt");
                 // Lưu lại response JSON (ví dụ có thể lưu vào biến toàn cục hoặc xử lý tiếp)
                 JSONObject jsonObject = new JSONObject(response.toString());
                 JSONArray routesArray = jsonObject.getJSONArray("routes");
@@ -435,7 +438,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             Log.e("MarkerError", "Không thể tải icon cho marker");
         }
     }
-    private String getPlaceName(LatLng latLng) {
+    private String getPlaceName(LatLng latLng) //convert a set of latitude and longitude coordinates (LatLng) into a human-readable address
+    {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
         try {
@@ -522,5 +526,24 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         // Compare latitude and longitude with a small threshold
         return Math.abs(location.latitude - currentLocation.latitude) < LOCATION_THRESHOLD &&
                 Math.abs(location.longitude - currentLocation.longitude) < LOCATION_THRESHOLD;
+    }
+
+    private void saveJsonToExternalStorage(String jsonResponse, String filename) {
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename);
+
+        try {
+            // Pretty-print JSON
+            JSONObject jsonObject = new JSONObject(jsonResponse);
+            String formattedJson = jsonObject.toString(4);
+
+            // Write JSON to file
+            try (FileWriter fileWriter = new FileWriter(file, false)) { // Overwrite
+                fileWriter.write(formattedJson);
+                fileWriter.flush();
+                Log.d("FILE_SAVE", "Formatted JSON saved to: " + file.getAbsolutePath());
+            }
+        } catch (JSONException | IOException e) {
+            Log.e("FILE_SAVE_ERROR", "Failed to save JSON", e);
+        }
     }
 }

@@ -115,11 +115,11 @@
         </com.google.android.material.tabs.TabLayout>
 
         <LinearLayout
-        android:id="@+id/overview_tab"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="visible">
+            android:id="@+id/overview_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
             <!-- Location Title -->
             <TextView
                 android:id="@+id/location_title"
@@ -130,43 +130,92 @@
                 android:textStyle="bold"
                 android:textColor="#2C3E50"
                 android:paddingBottom="12dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="start"
+                android:paddingBottom="12dp">
 
-            <!-- Location Address -->
-            <TextView
-                android:id="@+id/place_address"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Address: "
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#2C3E50"
-                android:paddingBottom="8dp"/>
+                <!-- Distance -->
+                <TextView
+                    android:id="@+id/distance_calc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3.2 km"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2C3E50"
+                    android:paddingEnd="16dp"
+                    android:visibility="gone"/>
 
-            <!-- Detailed information -->
-            <TextView
-                android:id="@+id/place_phone"
+                <!-- Duration + Car Icon -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/car_icon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/baseline_directions_car_24"
+                        android:visibility="gone"/>
+                    <TextView
+                        android:id="@+id/duration_calc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="8 min"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#007AFF"
+                        android:paddingEnd="4dp"
+                        android:visibility="gone"/>
+                </LinearLayout>
+            </LinearLayout>
+            <!-- BUTTON -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Phone: Not available"
-                android:visibility="gone"
-                android:textColor="#2C3E50"
-                android:paddingBottom="4dp"/>
-            <TextView
-                android:id="@+id/place_website"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Website: Not available"
-                android:visibility="gone"
-                android:textColor="#2C3E50"
-                android:paddingBottom="4dp"/>
-            <TextView
-                android:id="@+id/place_rating"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Rating: Not rated"
-                android:visibility="gone"
-                android:textColor="#2C3E50"
-                android:paddingBottom="8dp"/>
+                android:layout_height="80dp"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <!-- Direction Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/direction_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/long_button"
+                    android:drawableStart="@drawable/baseline_assistant_direction_24"
+                    android:text="Direction"
+                    android:layout_marginEnd="10dp"
+                    android:textColor="#000000"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:drawablePadding="6dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:onClick="routingFunction"/>
+
+                <!-- Save Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/save_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:background="@drawable/long_button"
+                    android:drawableStart="@drawable/save_button"
+                    android:text="Save"
+                    android:layout_marginEnd="10dp"
+                    android:textColor="#000000"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:drawablePadding="8dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"/>
+            </LinearLayout>
 
             <!-- Location Image -->
             <ImageView
@@ -176,6 +225,42 @@
                 android:scaleType="centerCrop"
                 android:visibility="gone"/>
 
+            <!-- Detailed information -->
+            <TextView
+                android:id="@+id/place_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Address: "
+                android:textColor="#2C3E50"
+                android:paddingBottom="8dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#D0D0D0"/>
+            <TextView
+                android:id="@+id/place_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phone: Not available"
+                android:visibility="gone"
+                android:textColor="#2C3E50"
+                android:paddingBottom="4dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#D0D0D0"/>
+            <TextView
+                android:id="@+id/place_website"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Website: Not available"
+                android:visibility="gone"
+                android:textColor="#2C3E50"
+                android:paddingBottom="4dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#D0D0D0"/>
+            <TextView
+                android:id="@+id/place_rating"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Rating: Not rated"
+                android:visibility="gone"
+                android:textColor="#2C3E50"
+                android:paddingBottom="8dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#D0D0D0"/>
 
             <!-- Weather Information Card -->
             <androidx.cardview.widget.CardView
@@ -225,48 +310,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <!-- Direction Button -->
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/direction_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/long_button"
-                    android:drawableStart="@drawable/baseline_assistant_direction_24"
-                    android:text="Direction"
-                    android:layout_marginEnd="10dp"
-                    android:textColor="#000000"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:drawablePadding="6dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:onClick="routingFunction"/>
-
-                <!-- Save Button -->
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/save_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="16dp"
-                    android:background="@drawable/long_button"
-                    android:drawableStart="@drawable/save_button"
-                    android:text="Save"
-                    android:layout_marginEnd="10dp"
-                    android:textColor="#000000"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:drawablePadding="8dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"/>
-            </LinearLayout>
 
         </LinearLayout>
 

@@ -19,19 +19,22 @@ public class RoutesAPIHelper {
     private static final String TAG = "RoutesAPI";
     private static final String ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
 
-    public static void requestRoute(Context context, double originLat, double originLng, double destLat, double destLng, Response.Listener<JSONObject> listener) {
+    public static void requestRoute(Context context, double originLat, double originLng,
+                                    double destLat, double destLng, String fieldMask,
+                                    Response.Listener<JSONObject> listener) {
         JSONObject jsonRequest = new JSONObject();
         try {
-            // Tạo JSON request
+            // Create JSON request
             JSONObject origin = new JSONObject();
             origin.put("location", new JSONObject().put("latLng", new JSONObject()
                     .put("latitude", originLat)
                     .put("longitude", originLng)));
 
             JSONObject destination = new JSONObject();
-            destination.put("location", new JSONObject().put("latLng", new JSONObject()
-                    .put("latitude", destLat)
-                    .put("longitude", destLng)));
+            destination.put("location", new JSONObject()
+                    .put("latLng", new JSONObject()
+                            .put("latitude", destLat)
+                            .put("longitude", destLng)));
 
             jsonRequest.put("origin", origin);
             jsonRequest.put("destination", destination);
@@ -44,10 +47,10 @@ public class RoutesAPIHelper {
             e.printStackTrace();
             return;
         }
+
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, ROUTES_API_URL, jsonRequest,
                 response -> {
                     Log.d(TAG , "Response: " + response.toString());
-                    // Gửi response về listener
                     listener.onResponse(response);
                 },
                 error -> Log.e(TAG , "Error: " + error.toString())
@@ -57,7 +60,10 @@ public class RoutesAPIHelper {
                 Map<String, String> headers = new HashMap<>();
                 headers.put("Content-Type", "application/json");
                 headers.put("X-Goog-Api-Key", context.getString(R.string.ggMapAPIKey)); // API Key
-                headers.put("X-Goog-FieldMask", "*"); // Nhận toàn bộ dữ liệu (có thể chỉnh nếu cần)
+
+                // ✅ Use the passed field mask dynamically
+                headers.put("X-Goog-FieldMask", fieldMask);
+
                 return headers;
             }
         };
@@ -65,6 +71,4 @@ public class RoutesAPIHelper {
         RequestQueue queue = Volley.newRequestQueue(context);
         queue.add(jsonObjectRequest);
     }
-
 }
-
