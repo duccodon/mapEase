@@ -29,11 +29,13 @@ import android.view.animation.LinearInterpolator;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mapease.Remote.RoutesAPIHelper;
+import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.events.SendLocationToActivity;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -56,6 +58,7 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.maps.android.PolyUtil;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -89,6 +92,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private Marker originMarker, destinationMarker;
     private AutocompleteSupportFragment autocompleteOrigin, autocompleteDestination;
     private LatLng currentLocation;
+    private SlidingUpPanelLayout slidingLayout;
+    private LinearLayout slidingPanel;
     @Override
     protected void onStart() {
         super.onStart();
@@ -113,7 +118,15 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
 
         binding = ActivityRouteBinding.inflate(getLayoutInflater());
+
         setContentView(R.layout.activity_route);
+
+        //setup sliding panel
+        slidingLayout = findViewById(R.id.sliding_layout);
+        slidingPanel = findViewById(R.id.route_info_sliding_panel);
+
+        SlidingPanelHelper.setupPanel(this, slidingLayout, slidingPanel);
+
         setupAutocomplete();
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         FragmentManager fragmentManager = getSupportFragmentManager();

@@ -45,6 +45,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.mapease.Remote.RoutesAPIHelper;
+import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.databinding.ActivityMainBinding;
 import com.example.mapease.events.SendLocationToActivity;
 import com.google.android.gms.common.api.Status;
@@ -111,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SupportMapFragment mapFragment;
     private AutocompleteSupportFragment autocompleteSupportFragment;
     private SlidingUpPanelLayout slidingLayout;
+    private LinearLayout slidingPanel;
     private final String url = "https://api.openweathermap.org/data/2.5/weather?";
     private final String appId = "7b7b6b93a8b58cf10c77b14fc34e06fe";
 
@@ -142,7 +144,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        setupSlidingPanel();
+        slidingLayout = findViewById(R.id.sliding_layout);
+        slidingPanel = findViewById(R.id.sliding_panel);
+        SlidingPanelHelper.setupPanel(this, slidingLayout, slidingPanel);
         //EdgeToEdge.enable(this);
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
 //        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -282,6 +286,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             selectedLatLng = poi.latLng;
             currentLatitude = String.valueOf(poi.latLng.latitude);
             currentLongitude = String.valueOf(poi.latLng.longitude);
+            selectedName = poi.name;
+
             getWeatherDetails();
 
             findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
@@ -293,6 +299,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             selectedLatLng = latLng;
             currentLatitude = String.valueOf(latLng.latitude);
             currentLongitude = String.valueOf(latLng.longitude);
+
             getWeatherDetails();
 
             findPlaceDetailsFromLocation(latLng, null, null);
@@ -409,6 +416,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 String address = addresses.get(0).getAddressLine(0);
+                selectedName = address;
                 Log.d("DetailInfor", "Address: " + address);
                 updatePlaceUI(null, addresses.get(0), latLng);
             }
@@ -458,6 +466,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             TextView duration_calc = findViewById(R.id.duration_calc);
             TextView distance_calc = findViewById(R.id.distance_calc);
             ImageView car_icon = findViewById(R.id.car_icon);
+
+
             if (place != null && address == null && latLng == null) {
                 Log.d("DetailInfor", "Update UI" + place.toString());
 
@@ -566,6 +576,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 placeWebsite.setVisibility(View.GONE);
                 placeRating.setVisibility(View.GONE);
 
+                distance_calc.setVisibility(View.GONE);
+                duration_calc.setVisibility(View.GONE);
+                car_icon.setVisibility(View.GONE);
+
                 // Set default photo
                 placeImage.setVisibility(View.VISIBLE);
                 placeImage.setImageResource(R.drawable.default_location);
@@ -574,6 +588,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (currentMarker != null) {
                     currentMarker.remove();
                 }
+
+
                 currentMarker = myMap.addMarker(new MarkerOptions()
                         .position(latLng)
                         .title("Selected Location"));
@@ -897,7 +913,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void setupSlidingPanel() {
         slidingLayout = findViewById(R.id.sliding_layout);
-        LinearLayout slidingPanel = findViewById(R.id.sliding_panel);
+        slidingPanel = findViewById(R.id.sliding_panel);
         if (slidingLayout == null || slidingPanel == null) {
             Log.e("SlidingPanel", "SlidingUpPanelLayout, panel, or drag handle not found!");
             return;
