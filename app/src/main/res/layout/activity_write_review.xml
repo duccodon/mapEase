@@ -8,6 +8,17 @@
     android:layout_marginTop="40dp"
     tools:context=".WriteReview">
 
+    <ImageButton
+        android:id="@+id/backToHomeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_back"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back to Home"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
     <!-- Place Name and User Info -->
     <TextView
         android:id="@+id/place_name"

@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -34,6 +35,7 @@ public class WriteReview extends AppCompatActivity {
     private ImageView imageView;
     private static final int PICK_IMAGE_REQUEST = 1; // Request code for selecting an image
     private static final int PERMISSION_REQUEST_CODE = 2; // Permission request code
+    String context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +51,7 @@ public class WriteReview extends AppCompatActivity {
         btnAddPhoto = findViewById(R.id.add_photos_button);
         Intent intent = getIntent();
         placeName.setText(intent.getStringExtra("placeName"));
+        context = intent.getStringExtra("context");
 
         imageView = findViewById(R.id.image_view);
 
@@ -65,6 +68,19 @@ public class WriteReview extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
             } else {
                 openGallery();
+            }
+        });
+
+        //return main button
+        ImageButton returnHomeButton = findViewById(R.id.backToHomeButton);
+        returnHomeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (context.contentEquals("main"))
+                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                else if (context.contentEquals("profile")) {
+                    startActivity(new Intent(getApplicationContext(), yourProfileActivity.class));
+                }
             }
         });
 

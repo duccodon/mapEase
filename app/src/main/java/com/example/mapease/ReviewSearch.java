@@ -67,6 +67,7 @@ public class ReviewSearch extends AppCompatActivity {
                     i.putExtra("placeAddress", placeAddress);
                     i.putExtra("placeLongitude", placeLongitude);
                     i.putExtra("placeLatitude", placeLatitude);
+                    i.putExtra("context", "profile");
                     startActivity(i);
 
                 } else {

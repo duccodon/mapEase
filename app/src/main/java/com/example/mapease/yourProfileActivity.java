@@ -18,6 +18,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mapease.adapter.ReviewAdapter;
 import com.example.mapease.model.Review;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -86,8 +87,8 @@ public class yourProfileActivity extends AppCompatActivity {
         // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
         //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
         List<String> images1 = Arrays.asList(
-                "https://example.com/image1.jpg",
-                "https://example.com/image2.jpg"
+                "https://imgur.com/DvpvklR.png",
+                "https://picsum.photos/200/300"
         );
 
         Map<String, Boolean> likesForReview2 = new HashMap<>();

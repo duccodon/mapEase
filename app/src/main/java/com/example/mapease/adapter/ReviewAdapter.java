@@ -1,4 +1,4 @@
-package com.example.mapease;
+package com.example.mapease.adapter;
 
 import android.content.Context;
 import android.util.Log;
@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -15,6 +14,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
+import com.example.mapease.R;
 import com.example.mapease.model.Review;
 
 import java.util.List;
@@ -99,6 +99,7 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
 
         // Handle images
         List<String> imageUrls = review.getImageUrls();
+        Log.d("Testing", "OK");
         if (imageUrls != null && !imageUrls.isEmpty()) {
             imagesRecycler.setVisibility(View.VISIBLE);
             ImageAdapter imageAdapter = new ImageAdapter(context, imageUrls);

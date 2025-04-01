@@ -20,10 +20,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.TableLayout;
@@ -32,6 +34,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -46,8 +49,10 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
+import com.example.mapease.adapter.ReviewAdapter;
 import com.example.mapease.databinding.ActivityMainBinding;
 import com.example.mapease.events.SendLocationToActivity;
+import com.example.mapease.model.Review;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -97,9 +102,12 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private final int FINE_PERMISSION_CODE = 1;
@@ -280,8 +288,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }).check();
 
+        //hide sliding panel before choose a place
+        slidingPanel.setVisibility(View.GONE);
+
         // POI click listener
         myMap.setOnPoiClickListener(poi -> {
+            slidingPanel.setVisibility(View.VISIBLE);
+
             Log.d("DetailInfor", "POI click" + poi.placeId);
             selectedLatLng = poi.latLng;
             currentLatitude = String.valueOf(poi.latLng.latitude);
@@ -291,10 +304,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             getWeatherDetails();
 
             findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
+
+            getReviews();
         });
 
         // Normal map click listener
         myMap.setOnMapClickListener(latLng -> {
+            slidingPanel.setVisibility(View.VISIBLE);
+
             Log.d("DetailInfor", "Normal click");
             selectedLatLng = latLng;
             currentLatitude = String.valueOf(latLng.latitude);
@@ -598,6 +615,57 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
 
                 Log.d("DetailInfor", "Address: " + fullAddress);
+            }
+        });
+    }
+
+    //Load reviews
+    private void getReviews(){
+        // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
+        //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
+        List<String> images1 = Arrays.asList(
+                "https://imgur.com/DvpvklR.png",
+                "https://picsum.photos/200/300"
+        );
+
+        Map<String, Boolean> likesForReview2 = new HashMap<>();
+        likesForReview2.put("ZbfpPC8DkegTta8kYEjdORcw6cs2", true);
+
+        List<Review> reviews = new ArrayList<>();
+        reviews.add(new Review(
+                "1",
+                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                "LocationID",
+                "Greate service, nice staff",
+                5.0f,
+                "yyyy-MM-dd'T'HH:mm:ssZ",
+                images1,
+                new HashMap<>()
+        ));
+        reviews.add(new Review(
+                "2",
+                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                "LocationID",
+                "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
+                4.0f,
+                "yyyy-MM-dd'T'HH:mm:ssZ",
+                images1,
+                likesForReview2
+        ));
+
+        // Set up ListView
+        ListView listView = findViewById(R.id.reviewListView);
+        ReviewAdapter adapter = new ReviewAdapter(this, reviews);
+        listView.setAdapter(adapter);
+
+        // review button
+        AppCompatButton writeReviewButton = findViewById(R.id.write_review_button);
+        writeReviewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, WriteReview.class);
+                intent.putExtra("context", "main");
+                startActivity(intent);
             }
         });
     }
