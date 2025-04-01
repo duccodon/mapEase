@@ -35,6 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mapease.Remote.RoutesAPIHelper;
+import com.example.mapease.Remote.Step;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.events.SendLocationToActivity;
 import com.google.android.gms.common.api.Status;
@@ -212,13 +213,15 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         Log.d("RouteActivity", "Requesting path: " + origin.toString() + " to " + destination.toString());
         mMap.clear();
         // Gửi request và nhận `JSONObject`
-        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", response -> {
+        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", "DRIVE", response -> {
             try {
                 Log.d("API_RETURN", "Response JSON: " + response.toString());
                 saveJsonToExternalStorage(response.toString(), "api_response.txt");
                 // Lưu lại response JSON (ví dụ có thể lưu vào biến toàn cục hoặc xử lý tiếp)
                 JSONObject jsonObject = new JSONObject(response.toString());
                 JSONArray routesArray = jsonObject.getJSONArray("routes");
+                List<Step> stepsList = new ArrayList<>();
+
                 if (routesArray.length() == 0) {
                         Toast.makeText(this, "No routes found", Toast.LENGTH_SHORT).show();
                     }
@@ -247,6 +250,16 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                         // Lấy polyline từ từng step
                         JSONObject polyline = step.getJSONObject("polyline");
                         String encodedPolyline = polyline.getString("encodedPolyline");
+
+                        String maneuver = step.getJSONObject("navigationInstruction").getString("maneuver");
+                        String instruction = step.getJSONObject("navigationInstruction").getString("instructions");
+                        int distanceMeters = step.getInt("distanceMeters");
+
+                        // Tạo Step Object và thêm vào list
+                        Step stepObject = new Step(maneuver, instruction, distanceMeters);
+                        Log.d("STEP BY STEP", stepObject.toString());
+
+                        stepsList.add(stepObject);
 
                         // Giải mã polyline
                         List<LatLng> decodedPath = PolyUtil.decode(encodedPolyline);
