@@ -530,7 +530,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //CALCULATE DISTANCE AND DURATION
                 if (currentLatLng != null && place.getLatLng() != null) {
                     RoutesAPIHelper.requestRoute(this, currentLatLng.latitude , currentLatLng.longitude, place.getLatLng().latitude, place.getLatLng().longitude,
-                            "routes.distanceMeters,routes.duration", // ✅ Get distance and duration
+                            "routes.distanceMeters,routes.duration", "DRIVE", // ✅ Get distance and duration
                             response -> {
                                 try {
                                     // Lấy data từ response JSON
