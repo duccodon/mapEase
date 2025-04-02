@@ -47,6 +47,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.mapease.AsyncTask.FetchPlacesTasks;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.adapter.ReviewAdapter;
@@ -179,6 +180,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         overviewTab = findViewById(R.id.overview_tab);
         reviewsTab = findViewById(R.id.reviews_tab);
         exploreTab = findViewById(R.id.explore_tab);
+        //button for place types
+        setupButtonListenersForPlacesType();
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -1249,5 +1252,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intent = new Intent(this, RouteActivity.class);
         EventBus.getDefault().postSticky(new SendLocationToActivity(currentLatLng, selectedLatLng, currentName, selectedName));
         startActivity(intent);
+    }
+
+    public void setupButtonListenersForPlacesType() {
+        findViewById(R.id.btn_restaurant).setOnClickListener(v -> fetchNearbyPlaces("restaurant"));
+        findViewById(R.id.btn_hotel).setOnClickListener(v -> fetchNearbyPlaces("hotel"));
+        findViewById(R.id.btn_cafe).setOnClickListener(v -> fetchNearbyPlaces("cafe"));
+        findViewById(R.id.btn_mall).setOnClickListener(v -> fetchNearbyPlaces("mall"));
+
+    }
+
+    public void fetchNearbyPlaces(String placeType) {
+        if (currentLatLng == null) {
+            Toast.makeText(this, "Fetching location, please wait...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+                + "location=" + currentLatLng.latitude + "," + currentLatLng.longitude
+                + "&radius=1500"
+                + "&type=" + placeType
+                + "&key=" + getString(R.string.ggMapAPIKey);
+
+        new FetchPlacesTasks(myMap).execute(url);
     }
 }
