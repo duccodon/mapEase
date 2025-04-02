@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -39,6 +40,7 @@ public class yourProfileActivity extends AppCompatActivity {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
+    private DatabaseReference reviewRef;
     private FirebaseAuth auth;
     private String userID;
 
@@ -75,6 +77,7 @@ public class yourProfileActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         myRef = database.getReference("user");
+        reviewRef = database.getReference("reviews");
 
         userID = auth.getCurrentUser().getUid();
 
@@ -83,6 +86,7 @@ public class yourProfileActivity extends AppCompatActivity {
         bio = findViewById(R.id.bio);
 
         loadUserProfile();
+        loadAllReviews();
 
         // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
         //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
@@ -117,9 +121,43 @@ public class yourProfileActivity extends AppCompatActivity {
         ));
 
         // Set up ListView
-        ListView listView = findViewById(R.id.reviewListView);
+        /*ListView listView = findViewById(R.id.reviewListView);
         ReviewAdapter adapter = new ReviewAdapter(this, reviews);
-        listView.setAdapter(adapter);
+        listView.setAdapter(adapter);*/
+    }
+
+    private void loadAllReviews() {
+        reviewRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Review> reviews = new ArrayList<>();
+
+                for (DataSnapshot reviewSnapshot : snapshot.getChildren()) {
+                    try {
+                        Review review = reviewSnapshot.getValue(Review.class);
+                        if (review != null && review.getUserID().contentEquals(userID))
+                            reviews.add(review);
+                    } catch (Exception e) {
+                        Log.e("RetrieveReview", "Error parsing review", e);
+                    }
+                }
+
+                for (Review review : reviews)
+                    Log.d("RetrieveReview", review.toString());
+
+                // Update adapter with real reviews
+                ReviewAdapter adapter = new ReviewAdapter(yourProfileActivity.this, reviews);
+                ListView listView = findViewById(R.id.reviewListView);
+                listView.setAdapter(adapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(yourProfileActivity.this,
+                        "Failed to load reviews: " + error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void loadUserProfile() {

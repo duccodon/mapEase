@@ -26,6 +26,9 @@ public class Review {
         this.likes = likes;
     }
 
+    public Review(){
+    }
+
     public String getReviewId() {
         return reviewId;
     }

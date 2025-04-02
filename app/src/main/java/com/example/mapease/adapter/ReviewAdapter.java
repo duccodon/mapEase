@@ -1,6 +1,9 @@
 package com.example.mapease.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -98,11 +101,10 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         });*/
 
         // Handle images
-        List<String> imageUrls = review.getImageUrls();
-        Log.d("Testing", "OK");
-        if (imageUrls != null && !imageUrls.isEmpty()) {
+        List<String> base64Images = review.getImageUrls();
+        if (base64Images != null && !base64Images.isEmpty()) {
             imagesRecycler.setVisibility(View.VISIBLE);
-            ImageAdapter imageAdapter = new ImageAdapter(context, imageUrls);
+            ImageAdapter imageAdapter = new ImageAdapter(context, base64Images);
             imagesRecycler.setAdapter(imageAdapter);
         } else {
             imagesRecycler.setVisibility(View.GONE);
@@ -112,8 +114,8 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
     }
 
 
-    // ImageAdapter class
-    private static class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
+    // ImageAdapter class for online URL image
+    /*private static class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
         private final Context context;
         private final List<String> imageUrls;
 
@@ -140,6 +142,96 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         @Override
         public int getItemCount() {
             return imageUrls.size();
+        }
+
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            ImageView imageView;
+
+            public ViewHolder(View itemView) {
+                super(itemView);
+                imageView = itemView.findViewById(R.id.imageView);
+            }
+        }
+    }*/
+
+    private static class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
+        private final Context context;
+        private final List<String> base64Images;
+
+        public ImageAdapter(Context context, List<String> base64Images) {
+            this.context = context;
+            this.base64Images = base64Images;
+        }
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_review_image, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            String base64Image = base64Images.get(position);
+
+            try {
+                // Remove data URI prefix if present
+                String pureBase64;
+                if (base64Image.startsWith("data:image")) {
+                    pureBase64 = base64Image.split(",")[1];
+                } else {
+                    pureBase64 = base64Image;
+                }
+
+                // Decode Base64 string
+                byte[] decodedBytes = Base64.decode(pureBase64, Base64.DEFAULT);
+
+                // Create bitmap with memory optimization
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length, options);
+
+                // Calculate inSampleSize to reduce memory usage
+                options.inSampleSize = calculateInSampleSize(options, 500, 500);
+                options.inJustDecodeBounds = false;
+
+                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length, options);
+
+                if (bitmap != null) {
+                    holder.imageView.setImageBitmap(bitmap);
+                } else {
+                    Log.e("ImageAdapter", "Failed to decode bitmap");
+                    holder.imageView.setImageResource(R.drawable.broken_image);
+                }
+            } catch (IllegalArgumentException e) {
+                Log.e("ImageAdapter", "Invalid Base64 string", e);
+                holder.imageView.setImageResource(R.drawable.broken_image);
+            } catch (Exception e) {
+                Log.e("ImageAdapter", "Error decoding image", e);
+                holder.imageView.setImageResource(R.drawable.broken_image);
+            }
+        }
+
+        // Helper method to calculate sample size for memory optimization
+        private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+            final int height = options.outHeight;
+            final int width = options.outWidth;
+            int inSampleSize = 1;
+
+            if (height > reqHeight || width > reqWidth) {
+                final int halfHeight = height / 2;
+                final int halfWidth = width / 2;
+
+                while ((halfHeight / inSampleSize) >= reqHeight
+                        && (halfWidth / inSampleSize) >= reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+            return inSampleSize;
+        }
+
+        @Override
+        public int getItemCount() {
+            return base64Images != null ? base64Images.size() : 0;
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {

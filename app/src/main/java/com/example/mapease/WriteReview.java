@@ -231,6 +231,7 @@ public class WriteReview extends AppCompatActivity {
         String createdAt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(new Date());
 
         Map<String, Boolean> likes = new HashMap<>();
+        likes.put("dummy", false);
 
         Review review = new Review(
                 reviewId,
