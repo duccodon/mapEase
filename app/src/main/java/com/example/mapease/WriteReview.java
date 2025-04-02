@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -25,17 +29,53 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.mapease.model.Review;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 public class WriteReview extends AppCompatActivity {
     private TextView placeName;
     private LinearLayout starRating;
     private EditText reviewInput;
-    private TextView addPhotosButton;
     private Button postButton;
     private Button btnAddPhoto;
-    private ImageView imageView;
+    private LinearLayout imageContainer;
+
+    private int selectedRating = 0;
+    private List<Uri> selectedImageUris = new ArrayList<>();
+
+    // Firebase
+    private FirebaseAuth auth;
+    private FirebaseDatabase database;
+    private DatabaseReference mDatabase;//myRef
+
     private static final int PICK_IMAGE_REQUEST = 1; // Request code for selecting an image
     private static final int PERMISSION_REQUEST_CODE = 2; // Permission request code
     String context;
+    private String locationId;
+    private String locationName;
+
+    // For image selection
+    private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    selectedImageUris.add(uri);
+                    addImageToContainer(uri);
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,35 +83,39 @@ public class WriteReview extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_write_review);
 
+        // Initialize Firebase
+        auth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
+        mDatabase = database.getReference("reviews");
+
         // Initialize views
         placeName = findViewById(R.id.place_name);
         starRating = findViewById(R.id.star_rating);
         reviewInput = findViewById(R.id.review_input);
         postButton = findViewById(R.id.post_button);
         btnAddPhoto = findViewById(R.id.add_photos_button);
+        imageContainer = findViewById(R.id.image_container);
+
+        // Get intent data
         Intent intent = getIntent();
-        placeName.setText(intent.getStringExtra("placeName"));
+        locationName = intent.getStringExtra("placeName");
+        locationId = intent.getStringExtra("locationID");
         context = intent.getStringExtra("context");
 
-        imageView = findViewById(R.id.image_view);
+        placeName.setText(locationName);
 
         // Handle Post button click
-        postButton.setOnClickListener(v -> {
-            // Here, you can add the functionality to post the review, maybe send the data to a backend
-            String reviewText = reviewInput.getText().toString();
-            // Handle the review post (e.g., save to database or send to server)
-        });
+        postButton.setOnClickListener(v -> postReview());
 
         btnAddPhoto.setOnClickListener(v -> {
-            // Check permission
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+            if (selectedImageUris.size() < 5) { // Limit to 5 images
+                galleryLauncher.launch("image/*");
             } else {
-                openGallery();
+                Toast.makeText(this, "Maximum 5 images allowed", Toast.LENGTH_SHORT).show();
             }
         });
 
-        //return main button
+        //return button
         ImageButton returnHomeButton = findViewById(R.id.backToHomeButton);
         returnHomeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -81,6 +125,7 @@ public class WriteReview extends AppCompatActivity {
                 else if (context.contentEquals("profile")) {
                     startActivity(new Intent(getApplicationContext(), yourProfileActivity.class));
                 }
+                finish();
             }
         });
 
@@ -89,8 +134,6 @@ public class WriteReview extends AppCompatActivity {
     }
 
     private void setupStarRating() {
-        // This is a simple example of how you might handle the star rating
-        // You can replace this with real interaction like click to fill the stars
         for (int i = 0; i < starRating.getChildCount(); i++) {
             ImageButton star = (ImageButton) starRating.getChildAt(i);
             final int index = i;
@@ -99,18 +142,119 @@ public class WriteReview extends AppCompatActivity {
     }
 
     private void updateStars(int index) {
-        // Update the stars based on the index clicked
+        selectedRating = index + 1;
         for (int i = 0; i < starRating.getChildCount(); i++) {
             ImageButton star = (ImageButton) starRating.getChildAt(i);
-            if (i <= index) {
-                star.setImageResource(R.drawable.ic_star_filled); // Set filled star
-            } else {
-                star.setImageResource(R.drawable.ic_star_empty); // Set empty star
-            }
+            star.setImageResource(i <= index ? R.drawable.ic_star_filled : R.drawable.ic_star_empty);
         }
     }
 
-    private void openGallery() {
+    private void addImageToContainer(Uri imageUri) {
+        ImageView imageView = new ImageView(this);
+        imageView.setLayoutParams(new LinearLayout.LayoutParams(200, 200));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setImageURI(imageUri);
+
+        // Add remove button
+        ImageButton removeButton = new ImageButton(this);
+        removeButton.setImageResource(R.drawable.ic_close);
+        removeButton.setBackground(null);
+        removeButton.setOnClickListener(v -> {
+            imageContainer.removeView(imageView);
+            imageContainer.removeView(removeButton);
+            selectedImageUris.remove(imageUri);
+        });
+
+        imageContainer.addView(imageView);
+        imageContainer.addView(removeButton);
+    }
+
+    private void postReview() {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Please sign in to post a review", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String reviewText = reviewInput.getText().toString().trim();
+        if (reviewText.isEmpty()) {
+            Toast.makeText(this, "Please enter your review", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (selectedRating == 0) {
+            Toast.makeText(this, "Please select a rating", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        postButton.setEnabled(false);
+
+        Log.d("WriteReview", "Location ID: " + locationId);
+        if (locationId == null || locationId.isEmpty()) {
+            Toast.makeText(this, "Invalid location", Toast.LENGTH_SHORT).show();
+            Log.e("WriteReview", "Location ID is null or empty");
+            return;
+        }
+
+        if (user.getUid() == null || user.getUid().isEmpty()) {
+            Toast.makeText(this, "Invalid user information", Toast.LENGTH_SHORT).show();
+            Log.e("WriteReview", "User ID is null or empty");
+            return;
+        }
+
+        String reviewId = user.getUid() + "_" + locationId;
+        String userId = user.getUid();
+
+        if (selectedImageUris.isEmpty()) {
+            saveReviewToDatabase(reviewId, userId, new ArrayList<>());
+        } else {
+            // Convert images to Base64
+            List<String> base64Images = new ArrayList<>();
+            for (Uri imageUri : selectedImageUris) {
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos); // 70% quality to reduce size
+                    byte[] imageBytes = baos.toByteArray();
+                    String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+                    base64Images.add(base64Image);
+                } catch (Exception e) {
+                    Log.e("ImageConversion", "Error converting image to Base64", e);
+                }
+            }
+            saveReviewToDatabase(reviewId, userId, base64Images);
+        }
+    }
+
+    private void saveReviewToDatabase(String reviewId, String userId, List<String> base64Images) {
+        String reviewText = reviewInput.getText().toString().trim();
+        String createdAt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(new Date());
+
+        Map<String, Boolean> likes = new HashMap<>();
+
+        Review review = new Review(
+                reviewId,
+                userId,
+                locationId,
+                reviewText,
+                selectedRating,
+                createdAt,
+                base64Images, // Now storing Base64 strings instead of URLs
+                likes
+        );
+
+        mDatabase.child(reviewId).setValue(review)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(WriteReview.this, "Review posted successfully", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(WriteReview.this, "Failed to post review: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    postButton.setEnabled(true);
+                });
+    }
+
+    /*private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, PICK_IMAGE_REQUEST);
     }
@@ -151,5 +295,5 @@ public class WriteReview extends AppCompatActivity {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
             }
         }
-    }
+    }*/
 }

@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private TabLayout tabLayout;
     private LinearLayout overviewTab;
     private LinearLayout reviewsTab;
+    private LinearLayout exploreTab;
     //
 
     @Override
@@ -177,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tabLayout = findViewById(R.id.tab_layout);
         overviewTab = findViewById(R.id.overview_tab);
         reviewsTab = findViewById(R.id.reviews_tab);
+        exploreTab = findViewById(R.id.explore_tab);
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -184,11 +186,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 switch (tab.getPosition()) {
                     case 0: // Overview tab
                         overviewTab.setVisibility(View.VISIBLE);
+                        exploreTab.setVisibility(View.GONE);
                         reviewsTab.setVisibility(View.GONE);
                         break;
                     case 1: // Reviews tab
                         overviewTab.setVisibility(View.GONE);
+                        exploreTab.setVisibility(View.GONE);
                         reviewsTab.setVisibility(View.VISIBLE);
+                        break;
+                    case 2: // Explore tab
+                        overviewTab.setVisibility(View.GONE);
+                        exploreTab.setVisibility(View.VISIBLE);
+                        reviewsTab.setVisibility(View.GONE);
                         break;
                 }
             }
@@ -229,10 +238,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         popup.show(); // Display the menu
     }
 
-
-    /*private void getLastLocation() {
-        TasK<Location> task = fusedLocationProviderClient.getLastLocation();
-    }*/
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         myMap = googleMap;
@@ -289,7 +294,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }).check();
 
         //hide sliding panel before choose a place
-        //slidingPanel.setVisibility(View.GONE);
+        slidingPanel.setVisibility(View.GONE);
 
         // POI click listener
         myMap.setOnPoiClickListener(poi -> {
@@ -305,7 +310,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
 
-            getReviews();
+            getReviews(true, poi.placeId);
         });
 
         // Normal map click listener
@@ -320,6 +325,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             getWeatherDetails();
 
             findPlaceDetailsFromLocation(latLng, null, null);
+            getReviews(false, null);
         });
     }
 
@@ -620,54 +626,85 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     //Load reviews
-    private void getReviews(){
-        // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
-        //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
-        List<String> images1 = Arrays.asList(
-                "https://imgur.com/DvpvklR.png",
-                "https://picsum.photos/200/300"
-        );
-
-        Map<String, Boolean> likesForReview2 = new HashMap<>();
-        likesForReview2.put("ZbfpPC8DkegTta8kYEjdORcw6cs2", true);
-
-        List<Review> reviews = new ArrayList<>();
-        reviews.add(new Review(
-                "1",
-                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
-                "LocationID",
-                "Greate service, nice staff",
-                5.0f,
-                "yyyy-MM-dd'T'HH:mm:ssZ",
-                images1,
-                new HashMap<>()
-        ));
-        reviews.add(new Review(
-                "2",
-                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
-                "LocationID",
-                "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
-                4.0f,
-                "yyyy-MM-dd'T'HH:mm:ssZ",
-                images1,
-                likesForReview2
-        ));
-
-        // Set up ListView
-        ListView listView = findViewById(R.id.reviewListView);
-        ReviewAdapter adapter = new ReviewAdapter(this, reviews);
-        listView.setAdapter(adapter);
-
-        // review button
+    private void getReviews(boolean isPOI, String locationID){
+        LinearLayout reviewsTab = findViewById(R.id.reviews_tab);
+        TabLayout tabLayout = findViewById(R.id.tab_layout);
         AppCompatButton writeReviewButton = findViewById(R.id.write_review_button);
-        writeReviewButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, WriteReview.class);
-                intent.putExtra("context", "main");
-                startActivity(intent);
-            }
-        });
+
+        if(isPOI) {
+            //enable tab
+            reviewsTab.setVisibility(View.VISIBLE);
+            writeReviewButton.setVisibility(View.VISIBLE);
+            tabLayout.getTabAt(1).view.setEnabled(true);
+            tabLayout.getTabAt(1).view.setAlpha(1f);
+
+            tabLayout.getTabAt(2).view.setEnabled(true);
+            tabLayout.getTabAt(2).view.setAlpha(1f);
+
+            tabLayout.selectTab(tabLayout.getTabAt(0));
+            // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
+            //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
+            List<String> images1 = Arrays.asList(
+                    "https://imgur.com/DvpvklR.png",
+                    "https://picsum.photos/200/300"
+            );
+
+            Map<String, Boolean> likesForReview2 = new HashMap<>();
+            likesForReview2.put("ZbfpPC8DkegTta8kYEjdORcw6cs2", true);
+
+            List<Review> reviews = new ArrayList<>();
+            reviews.add(new Review(
+                    "1",
+                    "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                    "LocationID",
+                    "Greate service, nice staff",
+                    5.0f,
+                    "yyyy-MM-dd'T'HH:mm:ssZ",
+                    images1,
+                    new HashMap<>()
+            ));
+            reviews.add(new Review(
+                    "2",
+                    "ZbfpPC8DkegTta8kYEjdORcw6cs2",
+                    "LocationID",
+                    "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
+                    4.0f,
+                    "yyyy-MM-dd'T'HH:mm:ssZ",
+                    images1,
+                    likesForReview2
+            ));
+
+            // Set up ListView
+            ListView listView = findViewById(R.id.reviewListView);
+            ReviewAdapter adapter = new ReviewAdapter(this, reviews);
+            listView.setAdapter(adapter);
+
+            // review button
+            writeReviewButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainActivity.this, WriteReview.class);
+                    intent.putExtra("context", "main");
+                    Log.e("WriteReview", "Location ID " + locationID);
+                    intent.putExtra("locationID", locationID);
+                    startActivity(intent);
+                }
+            });
+        }else{
+            reviewsTab.setVisibility(View.GONE);
+            writeReviewButton.setVisibility(View.GONE);
+
+            // Disable the Reviews tab in TabLayout
+            tabLayout.getTabAt(1).view.setEnabled(false);
+            tabLayout.getTabAt(1).view.setAlpha(0.5f);
+
+            //test explore tab
+            tabLayout.getTabAt(2).view.setEnabled(false);
+            tabLayout.getTabAt(2).view.setAlpha(0.5f);
+
+            // Ensure we're showing the Overview tab
+            tabLayout.selectTab(tabLayout.getTabAt(0));
+        }
     }
 
     public void loadPlacePhoto(PhotoMetadata photoMetadata, ImageView imageView) {
@@ -785,8 +822,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     placeAddress.setText("Address: " + place.getAddress());
 
                     // get place details
-                    getPlacePhoto(place.getId(), placeImage);
-                    updatePlaceUI(place, null, null);
+                    List<Place.Field> fullFields = Arrays.asList(
+                            Place.Field.ID,
+                            Place.Field.NAME,
+                            Place.Field.ADDRESS,
+                            Place.Field.LAT_LNG,
+                            Place.Field.PHOTO_METADATAS,
+                            Place.Field.INTERNATIONAL_PHONE_NUMBER,
+                            Place.Field.WEBSITE_URI,
+                            Place.Field.OPENING_HOURS,
+                            Place.Field.PRICE_LEVEL,
+                            Place.Field.BUSINESS_STATUS,
+                            Place.Field.TYPES
+                    );
+                    FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(place.getId(), fullFields).build();
+                    placesClient.fetchPlace(fullRequest).addOnSuccessListener(fullResponse -> {
+                        Place fullPlace = fullResponse.getPlace();
+                        // Check if this is a POI by examining types
+                        boolean isPOI = isPointOfInterest(fullPlace.getTypes());
+
+                        if (isPOI) {
+                            //POI search
+                            getWeatherDetails();
+                            findPlaceDetailsFromLocation(fullPlace.getLatLng(), fullPlace.getName(), fullPlace.getId());
+
+                            getReviews(true, fullPlace.getId());
+                        } else {
+                            getWeatherDetails();
+                            findPlaceDetailsFromLocation(place.getLatLng(), null, null);
+
+                            getReviews(false, null);
+                        }
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(MainActivity.this,"Failed to fetch place details: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
 
                     // Expand the sliding panel
                     slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
@@ -825,6 +894,116 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         {
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
         }
+    }
+
+    private boolean isPointOfInterest(List<Place.Type> types) {
+        if (types == null) return false;
+
+        // Common POI types - you can expand this list
+        for (Place.Type type : types) {
+            switch (type) {
+                case ACCOUNTING:
+                case AIRPORT:
+                case AMUSEMENT_PARK:
+                case AQUARIUM:
+                case ART_GALLERY:
+                case ATM:
+                case BAKERY:
+                case BANK:
+                case BAR:
+                case BEAUTY_SALON:
+                case BICYCLE_STORE:
+                case BOOK_STORE:
+                case BOWLING_ALLEY:
+                case BUS_STATION:
+                case CAFE:
+                case CAMPGROUND:
+                case CAR_DEALER:
+                case CAR_RENTAL:
+                case CAR_REPAIR:
+                case CAR_WASH:
+                case CASINO:
+                case CEMETERY:
+                case CHURCH:
+                case CITY_HALL:
+                case CLOTHING_STORE:
+                case CONVENIENCE_STORE:
+                case COURTHOUSE:
+                case DENTIST:
+                case DEPARTMENT_STORE:
+                case DOCTOR:
+                case DRUGSTORE:
+                case ELECTRICIAN:
+                case ELECTRONICS_STORE:
+                case EMBASSY:
+                case FIRE_STATION:
+                case FLORIST:
+                case FUNERAL_HOME:
+                case FURNITURE_STORE:
+                case GAS_STATION:
+                case GYM:
+                case HAIR_CARE:
+                case HARDWARE_STORE:
+                case HINDU_TEMPLE:
+                case HOME_GOODS_STORE:
+                case HOSPITAL:
+                case INSURANCE_AGENCY:
+                case JEWELRY_STORE:
+                case LAUNDRY:
+                case LAWYER:
+                case LIBRARY:
+                case LIGHT_RAIL_STATION:
+                case LIQUOR_STORE:
+                case LOCAL_GOVERNMENT_OFFICE:
+                case LOCKSMITH:
+                case LODGING:
+                case MEAL_DELIVERY:
+                case MEAL_TAKEAWAY:
+                case MOSQUE:
+                case MOVIE_RENTAL:
+                case MOVIE_THEATER:
+                case MOVING_COMPANY:
+                case MUSEUM:
+                case NIGHT_CLUB:
+                case PAINTER:
+                case PARK:
+                case PARKING:
+                case PET_STORE:
+                case PHARMACY:
+                case PHYSIOTHERAPIST:
+                case PLUMBER:
+                case POLICE:
+                case POST_OFFICE:
+                case PRIMARY_SCHOOL:
+                case REAL_ESTATE_AGENCY:
+                case RESTAURANT:
+                case ROOFING_CONTRACTOR:
+                case RV_PARK:
+                case SCHOOL:
+                case SECONDARY_SCHOOL:
+                case SHOE_STORE:
+                case SHOPPING_MALL:
+                case SPA:
+                case STADIUM:
+                case STORAGE:
+                case STORE:
+                case SUBWAY_STATION:
+                case SUPERMARKET:
+                case SYNAGOGUE:
+                case TAXI_STAND:
+                case TOURIST_ATTRACTION:
+                case TRAIN_STATION:
+                case TRANSIT_STATION:
+                case TRAVEL_AGENCY:
+                case UNIVERSITY:
+                case VETERINARY_CARE:
+                case ZOO:
+                    return true;
+                default:
+                    // Not a POI type
+            }
+        }
+        return false;
     }
 
     private void getPlacePhoto(String placeId, ImageView placeImage) {
