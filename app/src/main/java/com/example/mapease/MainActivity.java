@@ -289,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }).check();
 
         //hide sliding panel before choose a place
-        slidingPanel.setVisibility(View.GONE);
+        //slidingPanel.setVisibility(View.GONE);
 
         // POI click listener
         myMap.setOnPoiClickListener(poi -> {
@@ -347,9 +347,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED){
-            if (placeID != null) {
+            if (placeID != null) //poi click
+            {
                 FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
-
                 placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
                     Log.d("DetailInfor", "Place ID: " + placeID);
 
@@ -784,8 +784,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     placeName.setText(place.getName());
                     placeAddress.setText("Address: " + place.getAddress());
 
-                    // Show place image
+                    // get place details
                     getPlacePhoto(place.getId(), placeImage);
+                    updatePlaceUI(place, null, null);
 
                     // Expand the sliding panel
                     slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);

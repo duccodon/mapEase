@@ -17,7 +17,7 @@ public class Step {
     private int getManeuverIconResId(String maneuver) {
         switch (maneuver) {
             case "DEPART":
-                return R.drawable.icon_depart;
+                return R.drawable.icon_start;
 
             case "TURN_RIGHT":
                 return R.drawable.icon_turn_right;

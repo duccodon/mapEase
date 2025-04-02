@@ -8,6 +8,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.mapease.adapter.StepAdapter;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
@@ -95,6 +98,10 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private LatLng currentLocation;
     private SlidingUpPanelLayout slidingLayout;
     private LinearLayout slidingPanel;
+
+    private RecyclerView recyclerView;
+    private StepAdapter stepAdapter;
+    private List<Step> stepList;
     @Override
     protected void onStart() {
         super.onStart();
@@ -125,9 +132,14 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         //setup sliding panel
         slidingLayout = findViewById(R.id.sliding_layout);
         slidingPanel = findViewById(R.id.route_info_sliding_panel);
-
         SlidingPanelHelper.setupPanel(this, slidingLayout, slidingPanel);
 
+        // Initialize RecyclerView
+        recyclerView = findViewById(R.id.recycler_view_steps);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        stepList = new ArrayList<>();
+
+        // Setup autocomplete
         setupAutocomplete();
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -220,7 +232,6 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 // Lưu lại response JSON (ví dụ có thể lưu vào biến toàn cục hoặc xử lý tiếp)
                 JSONObject jsonObject = new JSONObject(response.toString());
                 JSONArray routesArray = jsonObject.getJSONArray("routes");
-                List<Step> stepsList = new ArrayList<>();
 
                 if (routesArray.length() == 0) {
                         Toast.makeText(this, "No routes found", Toast.LENGTH_SHORT).show();
@@ -244,6 +255,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                     JSONObject leg = legs.getJSONObject(i);
                     JSONArray steps = leg.getJSONArray("steps");
 
+                    stepList.clear();  // This will clear previous steps
+
                     for (int j = 0; j < steps.length(); j++) {
                         JSONObject step = steps.getJSONObject(j);
 
@@ -251,20 +264,34 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                         JSONObject polyline = step.getJSONObject("polyline");
                         String encodedPolyline = polyline.getString("encodedPolyline");
 
-                        String maneuver = step.getJSONObject("navigationInstruction").getString("maneuver");
-                        String instruction = step.getJSONObject("navigationInstruction").getString("instructions");
+                        JSONObject navigationInstruction = step.optJSONObject("navigationInstruction");
+                        String maneuver = "";
+                        String instruction = "";
+
+                        // Only extract maneuver and instruction if "navigationInstruction" is available
+                        if (navigationInstruction != null) {
+                            maneuver = navigationInstruction.optString("maneuver", ""); // Default to empty string if not found
+                            instruction = navigationInstruction.optString("instructions", "");
+                        }
+
+
                         int distanceMeters = step.getInt("distanceMeters");
 
                         // Tạo Step Object và thêm vào list
                         Step stepObject = new Step(maneuver, instruction, distanceMeters);
                         Log.d("STEP BY STEP", stepObject.toString());
 
-                        stepsList.add(stepObject);
+                        stepList.add(stepObject);
+
 
                         // Giải mã polyline
                         List<LatLng> decodedPath = PolyUtil.decode(encodedPolyline);
                         polylineList.addAll(decodedPath);
                     }
+                    //add recycler view
+                    stepAdapter = new StepAdapter(stepList);
+                    recyclerView.setAdapter(stepAdapter);
+
                 }
 
                 if (polylineList.isEmpty()) {
