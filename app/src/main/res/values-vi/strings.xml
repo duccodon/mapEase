@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="search_here">Search here</string>
+    <string name="title_activity_route">RouteActivity</string>
+    <string name="search_review">Find a place to review</string>
+
+    <string name="select_language">Ngôn ngữ</string>
+    <string name="english">Tiếng anh</string>
+    <string name="vietnamese">Tiếng việt</string>
+
+
+    <!-- Đăng nhập và Đăng ký -->
+    <string name="login">Đăng nhập</string>
+    <string name="sign_in">Đăng nhập</string>
+    <string name="sign_up">Đăng ký</string>
+
+
+    <string name="sign_in_emailUsername">Email hoặc Tên người dùng</string>
+    <string name="sign_inup_password">Mật khẩu</string>
+    <string name="dont">Chưa có tài khoản?</string>
+    <string name="forgot_password">Quên mật khẩu</string>
+
+    <string name="usernameSignUp">Tên người dùng</string>
+    <string name="EmailLabel">Email</string>
+
+    <string name="sign_in_btn">ĐĂNG NHẬP</string>
+    <string name="sign_up_btn">ĐĂNG KÝ</string>
+    <string name="alreadyHaveAccount">Đã có tài khoản</string>
+
+    <string name="rest_password_title">Đặt lại mật khẩu</string>
+    <string name="rest_password_btn">Đặt lại</string>
+    <string name="cancel_btn">Hủy</string>
+
+    <!-- Màn hình chào mừng -->
+    <string name="splash_screen_title">Chào mừng đến với ứng dụng của tôi</string>
+
+    <!-- Viết đánh giá -->
+    <string name="your_place">Địa điểm của bạn</string>
+    <string name="your_name">Tên của bạn</string>
+    <string name="posting_publicly">Đăng công khai</string>
+
+    <string name="tell_other_people">Chia sẻ trải nghiệm của bạn với mọi người</string>
+    <string name="add_photos">Thêm ảnh và video</string>
+    <string name="post_review">Đăng</string>
+
+    <!-- Hồ sơ cá nhân -->
+    <string name="edit_profile">Chỉnh sửa hồ sơ</string>
+    <string name="write_review">Viết đánh giá</string>
+    <string name="your_contributions">Đóng góp</string>
+    <string name="your_following">Đang theo dõi</string>
+    <string name="tell_other_people_profile">Hãy giới thiệu về bản thân và những địa điểm bạn yêu thích</string>
+    <string name="review_profile_list">ĐÁNH GIÁ</string>
+
+    <!-- Màn hình chính -->
+    <string name="search_btn">Tìm kiếm</string>
+    <string name="restaurant_btn">Nhà hàng</string>
+    <string name="hotel_btn">Khách sạn</string>
+    <string name="cafe_btn">Quán cà phê</string>
+    <string name="mall_btn">Trung tâm mua sắm</string>
+
+    <!-- Menu hồ sơ -->
+    <string name="yourProfile">Hồ sơ của bạn</string>
+    <string name="yourTimeLine">Dòng thời gian của bạn</string>
+    <string name="locationSharing">Chia sẻ vị trí</string>
+    <string name="setting">Cài đặt</string>
+    <string name="logout">Đăng xuất</string>
+</resources>
+

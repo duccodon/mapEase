@@ -1,6 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">mapease</string>
-    <string name="title_activity_sign_up" translatable="false">MapEase</string>
 
     <string name="search_here">Search here</string>
     <string name="title_activity_route">RouteActivity</string>
@@ -14,7 +13,6 @@
     <string name="login">Login</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_up">Sign up</string>
-
     <string name="sign_in_emailUsername">Email or Username</string>
     <string name="sign_inup_password">Password</string>
     <string name="dont">Do not have an account?</string>
@@ -32,23 +30,18 @@
     <string name="rest_password_btn">Reset</string>"
     <string name="cancel_btn">Cancel</string>
 
-<!--    //Main screen-->
+
+    <!--    //Main screen-->
     <string name="search_btn">Search</string>
     <string name="restaurant_btn">Restaurant</string>
     <string name="hotel_btn">Hotel</string>
     <string name="cafe_btn">Cafe</string>
     <string name="mall_btn">Mall</string>
 
-<!--    //Review search-->
-<!--    <string name="search_review">Find a place to review</string>-->
-<!--    <string name="search_here">Search here</string>-->
-
-
-<!--    SplashScreen-->
+    <!--    SplashScreen-->
     <string name="splash_screen_title">Welcome to my app</string>
 
-
-<!--    Write_review-->
+    <!--    Write_review-->
     <string name="your_place">Your place</string>
     <string name="your_name">Your name</string>
     <string name="posting_publicly">Posting publicly</string>
@@ -57,8 +50,7 @@
     <string name="add_photos">Add photos and videos</string>
     <string name="post_review">Post</string>
 
-
-<!--    Your profile -->
+    <!--    Your profile -->
     <string name="edit_profile">Edit profile</string>
     <string name="write_review">Write review</string>
     <string name="your_contributions">Contributions</string>
@@ -68,11 +60,11 @@
 
 
 
-<!--    //Profile Menu-->
+
+    <!--    //Profile Menu-->
     <string name="yourProfile">Your profile</string>
     <string name="yourTimeLine">Your timeline</string>
     <string name="locationSharing">Location sharing</string>
     <string name="setting">Settings</string>
     <string name="logout">Logout</string>
-
 </resources>

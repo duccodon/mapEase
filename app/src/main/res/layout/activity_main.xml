@@ -67,7 +67,7 @@
                     android:id="@+id/btn_restaurant"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Restaurant"
+                    android:text="@string/restaurant_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -76,7 +76,7 @@
                     android:id="@+id/btn_hotel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hotel"
+                    android:text="@string/hotel_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -85,7 +85,7 @@
                     android:id="@+id/btn_cafe"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cafe"
+                    android:text="@string/cafe_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -94,7 +94,7 @@
                     android:id="@+id/btn_mall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mall"
+                    android:text="@string/mall_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
