@@ -174,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
         binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
+        binding.languageButton.setOnClickListener(v -> showLanguageMenu(v));
         weather = findViewById(R.id.weatherText);
 
         //tab layout
@@ -226,8 +227,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else if (id == R.id.locationSharing) {
                 return true;
             } else if (id == R.id.setting) {
-                return true;
-            } else if (id == R.id.language) {
                 return true;
             } else if (id == R.id.logout) {
                 FirebaseAuth.getInstance().signOut();
