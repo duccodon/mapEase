@@ -99,5 +99,4 @@ dependencies {
     implementation ("androidx.recyclerview:recyclerview:1.1.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
-    implementation ("com.github.clans:fab:1.6.4")
 }

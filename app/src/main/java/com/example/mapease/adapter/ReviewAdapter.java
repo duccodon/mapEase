@@ -43,7 +43,7 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
 
         Review review = reviews.get(position);
 
-        Log.d("ReviewData", review.getContent() + " " + review.getCreateAt().substring(0, 10) + " " + review.getLocationID() + " " + review.getLikes()
+        Log.d("ReviewData", review.getContent() + " " + review.getCreateAt() + " " + review.getLocationID() + " " + review.getLikes()
         + " " + review.getRating() + " " + review.getUserID());
 
         // Bind data to views
