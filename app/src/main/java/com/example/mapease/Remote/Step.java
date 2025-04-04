@@ -1,8 +1,12 @@
 package com.example.mapease.Remote;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.example.mapease.R;
 
-public class Step {
+public class Step implements Parcelable
+{
     private int maneuverIconResId;
     private String instructions;
     private int distance;
@@ -11,6 +15,11 @@ public class Step {
         this.instructions = instructions;
         this.distance = distance;
         this.maneuverIconResId = getManeuverIconResId(maneuver);
+    }
+    protected Step(Parcel in) {
+        maneuverIconResId = in.readInt();
+        instructions = in.readString();
+        distance = in.readInt();
     }
 
     // Function to handle switching based on the maneuver
@@ -74,5 +83,29 @@ public class Step {
                 ", distance='" + distance + '\'' +
                 '}';
     }
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(maneuverIconResId);
+        dest.writeString(instructions);
+        dest.writeInt(distance);
+    }
+
+    // CREATOR for Parcelable
+    public static final Creator<Step> CREATOR = new Creator<Step>() {
+        @Override
+        public Step createFromParcel(Parcel in) {
+            return new Step(in);
+        }
+
+        @Override
+        public Step[] newArray(int size) {
+            return new Step[size];
+        }
+    };
 }
 

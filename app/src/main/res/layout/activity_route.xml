@@ -88,6 +88,7 @@
         android:padding="12dp"
         android:background="@drawable/rounded_bg"
         android:elevation="6dp">
+
         <View
             android:id="@+id/drag_handle"
             android:layout_width="80dp"
@@ -104,7 +105,20 @@
             android:src="@drawable/ic_back"
             android:contentDescription="Back" />
 
-        <LinearLayout
+        <!-- TAB ĐỔI PHƯƠNG TIỆN-->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabMode="fixed"
+            app:tabGravity="fill"/>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+<!--        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -166,7 +180,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="12dp">
-            <!-- Biểu tượng maneuver -->
+            &lt;!&ndash; Biểu tượng maneuver &ndash;&gt;
             <ImageView
                 android:id="@+id/img_maneuver"
                 android:layout_width="32dp"
@@ -174,13 +188,13 @@
                 android:layout_marginEnd="12dp"
                 android:src="@drawable/icon_depart"
                 android:contentDescription="Maneuver Icon" />
-            <!-- Nội dung hướng dẫn -->
+            &lt;!&ndash; Nội dung hướng dẫn &ndash;&gt;
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-                <!-- Hướng dẫn chính -->
+                &lt;!&ndash; Hướng dẫn chính &ndash;&gt;
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -202,6 +216,6 @@
             android:layout_height="wrap_content"
             android:nestedScrollingEnabled="false"
             android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
+            android:paddingBottom="8dp" />-->
     </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

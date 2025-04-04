@@ -1,5 +1,7 @@
 package com.example.mapease;
 
+import static java.lang.Thread.sleep;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -10,7 +12,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.mapease.adapter.StepAdapter;
+import androidx.viewpager2.widget.ViewPager2;
+
+import com.example.mapease.Remote.RouteData;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
@@ -61,6 +65,8 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.maps.android.PolyUtil;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -78,6 +84,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.reactivex.disposables.CompositeDisposable;
 
@@ -99,9 +106,14 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private SlidingUpPanelLayout slidingLayout;
     private LinearLayout slidingPanel;
 
-    private RecyclerView recyclerView;
-    private StepAdapter stepAdapter;
-    private List<Step> stepList;
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager;
+    private RoutePagerAdapter pagerAdapter;
+
+    private List<Step> stepList =  new ArrayList<>();
+    private List<RouteData> routeDataList = new ArrayList<>();
+    private int completedRequests = 0;
+    private int totalRequests = 3; // Number of times you call parseJsonWithMode
     @Override
     protected void onStart() {
         super.onStart();
@@ -134,10 +146,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         slidingPanel = findViewById(R.id.route_info_sliding_panel);
         SlidingPanelHelper.setupPanel(this, slidingLayout, slidingPanel);
 
-        // Initialize RecyclerView
-        recyclerView = findViewById(R.id.recycler_view_steps);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        stepList = new ArrayList<>();
+        //Initialize Tab Layout using ViewPager2
+        tabLayout = findViewById(R.id.tabLayout);
+        viewPager = findViewById(R.id.viewPager);
 
         // Setup autocomplete
         setupAutocomplete();
@@ -188,6 +199,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.setPadding(0, 200, 0, 420); // Dịch chuyển nút Zoom lên trên 150px
         if (sendLocationToActivity != null) {
+            loadRouteData(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());
 
             currentLocation = sendLocationToActivity.getOrigin();
 
@@ -196,14 +208,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 return true;
             });
 
-            try {
-                setAutocompleteText(R.id.autocomplete_origin, "Your Location");
-                setAutocompleteText(R.id.autocomplete_destination, sendLocationToActivity.getDestinationName());
-                drawPath(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination());// Vẽ đường đi
+            setAutocompleteText(R.id.autocomplete_origin, "Your Location");
+            setAutocompleteText(R.id.autocomplete_destination, sendLocationToActivity.getDestinationName());
 
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
         } else {
             Toast.makeText(this, "Route data not available yet", Toast.LENGTH_SHORT).show();
         }
@@ -215,6 +222,166 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         params.setMargins(0, 0, 0, 300);
     }
 
+    private void parseJsonWithMode(LatLng origin, LatLng destination, String mode, OnRouteDataLoadedListener listener) throws JSONException
+    {
+        if (origin == null || destination == null) {
+            Toast.makeText(this, "Origin or Destination is null", Toast.LENGTH_SHORT).show();
+
+        }
+
+        Log.d("RouteActivity", "Requesting path: " + origin.toString() + " to " + destination.toString());
+        mMap.clear();
+        // Gửi request và nhận `JSONObject`
+        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", mode, response -> {
+            try {
+                Log.d("API_RETURN", "Response JSON: " + response.toString());
+                // Lưu lại response JSON (ví dụ có thể lưu vào biến toàn cục hoặc xử lý tiếp)
+                JSONObject jsonObject = new JSONObject(response.toString());
+                JSONArray routesArray = jsonObject.getJSONArray("routes");
+
+                if (routesArray.length() == 0) {
+                    Toast.makeText(this, "No routes found", Toast.LENGTH_SHORT).show();
+                }
+
+                if (routesArray.length() == 0) {
+                    Toast.makeText(this, "No routes found", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (polylineList == null) {
+                    polylineList = new ArrayList<>();
+                }
+                polylineList.clear();
+
+                // Lấy tuyến đường đầu tiên
+                JSONObject route = routesArray.getJSONObject(0);
+                JSONArray legs = route.getJSONArray("legs");
+
+                for (int i = 0; i < legs.length(); i++) {
+                    JSONObject leg = legs.getJSONObject(i);
+                    JSONArray steps = leg.getJSONArray("steps");
+
+                    stepList.clear();  // This will clear previous steps
+                    polylineList.clear(); // This will clear previous polyline
+
+                    for (int j = 0; j < steps.length(); j++) {
+                        JSONObject step = steps.getJSONObject(j);
+
+                        // Lấy polyline từ từng step
+                        JSONObject polyline = step.getJSONObject("polyline");
+                        String encodedPolyline = polyline.getString("encodedPolyline");
+
+                        JSONObject navigationInstruction = step.optJSONObject("navigationInstruction");
+                        String maneuver = "";
+                        String instruction = "";
+
+                        // Only extract maneuver and instruction if "navigationInstruction" is available
+                        if (navigationInstruction != null) {
+                            maneuver = navigationInstruction.optString("maneuver", ""); // Default to empty string if not found
+                            instruction = navigationInstruction.optString("instructions", "");
+                        }
+
+
+                        int distanceMeters = step.getInt("distanceMeters");
+
+                        // Tạo Step Object và thêm vào list
+                        Step stepObject = new Step(maneuver, instruction, distanceMeters);
+                        stepList.add(stepObject);
+
+                        // Giải mã polyline va luu
+                        List<LatLng> decodedPath = PolyUtil.decode(encodedPolyline);
+                        polylineList.addAll(decodedPath);
+                    }
+                }
+
+                if (polylineList.isEmpty()) {
+                    Toast.makeText(this, "No polyline data", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                JSONObject legInfo = legs.getJSONObject(0);
+                JSONObject duration = legInfo.getJSONObject("localizedValues").getJSONObject("duration");
+                JSONObject distance = legInfo.getJSONObject("localizedValues").getJSONObject("distance");
+
+                String durationText = duration.getString("text");
+                String distanceText = distance.getString("text");
+
+                RouteData routeData = new RouteData(durationText, distanceText, stepList, polylineList);
+
+                routeDataList.add(routeData);
+                Log.d("UPDATE ROUTE LIST", "add route to list " +  routeDataList.size());
+
+
+                // 🔥 Call the callback here
+                if (listener != null) {
+                    listener.onRouteDataLoaded(routeDataList);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Error parsing JSON", Toast.LENGTH_SHORT).show();
+            }
+            // Notify that this call is done
+        });
+    }
+
+    private void drawPolylineOnMap(LatLng origin, LatLng destination, String mode) {
+        List<LatLng> polylineList = new ArrayList<>();
+        if(mode == "DRIVE")
+        {
+            polylineList = routeDataList.get(0).getPolylineList();
+        }
+        else if (mode == "RIDE")
+        {
+            polylineList = routeDataList.get(1).getPolylineList();
+        }
+        else if (mode == "WALK")
+        {
+            polylineList = routeDataList.get(2).getPolylineList();
+        }
+        Log.d("Polyline List","Polyline list length: " +  polylineList.size());
+        mMap.clear();
+        // Vẽ Polyline trên bản đồ
+        polylineOptions = new PolylineOptions()
+                .color(Color.GRAY)
+                .width(12)
+                .startCap(new com.google.android.gms.maps.model.SquareCap())
+                .jointType(JointType.ROUND)
+                .addAll(polylineList);
+
+        greyPolyline = mMap.addPolyline(polylineOptions);
+
+        blackPolylineOptions = new PolylineOptions()
+                .color(Color.BLACK)
+                .width(5)
+                .startCap(new com.google.android.gms.maps.model.SquareCap())
+                .jointType(JointType.ROUND)
+                .addAll(polylineList);
+
+        blackPolyline = mMap.addPolyline(blackPolylineOptions);
+
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 100);
+        valueAnimator.setDuration(1000);
+        valueAnimator.setRepeatCount(4);
+        valueAnimator.setInterpolator(new LinearInterpolator());
+        valueAnimator.addUpdateListener(value -> {
+            List<LatLng> points = greyPolyline.getPoints();
+            addOriginMarker(points);
+            int percentValue = (int) value.getAnimatedValue();
+            int size = points.size();
+            int newPoints = (int) (size * (percentValue / 100.0f));
+            List<LatLng> p = points.subList(0, newPoints);
+            blackPolyline.setPoints(p);
+        });
+        valueAnimator.start();
+
+        LatLngBounds latLngBounds = new LatLngBounds.Builder()
+                .include(origin)
+                .include(destination)
+                .build();
+
+        addDestinationMarker();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 160));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(mMap.getCameraPosition().zoom - 1));
+    }
     private void drawPath(LatLng origin, LatLng destination) throws JSONException {
         if (origin == null || destination == null) {
             Toast.makeText(this, "Origin or Destination is null", Toast.LENGTH_SHORT).show();
@@ -288,12 +455,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                         List<LatLng> decodedPath = PolyUtil.decode(encodedPolyline);
                         polylineList.addAll(decodedPath);
                     }
-                    //add recycler view
-                    stepAdapter = new StepAdapter(stepList);
-                    recyclerView.setAdapter(stepAdapter);
 
                 }
-
                 if (polylineList.isEmpty()) {
                     Toast.makeText(this, "No polyline data", Toast.LENGTH_SHORT).show();
                     return;
@@ -345,17 +508,17 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 String durationText = duration.getString("text");
                 String distanceText = distance.getString("text");
-
+/*
                 // Lấy vị trí bắt đầu/kết thúc từ JSON của Route API
                 JSONObject startLocation = legInfo.getJSONObject("startLocation").getJSONObject("latLng");
                 JSONObject endLocation = legInfo.getJSONObject("endLocation").getJSONObject("latLng");
 
                 String startLatLng = startLocation.getDouble("latitude") + "," + startLocation.getDouble("longitude");
-                String endLatLng = endLocation.getDouble("latitude") + "," + endLocation.getDouble("longitude");
-
+                String endLatLng = endLocation.getDouble("latitude") + "," + endLocation.getDouble("longitude");*/
                 addDestinationMarker();
 
-                updateRouteInfo(durationText, distanceText);
+                TextView tvDurationDistance = findViewById(R.id.tv_duration_distance);
+                tvDurationDistance.setText(durationText + " (" + distanceText + ")");
 
                 mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 160));
                 mMap.moveCamera(CameraUpdateFactory.zoomTo(mMap.getCameraPosition().zoom - 1));
@@ -416,17 +579,17 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         });
     }
 
-
     /**
      * Cập nhật lại tuyến đường khi chọn điểm đi hoặc điểm đến
      */
     private void updateRoute(LatLng newOrigin, LatLng newDestination) {
         if (newOrigin != null && newDestination != null) {
-            try {
+/*            try {
                 drawPath(newOrigin, newDestination);
             } catch (JSONException e) {
                 e.printStackTrace();
-            }
+            }*/
+            loadRouteData(newOrigin, newDestination);
         }
     }
     private BitmapDescriptor getBitmapDescriptorFromVector(Context context, @DrawableRes int vectorResId) {
@@ -491,25 +654,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             Log.e("MarkerError", "Không thể tải icon cho marker");
         }
     }
-    private String getPlaceName(LatLng latLng) //convert a set of latitude and longitude coordinates (LatLng) into a human-readable address
-    {
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
-        try {
-            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                return addresses.get(0).getAddressLine(0); // Cập nhật TextView
-            } else {
-                return "Unknown Location";
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    private void updateRouteInfo(String durationText, String distanceText) {
-        TextView tvDurationDistance = findViewById(R.id.tv_duration_distance);
-        tvDurationDistance.setText(durationText + " (" + distanceText + ")");
-    }
     private void setAutocompleteText(int fragmentId, String text) {
         new Handler(Looper.getMainLooper()).post(() -> {
             FragmentManager fragmentManager = getSupportFragmentManager();
@@ -599,4 +744,81 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             Log.e("FILE_SAVE_ERROR", "Failed to save JSON", e);
         }
     }
+
+    private void loadRouteData(LatLng origin, LatLng destination) //load route data for 3 mode, draw path for DRIVE mode
+    {
+        if (origin == null || destination == null) {
+            Log.d("loadRouteData", "Load Route Data fail");
+            return;
+        }
+
+        final int totalModes = 3;
+        final AtomicInteger completedCount = new AtomicInteger(0);  // To track how many finished
+        routeDataList.clear();  // Clear old data if needed
+
+        OnRouteDataLoadedListener listener = updatedList -> {
+            if (completedCount.incrementAndGet() == totalModes) {
+                // 🎯 All 3 have finished!
+                Log.d("loadRouteData", "All routes loaded. Total: " + routeDataList.size());
+
+                Log.d("NUMBER OF ROUTE", "number of route: " + routeDataList.size());
+                pagerAdapter = new RoutePagerAdapter(this, routeDataList);
+                viewPager.setAdapter(pagerAdapter);
+                new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+                    switch (position) {
+                        case 0:
+                            tab.setText("Drive");
+                            tab.setIcon(R.drawable.ic_drive); // Thêm icon cho tab Drive
+                            break;
+                        case 1:
+                            tab.setText("Ride");
+                            tab.setIcon(R.drawable.ic_ride); // Thêm icon cho tab Ride
+                            break;
+                        case 2:
+                            tab.setText("Walk");
+                            tab.setIcon(R.drawable.ic_walk); // Thêm icon cho tab Walk
+                            break;
+                    }
+                }).attach();
+                drawPolylineOnMap(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination(), "DRIVE");
+
+                viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        super.onPageSelected(position);
+                        // Xử lý khi tab được chọn
+                        Log.d("TAB_SELECTED", "Selected tab position: " + position);
+
+                        // Ví dụ: hiển thị thông tin tương ứng với tab
+                        switch (position) {
+                            case 0:
+                                drawPolylineOnMap(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination(), "DRIVE");
+                                break;
+                            case 1:
+                                drawPolylineOnMap(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination(), "RIDE");
+                                break;
+                            case 2:
+                                drawPolylineOnMap(sendLocationToActivity.getOrigin(), sendLocationToActivity.getDestination(), "WALK");
+                                break;
+                        }
+                    }
+                });
+
+            }
+        };
+
+        try {
+            parseJsonWithMode(origin, destination, "DRIVE", listener);
+            parseJsonWithMode(origin, destination, "TWO_WHEELER", listener);
+            parseJsonWithMode(origin, destination, "WALK", listener);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public interface OnRouteDataLoadedListener {
+        void onRouteDataLoaded(List<RouteData> routeDataList);
+    }
+
 }

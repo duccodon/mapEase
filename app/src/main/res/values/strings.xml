@@ -4,5 +4,7 @@
     <string name="search_here">Search here</string>
     <string name="title_activity_route">RouteActivity</string>
     <string name="search_review">Find a place to review</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

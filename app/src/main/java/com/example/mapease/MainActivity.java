@@ -271,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                             // Update instance variables
                                             currentLatitude = String.valueOf(location.getLatitude());
                                             currentLongitude = String.valueOf(location.getLongitude());
+                                            currentName = "Your Location";
                                             getWeatherDetails();
                                             currentLatLng = userLatLng;
                                         } else {
@@ -810,8 +811,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (place.getLocation() != null) {
                     currentLatitude = String.valueOf(place.getLatLng().latitude);
                     currentLongitude = String.valueOf(place.getLatLng().longitude);
-                    currentName = place.getDisplayName();
-                    selectedName = place.getDisplayName();
                     getWeatherDetails();
 
                     selectedLatLng = place.getLatLng();
@@ -821,7 +820,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     placeImage = findViewById(R.id.place_image);
 
                     // Update instance variables
-                    placeName.setText(place.getName());
+                    placeName.setText(place.getDisplayName());
                     placeAddress.setText("Address: " + place.getAddress());
 
                     // get place details
@@ -848,12 +847,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             //POI search
                             getWeatherDetails();
                             findPlaceDetailsFromLocation(fullPlace.getLatLng(), fullPlace.getName(), fullPlace.getId());
-
+                            selectedName = place.getDisplayName();
                             getReviews(true, fullPlace.getId());
                         } else {
                             getWeatherDetails();
                             findPlaceDetailsFromLocation(place.getLatLng(), null, null);
-
+                            selectedName = place.getDisplayName();
                             getReviews(false, null);
                         }
                     }).addOnFailureListener(e -> {
@@ -863,12 +862,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // Expand the sliding panel
                     slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
 
-                    updateMapLocation(place.getLatLng(), place.getName());
+                    updateMapLocation(place.getLatLng(), place.getDisplayName());
                 } else {
                     Snackbar.make(findViewById(android.R.id.content),
                             "No coordinates found for this place!",
                             Snackbar.LENGTH_SHORT).show();
                 }
+                Log.d("Selected name", "origin Name:: " + currentName+ " selected namee: " + selectedName);
             }
             @Override
             public void onError(@NonNull Status status) {
@@ -905,6 +905,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Common POI types - you can expand this list
         for (Place.Type type : types) {
             switch (type) {
+                // === Thêm các loại địa danh hành chính vào đây ===
+                case LOCALITY:                         // Thành phố
+                case ADMINISTRATIVE_AREA_LEVEL_1:      // Tỉnh
+                case ADMINISTRATIVE_AREA_LEVEL_2:      // Quận/Huyện
+                case COUNTRY:                          // Quốc gia
+                    return true;
+
                 case ACCOUNTING:
                 case AIRPORT:
                 case AMUSEMENT_PARK:
@@ -1244,8 +1251,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         // Parse LatLng thành String và hiển thị qua Toast
-        String currentStr = "Current: " + currentLatLng.latitude + ", " + currentLatLng.longitude;
-        String selectedStr = "Selected: " + selectedLatLng.latitude + ", " + selectedLatLng.longitude;
+        String currentStr = "Current: " + currentName;
+        String selectedStr = "Selected: " + selectedName;
         Toast.makeText(this, currentStr + "\n" + selectedStr, Toast.LENGTH_LONG).show();
 
         // Gửi dữ liệu và chuyển Activity
