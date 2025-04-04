@@ -353,6 +353,9 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+                <ScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
                     <!-- Weather Icon and City -->
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -376,14 +379,16 @@
                             android:paddingStart="8dp" />
                     </LinearLayout>
                     <!-- Weather Details -->
-                    <TextView
-                        android:id="@+id/weatherText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textColor="#34495E"
-                        android:lineSpacingExtra="4dp"
-                        android:layout_marginTop="8dp" />
+                        <TextView
+                            android:id="@+id/weatherText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp"
+                            android:textColor="#34495E"
+                            android:lineSpacingExtra="4dp"
+                            android:layout_marginTop="8dp" />
+                </ScrollView>
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
