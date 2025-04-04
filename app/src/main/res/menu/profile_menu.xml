@@ -2,17 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/yourProfile"
-        android:title="Your profile"/>
+        android:title="@string/yourProfile"/>
     <item
         android:id="@+id/yourTimeLine"
-        android:title="Your timeline"/>
+        android:title="@string/yourTimeLine"/>
     <item
         android:id="@+id/locationSharing"
-        android:title="Location sharing"/>
+        android:title="@string/locationSharing"/>
     <item
         android:id="@+id/setting"
-        android:title="Settings"/>
+        android:title="@string/setting"/>
+
+    <item
+        android:id="@+id/language"
+        android:title="@string/select_language"/>
+
     <item
         android:id="@+id/logout"
-        android:title="Logout" />
+        android:title="@string/logout" />
 </menu>

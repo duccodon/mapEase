@@ -3,6 +3,7 @@ package com.example.mapease;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Address;
@@ -173,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
         binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
+        binding.languageButton.setOnClickListener(v -> showLanguageMenu(v));
         weather = findViewById(R.id.weatherText);
 
         //tab layout
@@ -226,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             } else if (id == R.id.setting) {
                 return true;
-            }else if (id == R.id.logout) {
+            } else if (id == R.id.logout) {
                 FirebaseAuth.getInstance().signOut();
                 Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
 
@@ -1282,5 +1284,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 + "&key=" + getString(R.string.ggMapAPIKey);
 
         new FetchPlacesTasks(myMap).execute(url);
+    }
+
+    public void showLanguageMenu(View view) {
+        if (view == null) {
+            Log.e("LanguageMenu", "View is null. Cannot show menu.");
+            return;
+        }
+
+        Log.d("PopupMenu", "showLanguageMenu called");
+
+        PopupMenu popup = new PopupMenu(this, view);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.change_languages, popup.getMenu());
+
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.btnEnglish) {
+                setLocale("en");
+                return true;
+            } else if (id == R.id.btnVietnamese) {
+                setLocale("vi");
+                return true;
+            }
+            return false;
+        });
+        popup.show(); // Display the menu
+    }
+
+    private void setLocale(String en) {
+        Locale locale = new Locale(en);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.locale = locale;
+        getBaseContext().getResources().updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
+        Intent refresh = new Intent(this, MainActivity.class);
+        startActivity(refresh);
+        finish();
     }
 }

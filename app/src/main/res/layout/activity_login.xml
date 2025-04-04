@@ -27,7 +27,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Sign in"
+                android:text="@string/sign_in"
                 android:textSize="30sp"
                 android:textAlignment="center"
                 android:textStyle="bold"
@@ -40,7 +40,7 @@
                 android:background="@drawable/custom_edittext"
                 android:layout_marginTop="60dp"
                 android:padding="8dp"
-                android:hint="Email or Username"
+                android:hint="@string/sign_in_emailUsername"
                 android:drawableLeft="@drawable/user"
                 android:drawablePadding="15dp"
                 android:textColor="@color/black" />
@@ -53,7 +53,7 @@
                 android:layout_marginTop="20dp"
                 android:inputType="textPassword"
                 android:padding="8dp"
-                android:hint="Password"
+                android:hint="@string/sign_inup_password"
                 android:drawableLeft="@drawable/lock_icon"
                 android:drawablePadding="20dp"
                 android:textColor="@color/black" />
@@ -61,7 +61,7 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:text="SIGN IN"
+                android:text="@string/sign_in_btn"
                 android:id="@+id/signin_button"
                 android:textSize="18sp"
                 android:layout_marginTop="40dp"
@@ -78,14 +78,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/singUpRedirect"
-                    android:text="Do not have an account"
+                    android:text="@string/dont"
                     android:layout_gravity="left"
                     android:padding="10dp"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/forgotPassword"
-                    android:text="Forgot password"
+                    android:text="@string/forgot_password"
                     android:layout_gravity="right"
                     android:padding="10dp"/>
             </LinearLayout>

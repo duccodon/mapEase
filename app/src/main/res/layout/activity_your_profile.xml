@@ -67,7 +67,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Edit profile"
+            android:text="@string/edit_profile"
             android:backgroundTint="#E0F7FA"
             android:textColor="#00695C"
             android:layout_gravity="center_vertical" />
@@ -98,7 +98,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="contributions"
+                android:text="@string/your_contributions"
                 android:textSize="14sp"
                 android:textColor="#757575" />
         </LinearLayout>
@@ -121,7 +121,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="following"
+                android:text="@string/your_following"
                 android:textSize="14sp"
                 android:textColor="#757575" />
         </LinearLayout>
@@ -140,7 +140,7 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Tell others about yourself and the places you love"
+        android:hint="@string/tell_other_people_profile"
         android:textSize="14sp"
         android:textColor="#757575"
         android:background="#F5F5F5"
@@ -180,7 +180,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="REVIEWS"
+            android:text="@string/review_profile_list"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="#000000" />
@@ -189,7 +189,7 @@
             android:id="@+id/writeReview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Write review"
+            android:text="@string/write_review"
             android:backgroundTint="#E0F7FA"
             android:textColor="#00695C" />
     </LinearLayout>

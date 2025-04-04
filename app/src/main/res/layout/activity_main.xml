@@ -67,7 +67,7 @@
                     android:id="@+id/btn_restaurant"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Restaurant"
+                    android:text="@string/restaurant_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -76,7 +76,7 @@
                     android:id="@+id/btn_hotel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hotel"
+                    android:text="@string/hotel_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -85,7 +85,7 @@
                     android:id="@+id/btn_cafe"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cafe"
+                    android:text="@string/cafe_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -94,7 +94,7 @@
                     android:id="@+id/btn_mall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mall"
+                    android:text="@string/mall_btn"
                     android:background="@drawable/rounded_button_bg"
                     android:textColor="@android:color/white"
                     android:layout_marginEnd="8dp" />
@@ -124,6 +124,19 @@
             android:onClick="getWeatherDetails"
             android:scaleType="centerInside"
             android:src="@drawable/profile_user"
+            app:layout_constraintEnd_toStartOf="@id/language_button"
+            app:layout_constraintTop_toBottomOf="@id/location_type_scroll" />
+
+        <ImageButton
+            android:id="@+id/language_button"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_margin="16dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/round_button"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_language"
+            android:onClick="showLanguageMenu"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/location_type_scroll" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -340,6 +353,9 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+                <ScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
                     <!-- Weather Icon and City -->
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -363,14 +379,16 @@
                             android:paddingStart="8dp" />
                     </LinearLayout>
                     <!-- Weather Details -->
-                    <TextView
-                        android:id="@+id/weatherText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textColor="#34495E"
-                        android:lineSpacingExtra="4dp"
-                        android:layout_marginTop="8dp" />
+                        <TextView
+                            android:id="@+id/weatherText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp"
+                            android:textColor="#34495E"
+                            android:lineSpacingExtra="4dp"
+                            android:layout_marginTop="8dp" />
+                </ScrollView>
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
