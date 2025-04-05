@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_marginTop="50dp"
+    tools:context=".Admin_UserDetail">>
+
+    <TextView
+        android:id="@+id/detailUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Username"
+        android:textSize="24sp"
+        android:textColor="@color/lavender"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:textStyle="bold"/>
+
+    <ImageView
+        android:id="@+id/detailImage"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:src="@drawable/uploadimg"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Email"
+        android:textSize="14sp"
+        android:textColor="@color/lavender"
+        android:layout_marginBottom="4dp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/detailEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="user@example.com"
+        android:textSize="18sp"
+        android:textColor="@color/lavender"
+        android:padding="8dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bio"
+        android:textSize="14sp"
+        android:textColor="@color/lavender"
+        android:layout_marginBottom="4dp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/detailBio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="User bio here"
+        android:textSize="18sp"
+        android:textColor="@color/lavender"
+        android:padding="8dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Role"
+        android:textSize="14sp"
+        android:textColor="@color/lavender"
+        android:layout_marginBottom="4dp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/detailRole"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="User role"
+        android:textSize="18sp"
+        android:textColor="@color/lavender"
+        android:padding="8dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:layout_marginBottom="8dp" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.github.clans.fab.FloatingActionMenu
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            app:menu_fab_size="normal"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="16dp"
+            app:menu_colorNormal="@color/lavender"
+            app:menu_colorPressed="@color/lavender"
+            app:menu_icon="@drawable/ic_baseline_format_list_bulleted_24"
+            app:menu_openDirection="up">
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/editButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_edit_24"
+                app:fab_colorNormal="@color/green"
+                app:fab_size="mini"/>
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/deleteButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_delete_24"
+                app:fab_colorNormal="@color/red"
+                app:fab_size="mini"/>
+
+        </com.github.clans.fab.FloatingActionMenu>
+    </RelativeLayout>
+</LinearLayout>

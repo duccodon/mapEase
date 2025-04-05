@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical"
+tools:context=".Admin_ReviewDetail">
+
+<TextView
+    android:id="@+id/detailTitle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Review Detail"
+    android:layout_marginTop="14dp"
+    android:textSize="24sp"
+    android:layout_gravity="center"
+    android:layout_marginBottom="12dp"
+    android:textColor="@color/lavender"/>
+
+<!-- Username -->
+<TextView
+    android:id="@+id/reviewUser"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Username"
+    android:layout_gravity="center"
+    android:textSize="20sp"
+    android:textColor="@color/lavender"/>
+
+<!-- Location -->
+<TextView
+    android:id="@+id/reviewLocation"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:padding="20dp"
+    android:text="Location"
+    android:textSize="18sp"
+    android:textColor="@color/lavender"/>
+
+<!-- Rating -->
+<RatingBar
+    android:id="@+id/reviewRating"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_marginTop="10dp"
+    android:numStars="5"
+    android:stepSize="1.0"
+    android:isIndicator="true"
+    style="?android:attr/ratingBarStyle"/>
+
+<!-- Time -->
+<TextView
+    android:id="@+id/reviewTime"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:padding="20dp"
+    android:text="Time"
+    android:textSize="18sp"
+    android:textColor="@color/lavender"/>
+
+<!-- Content -->
+<TextView
+    android:id="@+id/reviewContent"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:padding="20dp"
+    android:text="Content"
+    android:textSize="18sp"
+    android:textColor="@color/lavender"/>
+
+<!-- Like Icon and Count -->
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_gravity="center"
+    android:layout_marginTop="10dp">
+
+    <ImageView
+        android:id="@+id/reviewLikeIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/outline_heart"/>
+
+    <TextView
+        android:id="@+id/reviewLikeCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:text="0"
+        android:textSize="18sp"
+        android:textColor="@color/lavender"/>
+</LinearLayout>
+
+<!-- Images Recycler -->
+<androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/reviewImagesRecycler"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:orientation="horizontal"
+    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+
+</LinearLayout>
