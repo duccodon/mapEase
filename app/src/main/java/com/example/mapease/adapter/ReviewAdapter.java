@@ -1,5 +1,6 @@
 package com.example.mapease.adapter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,21 +13,46 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
 
+import com.example.mapease.MainActivity;
 import com.example.mapease.R;
 import com.example.mapease.model.Review;
+import com.example.mapease.model.User;
+import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.FetchPlaceResponse;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ReviewAdapter extends ArrayAdapter<Review> {
 
     private final Context context;
     private final List<Review> reviews;
+    private FirebaseAuth auth;
+    private FirebaseDatabase db;
+    private DatabaseReference userRef;
+    private String currentUserID;
 
     public ReviewAdapter(Context context, List<Review> reviews) {
         super(context, 0, reviews);
@@ -57,23 +83,23 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         RecyclerView imagesRecycler = itemView.findViewById(R.id.reviewImagesRecycler);
 
         // Set data
-        userTextView.setText(review.getUserID());
+        auth = FirebaseAuth.getInstance();
+        currentUserID = auth.getCurrentUser().getUid();
+        db = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
+        userRef = db.getReference("user");
+
+        setUsername(userTextView, review.getUserID());
         ratingBar.setRating(review.getRating());
-        timeTextView.setText(review.getCreateAt());
-        locationTextView.setText(review.getLocationID());
+        timeTextView.setText(formatDate(review.getCreateAt()));
+        setLocation(review, locationTextView);
         contentTextView.setText(review.getContent());
-
-
-        String currentUserID = "ZbfpPC8DkegTta8kYEjdORcw6cs2";//test user lien ket vs data ben yourProfileActivity.java
 
         //new handle likes
         Map<String, Boolean> likes = review.getLikes();
-
             likeIcon.setVisibility(View.VISIBLE);
             likeCountTextView.setVisibility(View.VISIBLE);
-
-            // Set like count (number of entries in the map)
-            likeCountTextView.setText(String.valueOf(likes.size()));
+            // Set like count
+            likeCountTextView.setText(String.valueOf(likes.size() - 1));
 
             if (likes.containsKey(currentUserID)) {
                 likeIcon.setImageResource(R.drawable.heart);
@@ -83,22 +109,20 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
                 likeIcon.setColorFilter(ContextCompat.getColor(context, R.color.gray));
             }
 
-        // Handle like icon click, will fix when handle with firebase
-        /*likeIcon.setOnClickListener(v -> {
-            DatabaseReference likesRef = FirebaseDatabase.getInstance()
+        // Handle like icon click
+        likeIcon.setOnClickListener(v -> {
+            DatabaseReference likesRef = db
                     .getReference("reviews")
                     .child(review.getReviewId())
                     .child("likes")
-                    .child(currentUserId);
+                    .child(currentUserID);
 
-            if (likes != null && likes.containsKey(currentUserId)) {
-                // Unlike: Remove user from likes
+            if (likes.containsKey(currentUserID)) {
                 likesRef.removeValue();
             } else {
-                // Like: Add user to likes
                 likesRef.setValue(true);
             }
-        });*/
+        });
 
         // Handle images
         List<String> base64Images = review.getImageUrls();
@@ -113,7 +137,118 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         return itemView;
     }
 
+    private void setUsername(TextView userTextView, String UID) {
+        userRef.child(UID).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    User user = snapshot.getValue(User.class);
 
+                    String username = user.getUsername();
+                    userTextView.setText(username);
+                    Log.d("UserData", "Username: " + username);
+                } else {
+                    Log.d("UserData", "User data doesn't exist");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("UserData", "Error fetching user data: " + error.getMessage(), error.toException());
+            }
+        });
+    }
+
+    private String formatDate(String isoTime) {
+        try {
+            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
+            Date pastDate = isoFormat.parse(isoTime);
+            Date now = new Date();
+            long diffInMillis = now.getTime() - pastDate.getTime();
+
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(diffInMillis);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(diffInMillis);
+            long hours = TimeUnit.MILLISECONDS.toHours(diffInMillis);
+            long days = TimeUnit.MILLISECONDS.toDays(diffInMillis);
+            long weeks = days / 7;
+            long months = days / 30;
+            long years = days / 365;
+
+            if (seconds < 60) {
+                return "Just now";
+            } else if (minutes < 60) {
+                return minutes + "m ago";
+            } else if (hours < 24) {
+                return hours + "h ago";
+            } else if (days < 7) {
+                return days + "d ago";
+            } else if (weeks < 4) {
+                return weeks + "w ago";
+            } else if (months < 12) {
+                return months + "mo ago";
+            } else {
+                return years + "y ago";
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return isoTime; //return origin if fail
+        }
+    }
+
+    public interface LocationAddressCallback {
+        void onAddressLoaded(String address);
+        void onFailure(Exception e);
+    }
+
+    private void getLocationAddress(String locationID, LocationAddressCallback callback) {
+        List<Place.Field> fields = Arrays.asList(
+                Place.Field.ID,
+                Place.Field.ADDRESS
+        );
+
+        PlacesClient placesClient = Places.createClient(context);
+        FetchPlaceRequest request = FetchPlaceRequest.builder(locationID, fields).build();
+
+        placesClient.fetchPlace(request).addOnSuccessListener(fullResponse -> {
+            Place place = fullResponse.getPlace();
+            callback.onAddressLoaded(place.getAddress());
+        }).addOnFailureListener(e -> {
+            Log.e("Review", "Error finding place: " + e.getMessage());
+            callback.onFailure(e);
+        });
+    }
+
+    private void setLocation(Review review, TextView locationTextView){
+        getLocationAddress(review.getLocationID(), new LocationAddressCallback() {
+            @Override
+            public void onAddressLoaded(String address) {
+                // Update UI on main thread
+                ((Activity) context).runOnUiThread(() -> {
+                    locationTextView.setText(address);
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                ((Activity) context).runOnUiThread(() -> {
+                    locationTextView.setText("Address not available");
+                });
+            }
+        });
+
+    }
+
+    public float calculateAverageRating() {
+        if (reviews == null || reviews.isEmpty()) {
+            return 0f;
+        }
+
+        float sum = 0f;
+        for (Review review : reviews) {
+            sum += review.getRating();
+        }
+        return sum / reviews.size();
+    }
     // ImageAdapter class for online URL image
     /*private static class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
         private final Context context;

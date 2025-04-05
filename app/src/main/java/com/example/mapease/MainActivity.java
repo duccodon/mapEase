@@ -27,6 +27,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.TableLayout;
@@ -89,6 +90,11 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -147,7 +153,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout overviewTab;
     private LinearLayout reviewsTab;
     private LinearLayout exploreTab;
-    //
+    //firbase
+    private FirebaseAuth auth;
+    private FirebaseDatabase db;
+    private DatabaseReference reviewRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,6 +193,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         exploreTab = findViewById(R.id.explore_tab);
         //button for place types
         setupButtonListenersForPlacesType();
+        //firebase
+        db = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
+        reviewRef = db.getReference("reviews");
+        auth = FirebaseAuth.getInstance();
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -636,6 +649,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LinearLayout reviewsTab = findViewById(R.id.reviews_tab);
         TabLayout tabLayout = findViewById(R.id.tab_layout);
         AppCompatButton writeReviewButton = findViewById(R.id.write_review_button);
+        TextView averageRatingBar = findViewById(R.id.rating_number);
+        RatingBar ratingBar = findViewById(R.id.rating_bar);
 
         if(isPOI) {
             //enable tab
@@ -648,42 +663,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             tabLayout.getTabAt(2).view.setAlpha(1f);
 
             tabLayout.selectTab(tabLayout.getTabAt(0));
-            // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
-            //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
-            List<String> images1 = Arrays.asList(
-                    "https://imgur.com/DvpvklR.png",
-                    "https://picsum.photos/200/300"
-            );
 
-            Map<String, Boolean> likesForReview2 = new HashMap<>();
-            likesForReview2.put("ZbfpPC8DkegTta8kYEjdORcw6cs2", true);
+            //check data from firebase
+            writeReviewButton.setEnabled(true);
+            writeReviewButton.setAlpha(1.0f);
+            writeReviewButton.setText("write review");
+            loadAllReviews(locationID, new ReviewsLoadCallback() {
+                @Override
+                public void onReviewsLoaded(List<Review> reviews) {
+                    ListView listView = findViewById(R.id.reviewListView);
 
-            List<Review> reviews = new ArrayList<>();
-            reviews.add(new Review(
-                    "1",
-                    "ZbfpPC8DkegTta8kYEjdORcw6cs2",
-                    "LocationID",
-                    "Greate service, nice staff",
-                    5.0f,
-                    "yyyy-MM-dd'T'HH:mm:ssZ",
-                    images1,
-                    new HashMap<>()
-            ));
-            reviews.add(new Review(
-                    "2",
-                    "ZbfpPC8DkegTta8kYEjdORcw6cs2",
-                    "LocationID",
-                    "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
-                    4.0f,
-                    "yyyy-MM-dd'T'HH:mm:ssZ",
-                    images1,
-                    likesForReview2
-            ));
+                    if (reviews != null && !reviews.isEmpty()) {
+                        ReviewAdapter adapter = new ReviewAdapter(MainActivity.this, reviews);
 
-            // Set up ListView
-            ListView listView = findViewById(R.id.reviewListView);
-            ReviewAdapter adapter = new ReviewAdapter(this, reviews);
-            listView.setAdapter(adapter);
+                        //rating
+                        float averageRating = adapter.calculateAverageRating();
+                        averageRatingBar.setText(String.format("%.1f", averageRating));
+                        ratingBar.setRating(averageRating);
+                        //write review button
+                        boolean hasUserReviewed = false;
+                        for (Review review : reviews) {
+                            if (review.getUserID().contentEquals(auth.getCurrentUser().getUid())){
+                                hasUserReviewed = true;
+                                writeReviewButton.setText("You've already reviewed");
+                                break;
+                            }
+                        }
+                        writeReviewButton.setEnabled(!hasUserReviewed);
+                        writeReviewButton.setAlpha(hasUserReviewed ? 0.5f : 1.0f);
+
+                        listView.setAdapter(adapter);
+                        listView.setVisibility(View.VISIBLE);
+                    } else {
+                        averageRatingBar.setText("0");
+                        ratingBar.setRating(0);
+                    }
+                }
+            });
 
             // review button
             writeReviewButton.setOnClickListener(new View.OnClickListener() {
@@ -711,6 +727,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Ensure we're showing the Overview tab
             tabLayout.selectTab(tabLayout.getTabAt(0));
         }
+    }
+
+    private void loadAllReviews(String locationID, ReviewsLoadCallback callback) {
+        List<Review> reviews = new ArrayList<>();
+        reviewRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                reviews.clear();
+                for (DataSnapshot reviewSnapshot : snapshot.getChildren()) {
+                    try {
+                        Review review = reviewSnapshot.getValue(Review.class);
+                        if (review != null && review.getLocationID().contentEquals(locationID))
+                            reviews.add(review);
+                    } catch (Exception e) {
+                        Log.e("RetrieveReview", "Error parsing review", e);
+                    }
+                }
+                callback.onReviewsLoaded(reviews);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(MainActivity.this,
+                        "Failed to load reviews of current place: " + error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+                callback.onReviewsLoaded(new ArrayList<>()); // Return empty list on error
+            }
+        });
+    }
+
+    interface ReviewsLoadCallback {
+        void onReviewsLoaded(List<Review> reviews);
     }
 
     public void loadPlacePhoto(PhotoMetadata photoMetadata, ImageView imageView) {
