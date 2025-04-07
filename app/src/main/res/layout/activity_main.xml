@@ -172,7 +172,7 @@
             app:tabTextColor="#2C3E50"
             app:tabSelectedTextColor="#2C3E50"
             app:tabIndicatorHeight="3dp"
-            app:tabMode="fixed"
+            app:tabMode="scrollable"
             app:tabGravity="fill">
 
             <com.google.android.material.tabs.TabItem
@@ -189,6 +189,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Explore" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save" />
         </com.google.android.material.tabs.TabLayout>
 
         <LinearLayout
@@ -291,7 +296,8 @@
                     android:paddingEnd="8dp"
                     android:drawablePadding="8dp"
                     android:minWidth="0dp"
-                    android:minHeight="0dp"/>
+                    android:minHeight="0dp"
+                    android:onClick="saveLocationFunction"/>
             </LinearLayout>
 
             <!-- Location Image -->
@@ -480,5 +486,30 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"/>
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/save_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Favorite Location"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="16dp"/>
+
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/save_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"/>
+        </LinearLayout>
+
     </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

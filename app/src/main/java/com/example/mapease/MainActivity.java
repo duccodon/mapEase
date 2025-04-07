@@ -153,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout overviewTab;
     private LinearLayout reviewsTab;
     private LinearLayout exploreTab;
+    private  LinearLayout saveLocationTab;
     //firbase
     private FirebaseAuth auth;
     private FirebaseDatabase db;
@@ -191,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         overviewTab = findViewById(R.id.overview_tab);
         reviewsTab = findViewById(R.id.reviews_tab);
         exploreTab = findViewById(R.id.explore_tab);
+        saveLocationTab = findViewById(R.id.save_tab);
         //button for place types
         setupButtonListenersForPlacesType();
         //firebase
@@ -206,17 +208,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         overviewTab.setVisibility(View.VISIBLE);
                         exploreTab.setVisibility(View.GONE);
                         reviewsTab.setVisibility(View.GONE);
+                        saveLocationTab.setVisibility(View.GONE);
                         break;
                     case 1: // Reviews tab
                         overviewTab.setVisibility(View.GONE);
                         exploreTab.setVisibility(View.GONE);
                         reviewsTab.setVisibility(View.VISIBLE);
+                        saveLocationTab.setVisibility(View.GONE);
                         break;
                     case 2: // Explore tab
                         overviewTab.setVisibility(View.GONE);
                         exploreTab.setVisibility(View.VISIBLE);
                         reviewsTab.setVisibility(View.GONE);
+                        saveLocationTab.setVisibility(View.GONE);
                         break;
+                    case 3: // Save Location tab
+                        overviewTab.setVisibility(View.GONE);
+                        exploreTab.setVisibility(View.GONE);
+                        reviewsTab.setVisibility(View.GONE);
+                        saveLocationTab.setVisibility(View.VISIBLE);
+                        break;
+
                 }
             }
             @Override
@@ -1311,6 +1323,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivity(intent);
     }
 
+    public void saveLocationFunction(View view){
+        if (currentLatLng == null || selectedLatLng == null) {
+            Toast.makeText(this, "Missing location data: " +
+                            (currentLatLng == null ? "Current is null" : "") + " " +
+                            (selectedLatLng == null ? "Selected is null" : ""),
+                    Toast.LENGTH_LONG).show();
+        }
+
+        // Parse LatLng thành String và hiển thị qua Toast
+        String selectedStr = "Selected: " + selectedName;
+        Toast.makeText(this,selectedStr, Toast.LENGTH_LONG).show();
+
+        // Gửi dữ liệu và chuyển Activity
+        Intent intent = new Intent(this, SaveLocation.class);
+        Bundle bundle = new Bundle();
+
+        bundle.putParcelable("selectedLatLng", selectedLatLng);
+
+        intent.putExtras(bundle);
+        startActivity(intent);
+    }
+
+
     public void setupButtonListenersForPlacesType() {
         findViewById(R.id.btn_restaurant).setOnClickListener(v -> fetchNearbyPlaces("restaurant"));
         findViewById(R.id.btn_hotel).setOnClickListener(v -> fetchNearbyPlaces("hotel"));
@@ -1370,4 +1405,5 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivity(refresh);
         finish();
     }
+
 }

@@ -15,6 +15,7 @@ public class SendLocationToActivity {
         this.destinationName = destinationName;
     }
 
+
     public LatLng getOrigin() {
         return origin;
     }

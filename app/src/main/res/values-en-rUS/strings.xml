@@ -67,4 +67,10 @@
     <string name="locationSharing">Location sharing</string>
     <string name="setting">Settings</string>
     <string name="logout">Logout</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- Admin -->
+    <string name="admin_open_menu">Open menu</string>
+    <string name="admin_close_menu">Close menu</string>
 </resources>
