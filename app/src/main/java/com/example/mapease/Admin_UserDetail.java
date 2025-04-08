@@ -63,6 +63,7 @@ public class Admin_UserDetail extends AppCompatActivity {
             public void onClick(View v) {
                 myRef.child(userId).removeValue()
                         .addOnSuccessListener(aVoid -> {
+                            auth.getUid();
                             Toast.makeText(Admin_UserDetail.this, "User data deleted", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(getApplicationContext(), AdminActivity.class));
                             finish();
