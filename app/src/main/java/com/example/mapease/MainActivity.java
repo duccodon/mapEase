@@ -12,6 +12,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -108,6 +109,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -124,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker currentMarker = null;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
-    private SearchView mapSearchView;
+
     private SupportMapFragment mapFragment;
     private AutocompleteSupportFragment autocompleteSupportFragment;
     private SlidingUpPanelLayout slidingLayout;
@@ -136,13 +138,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private TextView placeName;
     private TextView placeAddress;
+
     private ImageView placeImage;
+
+
+
     private String currentLatitude = "";
     private String currentLongitude = "";
     private LatLng currentLatLng = null;
     private LatLng selectedLatLng = null;
     private String currentName = "";
     private String selectedName = "";
+
+    private  String selectedAddress = "";
+    private String selectedPlaceID = "";
+    private String selectedPlaceImage = "";
+
+    private boolean isSelectedPOI;
+
     TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
     //FusedLocationProviderClient locationProviderClient;
@@ -167,6 +180,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(binding.getRoot());
         slidingLayout = findViewById(R.id.sliding_layout);
         slidingPanel = findViewById(R.id.sliding_panel);
+
         SlidingPanelHelper.setupPanel(this, slidingLayout, slidingPanel);
         //EdgeToEdge.enable(this);
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -885,6 +899,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     placeName.setText(place.getDisplayName());
                     placeAddress.setText("Address: " + place.getAddress());
 
+                    selectedAddress = place.getAddress();
+                    selectedPlaceID = place.getId();
+                    fetchPlacePhoto(place.getId(), new PhotoCallback() {
+                        @Override
+                        public void onPhotoBase64Ready(String base64Image) {
+                            selectedPlaceImage = base64Image;
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Log.e("PhotoFetch", "Error: " + e.getMessage());
+                            selectedPlaceImage = null;
+                        }
+                    });
+
                     // get place details
                     List<Place.Field> fullFields = Arrays.asList(
                             Place.Field.ID,
@@ -911,11 +940,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             findPlaceDetailsFromLocation(fullPlace.getLatLng(), fullPlace.getName(), fullPlace.getId());
                             selectedName = place.getDisplayName();
                             getReviews(true, fullPlace.getId());
+                            isSelectedPOI = true;
+
                         } else {
                             getWeatherDetails();
                             findPlaceDetailsFromLocation(place.getLatLng(), null, null);
                             selectedName = place.getDisplayName();
                             getReviews(false, null);
+                            isSelectedPOI = false;
                         }
                     }).addOnFailureListener(e -> {
                         Toast.makeText(MainActivity.this,"Failed to fetch place details: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -1076,44 +1108,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
         return false;
-    }
-
-    private void getPlacePhoto(String placeId, ImageView placeImage) {
-        List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
-        FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
-
-        placesClient.fetchPlace(placeRequest).addOnSuccessListener((response) -> {
-            Place place = response.getPlace();
-            List<PhotoMetadata> photoMetadataList = place.getPhotoMetadatas();
-
-            if (photoMetadataList == null || photoMetadataList.isEmpty()) {
-                Log.e("PlacePhoto", "No photo metadata found for this place.");
-                placeImage.setVisibility(View.GONE);
-                return;
-            }
-
-            PhotoMetadata photoMetadata = photoMetadataList.get(0);
-
-            FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
-                    .setMaxWidth(500)
-                    .setMaxHeight(300)
-                    .build();
-
-            placesClient.fetchPhoto(photoRequest).addOnSuccessListener(fetchPhotoResponse -> {
-                Bitmap bitmap = fetchPhotoResponse.getBitmap();
-                placeImage.setImageBitmap(bitmap);
-                placeImage.setVisibility(View.VISIBLE);
-            }).addOnFailureListener(exception -> {
-                Log.e("PlacePhoto", "Photo fetch failed: " + exception.getMessage());
-                placeImage.setVisibility(View.GONE);
-            });
-
-        }).addOnFailureListener(exception -> {
-            Log.e("PlacePhoto", "Place details fetch failed: " + exception.getMessage());
-            placeImage.setVisibility(View.GONE);
-
-        });
-
     }
 
     private void setRestrictPlacesInCountry(Location location) {
@@ -1331,18 +1325,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Toast.LENGTH_LONG).show();
         }
 
-        // Parse LatLng thành String và hiển thị qua Toast
-        String selectedStr = "Selected: " + selectedName;
-        Toast.makeText(this,selectedStr, Toast.LENGTH_LONG).show();
+        if(true) {
+            Toast.makeText(this, "Selected POI: " + selectedName, Toast.LENGTH_LONG).show();
 
-        // Gửi dữ liệu và chuyển Activity
-        Intent intent = new Intent(this, SaveLocation.class);
-        Bundle bundle = new Bundle();
 
-        bundle.putParcelable("selectedLatLng", selectedLatLng);
+            // Gửi dữ liệu và chuyển Activity
+            Intent intent = new Intent(this, SaveLocation.class);
+            Bundle bundle = new Bundle();
 
-        intent.putExtras(bundle);
-        startActivity(intent);
+            bundle.putParcelable("selectedLatLng", selectedLatLng);
+            bundle.putString("selectedName", selectedName);
+            bundle.putString("selectedAddress", selectedAddress);
+            bundle.putString("selectedPlaceID", selectedPlaceID);
+
+            if (selectedPlaceImage != null) {
+                bundle.putString("placeImageBase64", selectedPlaceImage);
+            }
+
+            intent.putExtra("context", "main");
+
+
+            intent.putExtras(bundle);
+            startActivity(intent);
+        }
+        else{
+            Toast.makeText(this, "Can not save this location", Toast.LENGTH_LONG).show();
+        }
     }
 
 
@@ -1405,5 +1413,50 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivity(refresh);
         finish();
     }
+    public interface PhotoCallback {
+        void onPhotoBase64Ready(String base64Image);
+        void onError(Exception e);
+    }
+
+
+
+
+    private  void fetchPlacePhoto(String placeId, PhotoCallback callback){
+        List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
+        FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
+
+        placesClient.fetchPlace(placeRequest).addOnSuccessListener((response) -> {
+            Place place = response.getPlace();
+            List<PhotoMetadata> photoMetadataList = place.getPhotoMetadatas();
+
+            if (photoMetadataList == null || photoMetadataList.isEmpty()) {
+                callback.onError(new Exception("No photo metadata found for this place."));
+                return;
+            }
+
+            PhotoMetadata photoMetadata = photoMetadataList.get(0);
+            FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
+                    .setMaxWidth(500)
+                    .setMaxHeight(300)
+                    .build();
+
+            placesClient.fetchPhoto(photoRequest).addOnSuccessListener(fetchPhotoResponse -> {
+                Bitmap bitmap = fetchPhotoResponse.getBitmap();
+                String base64Image = bitmapToBase64(bitmap);
+                callback.onPhotoBase64Ready(base64Image);
+            }).addOnFailureListener(callback::onError);
+
+        }).addOnFailureListener(callback::onError);
+    }
+
+
+    private String bitmapToBase64(Bitmap bitmap){
+        if (bitmap == null) return null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+    }
+
 
 }

@@ -42,6 +42,10 @@
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
+            android:name=".SaveLocation"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
+        <activity
             android:name=".ReviewSearch"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />

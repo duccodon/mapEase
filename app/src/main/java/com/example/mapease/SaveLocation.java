@@ -1,21 +1,30 @@
 package com.example.mapease;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mapease.model.favoriteLocation;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class SaveLocation extends AppCompatActivity {
 
@@ -24,31 +33,26 @@ public class SaveLocation extends AppCompatActivity {
     private FirebaseDatabase database;
     private DatabaseReference mDatabase;//myRef
 
-    private static final int PICK_IMAGE_REQUEST = 1; // Request code for selecting an image
-    private static final int PERMISSION_REQUEST_CODE = 2; // Permission request code
     String context;
+
     private String locationId;
-    private String locationName;
-
-    private String locationAddress;
-
-    private String locationNotes;
-
-    private String locationType;
-
-    private double locationLatitude;
-
-    private double locationLongitude;
-
-    private String createAt;
-
-    private List<String> imageUrls;
-
-    private String userID;
 
     private String favoriteId;
 
     private String userId;
+
+    private String locationName;
+
+    private String locationAddress;
+
+    private String locationNotes = "";
+
+    private String locationType = "";
+
+    private LatLng locationLatLng;
+
+    private String imageUrls;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -57,20 +61,46 @@ public class SaveLocation extends AppCompatActivity {
 
         // Initialize Firebase
         auth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         mDatabase = database.getReference("favoriteLocations");
 
-//        // Initialize UI elements
-//        EditText locationNameEditText = findViewById(R.id.location_name_edit_text);
-//        EditText locationAddressEditText = findViewById(R.id.location_address_edit_text);
-//        EditText locationNotesEditText = findViewById(R.id.location_notes_edit_text);
-//        EditText locationTypeEditText = findViewById(R.id.location_type_edit_text);
-//        Button saveButton = findViewById(R.id.save_button);
-//
-//        // Set up save button click listener
-//        saveButton.setOnClickListener(v -> {
-//            saveLocation();
-//        });
+        // Get the user ID
+        userId = auth.getCurrentUser().getUid();
+        // Initialize the image URLs list
+
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            locationName = extras.getString("selectedName");
+            locationLatLng = extras.getParcelable("selectedLatLng");
+            locationAddress = extras.getString("selectedAddress");
+            locationId = extras.getString("selectedId");
+            context = extras.getString("context");
+            imageUrls = extras.getString("placeImageBase64");
+        }
+
+        saveFavoriteLocationToDB(locationName, locationAddress, locationNotes, locationType, locationLatLng, imageUrls);
+        finish();
     }
+
+    private  void saveFavoriteLocationToDB (String locationName, String locationAddress, String locationNotes, String locationType, LatLng locationLatLng, String imageUrls) {
+        // Create a new FavoriteLocation object
+        favoriteId = userId + "_" + locationId;
+        String createdAt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(new Date());
+
+
+        favoriteLocation favoriteLocation = new favoriteLocation(favoriteId, userId, locationId, locationLatLng ,locationName, locationAddress, locationNotes, locationType, createdAt, imageUrls);
+
+        // Save the favorite location to the database
+        mDatabase.child(favoriteId).setValue(favoriteLocation)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(SaveLocation.this, "Save location successfully", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(SaveLocation.this, "Save location successfully failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
     
 }

@@ -14,10 +14,9 @@ public class favoriteLocation {
     private String locationAddress;
     private String locationNotes;
     private String locationType;
-    private String createAt;
-    private List<String> imageUrls;
+    private String imageUrls;
 
-    public favoriteLocation(String favoriteId, String userID, String locationID, LatLng lng, String locationName, String locationAddress, String locationNotes, String locationType, String createAt, List<String> imageUrls) {
+    public favoriteLocation(String favoriteId, String userID, String locationID, LatLng lng, String locationName, String locationAddress, String locationNotes, String locationType, String createAt, String imageUrls) {
         this.favoriteId = favoriteId;
         this.userID = userID;
         this.locationID = locationID;
@@ -26,7 +25,7 @@ public class favoriteLocation {
         this.locationAddress = locationAddress;
         this.locationNotes = locationNotes;
         this.locationType = locationType;
-        this.createAt = createAt;
+
         this.imageUrls = imageUrls;
     }
 
@@ -66,11 +65,9 @@ public class favoriteLocation {
         return locationType;
     }
 
-    public String getCreateAt() {
-        return createAt;
-    }
 
-    public List<String> getImageUrls() {
+
+    public String getImageUrls() {
         return imageUrls;
     }
 
@@ -107,11 +104,8 @@ public class favoriteLocation {
         this.locationType = locationType;
     }
 
-    public void setCreateAt(String createAt) {
-        this.createAt = createAt;
-    }
 
-    public void setImageUrls(List<String> imageUrls) {
+    public void setImageUrls(String imageUrls) {
         this.imageUrls = imageUrls;
     }
 
@@ -126,7 +120,6 @@ public class favoriteLocation {
                 ", locationAddress='" + locationAddress + '\'' +
                 ", locationNotes='" + locationNotes + '\'' +
                 ", locationType='" + locationType + '\'' +
-                ", createAt='" + createAt + '\'' +
                 ", imageUrls=" + imageUrls +
                 '}';
     }
