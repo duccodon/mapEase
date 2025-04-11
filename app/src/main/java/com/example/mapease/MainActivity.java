@@ -150,11 +150,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String currentName = "";
     private String selectedName = "";
 
-    private  String selectedAddress = "";
-    private String selectedPlaceID = "";
     private String selectedPlaceImage = "";
 
-    private boolean isSelectedPOI;
+    private  String selectedAddress = "";
+
 
     TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
@@ -356,6 +355,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
 
             getReviews(true, poi.placeId);
+            getSaveLocation(true, poi.placeId);
         });
 
         // Normal map click listener
@@ -371,6 +371,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             findPlaceDetailsFromLocation(latLng, null, null);
             getReviews(false, null);
+            getSaveLocation(false, null);
         });
     }
 
@@ -755,6 +756,80 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void getSaveLocation(boolean isPOI, String locationID){
+//        LinearLayout saveLocationTab = findViewById(R.id.save_tab);
+//        TabLayout tabLayout = findViewById(R.id.tab_layout);
+        AppCompatButton saveLocationButton = findViewById(R.id.save_button);
+
+        if(isPOI) {
+//            //enable tab
+//            saveLocationTab.setVisibility(View.VISIBLE);
+//            saveLocationButton.setVisibility(View.VISIBLE);
+//            tabLayout.getTabAt(3).view.setEnabled(true);
+//            tabLayout.getTabAt(3).view.setAlpha(1f);
+
+            //check data from firebase
+            saveLocationButton.setEnabled(true);
+            saveLocationButton.setAlpha(1.0f);
+
+            fetchPlacePhoto(locationID, new PhotoCallback() {
+                @Override
+                public void onPhotoBase64Ready(String base64Image) {
+                    selectedPlaceImage = base64Image;
+                    Log.d("PhotoBase64", "Base64 Image: " + base64Image);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e("PhotoBase64", "Error: " + e.getMessage());
+                }
+            });
+
+            fetchAddressFromPlaceId(locationID, new AddressCallback() {
+                @Override
+                public void onAddressFetched(String address) {
+                    selectedAddress = address;
+                    Log.d("Address", "Address: " + address);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e("Address", "Error: " + e.getMessage());
+                }
+            });
+//            saveLocationButton.setText("Save this location");
+        }else{
+//            saveLocationTab.setVisibility(View.GONE);
+//            saveLocationButton.setVisibility(View.GONE);
+//
+//            // Disable the Reviews tab in TabLayout
+//            tabLayout.getTabAt(3).view.setEnabled(false);
+//            tabLayout.getTabAt(3).view.setAlpha(0.5f);
+
+        }
+        //save location button
+        saveLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SaveLocation.class);
+                Bundle bundle = new Bundle();
+
+                bundle.putParcelable("selectedLatLng", selectedLatLng);
+                bundle.putString("selectedName", selectedName);
+                bundle.putString("selectedAddress", selectedAddress);
+                bundle.putString("selectedPlaceID", locationID);
+
+                if (selectedPlaceImage != null) { // 🔧 FIX: now included if ready
+                    bundle.putString("placeImageBase64", selectedPlaceImage);
+                }
+
+                intent.putExtra("context", "main");
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
+    }
+
     private void loadAllReviews(String locationID, ReviewsLoadCallback callback) {
         List<Review> reviews = new ArrayList<>();
         reviewRef.addValueEventListener(new ValueEventListener() {
@@ -871,7 +946,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.autocomplete_fragment);
         assert autocompleteSupportFragment != null;
 
-        autocompleteSupportFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.FORMATTED_ADDRESS, Place.Field.DISPLAY_NAME, Place.Field.LAT_LNG));
+        autocompleteSupportFragment.setPlaceFields(Arrays.asList(
+                Place.Field.ID,
+                Place.Field.FORMATTED_ADDRESS,
+                Place.Field.DISPLAY_NAME,
+                Place.Field.LAT_LNG,
+                Place.Field.NAME,
+                Place.Field.ADDRESS
+        ));
         autocompleteSupportFragment.setHint(getString(R.string.search_here));
 
         if (autocompleteSupportFragment != null) {
@@ -899,20 +981,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     placeName.setText(place.getDisplayName());
                     placeAddress.setText("Address: " + place.getAddress());
 
-                    selectedAddress = place.getAddress();
-                    selectedPlaceID = place.getId();
-                    fetchPlacePhoto(place.getId(), new PhotoCallback() {
-                        @Override
-                        public void onPhotoBase64Ready(String base64Image) {
-                            selectedPlaceImage = base64Image;
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            Log.e("PhotoFetch", "Error: " + e.getMessage());
-                            selectedPlaceImage = null;
-                        }
-                    });
 
                     // get place details
                     List<Place.Field> fullFields = Arrays.asList(
@@ -931,8 +999,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(place.getId(), fullFields).build();
                     placesClient.fetchPlace(fullRequest).addOnSuccessListener(fullResponse -> {
                         Place fullPlace = fullResponse.getPlace();
-                        // Check if this is a POI by examining types
+
                         boolean isPOI = isPointOfInterest(fullPlace.getTypes());
+
 
                         if (isPOI) {
                             //POI search
@@ -940,14 +1009,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             findPlaceDetailsFromLocation(fullPlace.getLatLng(), fullPlace.getName(), fullPlace.getId());
                             selectedName = place.getDisplayName();
                             getReviews(true, fullPlace.getId());
-                            isSelectedPOI = true;
+                            getSaveLocation(true, fullPlace.getId());
 
                         } else {
                             getWeatherDetails();
                             findPlaceDetailsFromLocation(place.getLatLng(), null, null);
                             selectedName = place.getDisplayName();
                             getReviews(false, null);
-                            isSelectedPOI = false;
+                            getSaveLocation(false, null);
+
                         }
                     }).addOnFailureListener(e -> {
                         Toast.makeText(MainActivity.this,"Failed to fetch place details: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -1121,6 +1191,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             throw new RuntimeException(e);
         }
     }
+
     private void updateMapLocation(LatLng latLng, String placeName) {
 
         // Remove the previous marker if it exists
@@ -1317,43 +1388,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivity(intent);
     }
 
-    public void saveLocationFunction(View view){
-        if (currentLatLng == null || selectedLatLng == null) {
-            Toast.makeText(this, "Missing location data: " +
-                            (currentLatLng == null ? "Current is null" : "") + " " +
-                            (selectedLatLng == null ? "Selected is null" : ""),
-                    Toast.LENGTH_LONG).show();
-        }
-
-        if(true) {
-            Toast.makeText(this, "Selected POI: " + selectedName, Toast.LENGTH_LONG).show();
-
-
-            // Gửi dữ liệu và chuyển Activity
-            Intent intent = new Intent(this, SaveLocation.class);
-            Bundle bundle = new Bundle();
-
-            bundle.putParcelable("selectedLatLng", selectedLatLng);
-            bundle.putString("selectedName", selectedName);
-            bundle.putString("selectedAddress", selectedAddress);
-            bundle.putString("selectedPlaceID", selectedPlaceID);
-
-            if (selectedPlaceImage != null) {
-                bundle.putString("placeImageBase64", selectedPlaceImage);
-            }
-
-            intent.putExtra("context", "main");
-
-
-            intent.putExtras(bundle);
-            startActivity(intent);
-        }
-        else{
-            Toast.makeText(this, "Can not save this location", Toast.LENGTH_LONG).show();
-        }
-    }
-
-
     public void setupButtonListenersForPlacesType() {
         findViewById(R.id.btn_restaurant).setOnClickListener(v -> fetchNearbyPlaces("restaurant"));
         findViewById(R.id.btn_hotel).setOnClickListener(v -> fetchNearbyPlaces("hotel"));
@@ -1418,9 +1452,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         void onError(Exception e);
     }
 
-
-
-
     private  void fetchPlacePhoto(String placeId, PhotoCallback callback){
         List<Place.Field> fields = Arrays.asList(Place.Field.PHOTO_METADATAS);
         FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
@@ -1449,7 +1480,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).addOnFailureListener(callback::onError);
     }
 
-
     private String bitmapToBase64(Bitmap bitmap){
         if (bitmap == null) return null;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1457,6 +1487,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         byte[] imageBytes = baos.toByteArray();
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
     }
+
+    private void fetchAddressFromPlaceId(String placeId, AddressCallback callback) {
+        List<Place.Field> fields = Arrays.asList(
+                Place.Field.ID,
+                Place.Field.ADDRESS,
+                Place.Field.NAME,
+                Place.Field.LAT_LNG
+        );
+
+        FetchPlaceRequest request = FetchPlaceRequest.builder(placeId, fields).build();
+
+        placesClient.fetchPlace(request)
+                .addOnSuccessListener(response -> {
+                    Place place = response.getPlace();
+                    String address = place.getAddress();
+
+                    // Call your callback with the fetched data
+                    callback.onAddressFetched(address);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PlaceFetch", "Failed to fetch address for placeId: " + placeId, e);
+                    callback.onError(e);
+                });
+    }
+
+
+    public interface AddressCallback {
+        void onAddressFetched(String address);
+        void onError(Exception e);
+    }
+
+
 
 
 }

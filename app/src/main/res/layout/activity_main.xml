@@ -296,8 +296,7 @@
                     android:paddingEnd="8dp"
                     android:drawablePadding="8dp"
                     android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:onClick="saveLocationFunction"/>
+                    android:minHeight="0dp" />
             </LinearLayout>
 
             <!-- Location Image -->

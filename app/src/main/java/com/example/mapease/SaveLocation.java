@@ -16,12 +16,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.mapease.model.favoriteLocation;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -74,16 +77,16 @@ public class SaveLocation extends AppCompatActivity {
             locationName = extras.getString("selectedName");
             locationLatLng = extras.getParcelable("selectedLatLng");
             locationAddress = extras.getString("selectedAddress");
-            locationId = extras.getString("selectedId");
+            locationId = extras.getString("selectedPlaceID");
             context = extras.getString("context");
             imageUrls = extras.getString("placeImageBase64");
         }
 
-        saveFavoriteLocationToDB(locationName, locationAddress, locationNotes, locationType, locationLatLng, imageUrls);
+        saveFavoriteLocationToDB(locationId, locationName, locationAddress, locationNotes, locationType, locationLatLng, imageUrls);
         finish();
     }
 
-    private  void saveFavoriteLocationToDB (String locationName, String locationAddress, String locationNotes, String locationType, LatLng locationLatLng, String imageUrls) {
+    private  void saveFavoriteLocationToDB (String locationId, String locationName, String locationAddress, String locationNotes, String locationType, LatLng locationLatLng, String imageUrls) {
         // Create a new FavoriteLocation object
         favoriteId = userId + "_" + locationId;
         String createdAt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(new Date());
@@ -102,5 +105,7 @@ public class SaveLocation extends AppCompatActivity {
                 });
     }
 
-    
+
+
+
 }
