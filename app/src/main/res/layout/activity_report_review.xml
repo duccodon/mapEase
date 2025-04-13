@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical"
+android:background="#FFFFFF"
+tools:context=".ReportReview"
+android:layout_marginTop="20dp">
+
+<!-- Tiêu đề "ReportTitle review" -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Report review"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="16dp"
+            android:textColor="#000000" />
+        <ImageButton
+            android:id="@+id/reportReviewBackBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_back"
+            android:background="@color/white"
+            android:layout_marginTop="22dp"
+            android:layout_marginLeft="15dp"
+            />
+    </RelativeLayout>
+
+
+<!-- ListView để hiển thị danh sách các mục -->
+<ListView
+    android:id="@+id/listView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:divider="@android:color/darker_gray"
+    android:dividerHeight="0.5dp" />
+</LinearLayout>
