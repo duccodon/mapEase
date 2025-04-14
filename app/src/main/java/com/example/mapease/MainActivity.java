@@ -3,21 +3,18 @@ package com.example.mapease;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -27,18 +24,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
-import android.widget.SearchView;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,25 +37,16 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.PopupMenu;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.example.mapease.AsyncTask.FetchPlacesTasks;
-import com.example.mapease.Remote.PlacesAPIHelper;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.adapter.ReviewAdapter;
@@ -86,7 +67,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -96,12 +76,7 @@ import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.CircularBounds;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.api.model.PlaceLikelihood;
-import com.google.android.libraries.places.api.model.AutocompletePrediction;
-import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.api.net.FetchPlaceResponse;
-import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
-import com.google.android.gms.maps.model.PointOfInterest;
 import com.google.android.libraries.places.api.net.FetchPhotoRequest;
 import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
@@ -111,7 +86,6 @@ import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -201,11 +175,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private  DatabaseReference saveLocationRef;
 
-    private  DatabaseReference userRef;
+    public static Locale currentLocale;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        loadLocale();
         super.onCreate(savedInstanceState);
+
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.ggMapAPIKey), currentLocale);
+        }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -1006,7 +985,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
     private void init()
     {
-        Places.initialize(this, getString(R.string.ggMapAPIKey));
+        Places.initialize(this, getString(R.string.ggMapAPIKey), currentLocale);
         placesClient = Places.createClient(this);
 
 
@@ -1690,16 +1669,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         popup.show(); // Display the menu
     }
 
-    private void setLocale(String en) {
-        Locale locale = new Locale(en);
+    private void setLocale(String langCode) {
+        Locale locale = new Locale(langCode);
         Locale.setDefault(locale);
+
         Configuration config = new Configuration();
         config.locale = locale;
         getBaseContext().getResources().updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
+
+        getSharedPreferences("Settings", MODE_PRIVATE)
+                .edit()
+                .putString("App_Lang", langCode)
+                .apply();
+
         Intent refresh = new Intent(this, MainActivity.class);
         startActivity(refresh);
         finish();
     }
+
+
+    private void loadLocale() {
+        SharedPreferences prefs = getSharedPreferences("Settings", MODE_PRIVATE);
+        String langCode = prefs.getString("App_Lang", "en"); // Default: English
+
+        currentLocale = new Locale(langCode);
+        Locale.setDefault(currentLocale);
+
+        Configuration config = new Configuration();
+        config.setLocale(currentLocale);
+        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+    }
+
+
     public interface PhotoCallback {
         void onPhotoBase64Ready(String base64Image);
         void onError(Exception e);
