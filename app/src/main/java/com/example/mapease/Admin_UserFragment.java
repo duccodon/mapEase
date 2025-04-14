@@ -63,24 +63,24 @@ public class Admin_UserFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userList = new ArrayList<>();
 
-                for (DataSnapshot reviewSnapshot : snapshot.getChildren()) {
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                     try {
-                        User user = reviewSnapshot.getValue(User.class);
+                        User user = userSnapshot.getValue(User.class);
                         //if (user != null && user.getId().contentEquals(Id))
-                        user.setId(reviewSnapshot.getKey());
+                        user.setId(userSnapshot.getKey());
                         userList.add(user);
                     } catch (Exception e) {
-                        Log.e("RetrieveReview", "Error parsing review", e);
+                        Log.e("RetrieveUser", "Error parsing user", e);
                     }
                 }
 
-                for (User user : userList)
-                    Log.d("RetrieveUser", user.toString());
+                /* for (User user : userList)
+                    Log.d("RetrieveUser", user.toString()); */
 
-                // Update adapter with real reviews
-                UserAdapter adapter = new UserAdapter(getContext(), userList);
+                // Update adapter with real users
+                userAdapter = new UserAdapter(getContext(), userList);
                 ListView listView = view.findViewById(R.id.listView);
-                listView.setAdapter(adapter);
+                listView.setAdapter(userAdapter);
 
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
@@ -100,7 +100,7 @@ public class Admin_UserFragment extends Fragment {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(getContext(),
-                        "Failed to load reviews: " + error.getMessage(),
+                        "Failed to load users: " + error.getMessage(),
                         Toast.LENGTH_SHORT).show();
             }
         });

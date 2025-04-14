@@ -23,9 +23,13 @@
         android:theme="@style/Theme.Mapease"
         tools:targetApi="31">
         <activity
-            android:name=".ReportSubmit"
+            android:name=".Admin_ReportDetail"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
             android:exported="false" />
+        <activity
+            android:name=".ReportSubmit"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
             android:name=".ReportReview"
             android:exported="false"
