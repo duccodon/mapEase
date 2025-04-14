@@ -19,7 +19,9 @@ import com.example.mapease.Remote.RouteData;
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -135,6 +137,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        loadLocale();
         super.onCreate(savedInstanceState);
 
         binding = ActivityRouteBinding.inflate(getLayoutInflater());
@@ -819,6 +822,18 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     public interface OnRouteDataLoadedListener {
         void onRouteDataLoaded(List<RouteData> routeDataList);
+    }
+
+    private void loadLocale() {
+        SharedPreferences prefs = getSharedPreferences("Settings", MODE_PRIVATE);
+        String langCode = prefs.getString("App_Lang", "en");
+
+        Locale locale = new Locale(langCode);
+        Locale.setDefault(locale);
+
+        Configuration config = new Configuration();
+        config.setLocale(locale);
+        getBaseContext().getResources().updateConfiguration(config, getResources().getDisplayMetrics());
     }
 
 }
