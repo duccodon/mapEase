@@ -50,6 +50,8 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.android.volley.Request;
@@ -67,10 +69,12 @@ import com.example.mapease.Remote.PlacesAPIHelper;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.adapter.ReviewAdapter;
+import com.example.mapease.adapter.SaveLocationAdapter;
 import com.example.mapease.databinding.ActivityMainBinding;
 import com.example.mapease.databinding.CustomPlaceButtonBinding;
 import com.example.mapease.events.SendLocationToActivity;
 import com.example.mapease.model.Review;
+import com.example.mapease.model.favoriteLocation;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -161,6 +165,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private ImageView placeImage;
 
+    private ListView saveListView;
+    private SaveLocationAdapter saveAdapter;
+    List<favoriteLocation> saveLocationList = new ArrayList<>();
+
 
 
     private String currentLatitude = "";
@@ -190,6 +198,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FirebaseAuth auth;
     private FirebaseDatabase db;
     private DatabaseReference reviewRef;
+
+    private  DatabaseReference saveLocationRef;
+
+    private  DatabaseReference userRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -226,12 +238,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         reviewsTab = findViewById(R.id.reviews_tab);
         exploreTab = findViewById(R.id.explore_tab);
         saveLocationTab = findViewById(R.id.save_tab);
+
+        //List view
+        saveListView = findViewById(R.id.save_list_view);
+        saveAdapter = new SaveLocationAdapter(this, saveLocationList);
+        saveListView.setAdapter(saveAdapter);
+
+
         //button for place types
         setupButtonListenersForPlacesType();
+
         //firebase
         db = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         reviewRef = db.getReference("reviews");
         auth = FirebaseAuth.getInstance();
+        reviewRef = db.getReference("reviews");
+        saveLocationRef = db.getReference("favoriteLocations");
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -274,13 +296,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     reviewsTab.setVisibility(View.GONE);
                     exploreTab.setVisibility(View.GONE);
                     saveLocationTab.setVisibility(View.VISIBLE);
+                    //Load save place
+                    loadAllSavePlace(new DataLoadBack<favoriteLocation>() {
+                        @Override
+                        public void onDataLoaded(List<favoriteLocation> data) {
+                            saveLocationList.clear();
+                            saveLocationList.addAll(data);
+                            saveAdapter.notifyDataSetChanged();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Log.e("LoadSaveLocation", "Error loading save location: " + e.getMessage());
+                        }
+                    });
                     break;
             }
             if (tab != null) {
                 tab.select();
             }
+
         }
     }
+
     private void showProfileMenu(View view) {
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -1733,6 +1771,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         void onError(Exception e);
     }
 
+
+    public interface  DataLoadBack<T>{
+        void onDataLoaded(List<T> data);
+        void onError(Exception e);
+    }
+
+    private void loadAllSavePlace(DataLoadBack<favoriteLocation> callback){
+        List<favoriteLocation> savedPlaces = new ArrayList<>();
+        String currentUserID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        saveLocationRef.addListenerForSingleValueEvent(new ValueEventListener(){
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                savedPlaces.clear();
+                for (DataSnapshot placeSnapshot : snapshot.getChildren()) {
+                    try {
+                        favoriteLocation place = placeSnapshot.getValue(favoriteLocation.class);
+                        if(place == null) continue;
+
+                        String userId = place.getUserID();
+                        if (userId != null && userId.equals(currentUserID)) {
+                            savedPlaces.add(place);
+                        }
+                    } catch (Exception e) {
+                        Log.e("FirebaseLoad", "Error parsing place", e);
+                    }
+                }
+
+                callback.onDataLoaded(savedPlaces);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FirebaseLoad", "Database error: " + error.getMessage());
+            }
+        });
+    }
 
 
 

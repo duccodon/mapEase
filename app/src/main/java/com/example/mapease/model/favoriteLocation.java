@@ -9,7 +9,10 @@ public class favoriteLocation {
     private String favoriteId;
     private String userID;
     private String locationID;
-    private LatLng locationLatLng;
+
+    private double locationLatitude;
+    private double locationLongitude;
+
     private String locationName;
     private String locationAddress;
     private String locationNotes;
@@ -20,7 +23,8 @@ public class favoriteLocation {
         this.favoriteId = favoriteId;
         this.userID = userID;
         this.locationID = locationID;
-        this.locationLatLng = lng;
+       this.locationLatitude = lng.latitude;
+        this.locationLongitude = lng.longitude;
         this.locationName = locationName;
         this.locationAddress = locationAddress;
         this.locationNotes = locationNotes;
@@ -44,10 +48,13 @@ public class favoriteLocation {
         return locationID;
     }
 
-    public LatLng getLocationLatLng() {
-        return locationLatLng;
+    public double getLocationLatitude() {
+        return locationLatitude;
     }
 
+    public double getLocationLongitude() {
+        return locationLongitude;
+    }
 
     public String getLocationName() {
         return locationName;
@@ -83,10 +90,13 @@ public class favoriteLocation {
         this.locationID = locationID;
     }
 
-    public void setLocationLatitude(LatLng locationLng) {
-        this.locationLatLng = locationLng;
+    public void setLocationLatitude(double locationLatitude) {
+        this.locationLatitude = locationLatitude;
     }
 
+    public void setLocationLongitude(double locationLongitude) {
+        this.locationLongitude = locationLongitude;
+    }
 
     public void setLocationName(String locationName) {
         this.locationName = locationName;
@@ -115,7 +125,8 @@ public class favoriteLocation {
                 "favoriteId='" + favoriteId + '\'' +
                 ", userID='" + userID + '\'' +
                 ", locationID='" + locationID + '\'' +
-                ", locationLatLng=" + locationLatLng +
+                ", locationLatitude=" + locationLatitude + '\'' +
+                ", locationLongitude=" + locationLongitude + '\'' +
                 ", locationName='" + locationName + '\'' +
                 ", locationAddress='" + locationAddress + '\'' +
                 ", locationNotes='" + locationNotes + '\'' +
