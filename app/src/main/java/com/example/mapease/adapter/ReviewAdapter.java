@@ -2,6 +2,7 @@ package com.example.mapease.adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
@@ -10,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
@@ -21,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mapease.MainActivity;
 import com.example.mapease.R;
+import com.example.mapease.ReportReview;
 import com.example.mapease.model.Review;
 import com.example.mapease.model.User;
 import com.google.android.gms.tasks.Task;
@@ -81,6 +84,7 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         ImageView likeIcon = itemView.findViewById(R.id.reviewLikeIcon);
         TextView likeCountTextView = itemView.findViewById(R.id.reviewLikeCount);
         RecyclerView imagesRecycler = itemView.findViewById(R.id.reviewImagesRecycler);
+        ImageButton reportBtn = itemView.findViewById(R.id.report_button);
 
         // Set data
         auth = FirebaseAuth.getInstance();
@@ -133,6 +137,19 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         } else {
             imagesRecycler.setVisibility(View.GONE);
         }
+
+        //Handle report
+        reportBtn.setOnClickListener(v -> {
+            Intent i = new Intent(context, ReportReview.class);
+            i.putExtra("reviewId", review.getReviewId());
+            i.putExtra("reporterId", currentUserID);
+            if (context instanceof Activity) {
+                ((Activity) context).startActivity(i);
+            } else {
+                Log.e("ReviewAdapter", "Context is not an Activity, cannot start ReportReview");
+                Toast.makeText(context, "Cannot start report activity", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return itemView;
     }
