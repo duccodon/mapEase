@@ -48,6 +48,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mapease.Remote.RoutesAPIHelper;
+import com.example.mapease.Utils.LanguageHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.adapter.ReviewAdapter;
 import com.example.mapease.adapter.SaveLocationAdapter;
@@ -181,6 +182,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         loadLocale();
         super.onCreate(savedInstanceState);
+
+        currentLocale = LanguageHelper.getCurrentLocale(this);
 
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.ggMapAPIKey), currentLocale);
@@ -1690,14 +1693,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void loadLocale() {
         SharedPreferences prefs = getSharedPreferences("Settings", MODE_PRIVATE);
-        String langCode = prefs.getString("App_Lang", "en"); // Default: English
+        String langCode = prefs.getString("App_Lang", "en");
 
-        currentLocale = new Locale(langCode);
-        Locale.setDefault(currentLocale);
+        Locale locale = new Locale(langCode);
+        Locale.setDefault(locale);
 
         Configuration config = new Configuration();
-        config.setLocale(currentLocale);
-        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+        config.setLocale(locale);
+        getBaseContext().getResources().updateConfiguration(config, getResources().getDisplayMetrics());
     }
 
 
