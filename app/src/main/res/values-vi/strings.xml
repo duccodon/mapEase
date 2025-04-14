@@ -71,5 +71,15 @@
     <!-- Admin -->
     <string name="admin_open_menu">Open menu</string>
     <string name="admin_close_menu">Close menu</string>
+
+    <string name="place_icon">Place Icon</string>
+    <string name="place_name">Place Name</string>
+    <string name="restaurant">Nhà hàng</string>
+    <string name="coffee">Cà phê</string>
+    <string name="hotels">Khách sạn</string>
+    <string name="shopping">Mua sắm</string>
+    <string name="gas">Cây xăng</string>
+    <string name="groceries">Cửa hàng</string>
+    <string name="hospital_clinics">Bệnh viện</string>
 </resources>
 

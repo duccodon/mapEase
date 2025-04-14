@@ -29,10 +29,8 @@
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <fragment
             android:id="@+id/autocomplete_fragment"
@@ -47,58 +45,80 @@
         <!-- Scrollable Location Types -->
         <HorizontalScrollView
             android:id="@+id/location_type_scroll"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:fillViewport="true"
             android:overScrollMode="never"
-            android:scrollbars="none">
+            android:scrollbars="none"
+            app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="8dp">
+                android:gravity="center_vertical"
+                >
 
-                <Button
-                    android:id="@+id/btn_restaurant"
+                <!-- Restaurant Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/restaurant_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/restaurant_btn"
-                    android:background="@drawable/rounded_button_bg"
-                    android:textColor="@android:color/white"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"/>
 
-                <Button
-                    android:id="@+id/btn_hotel"
+                <!-- Coffee Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/coffee_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/hotel_btn"
-                    android:background="@drawable/rounded_button_bg"
-                    android:textColor="@android:color/white"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"/>
 
-                <Button
-                    android:id="@+id/btn_cafe"
+                <!-- Hotels Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/hotels_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/cafe_btn"
-                    android:background="@drawable/rounded_button_bg"
-                    android:textColor="@android:color/white"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"/>
 
-                <Button
-                    android:id="@+id/btn_mall"
+                <!-- Shopping Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/shopping_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/mall_btn"
-                    android:background="@drawable/rounded_button_bg"
-                    android:textColor="@android:color/white"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"/>
 
+                <!-- Gas Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/gas_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"/>
+
+                <!-- Groceries Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/groceries_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"/>
+
+                <!-- Hospital & Clinics Button -->
+                <include
+                    layout="@layout/custom_place_button"
+                    android:id="@+id/hospital_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"/>
             </LinearLayout>
         </HorizontalScrollView>
 
@@ -139,10 +159,10 @@
             android:onClick="showLanguageMenu"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/location_type_scroll" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-    <!-- Sliding Panel -->
+    <!-- Sliding Panel (unchanged) -->
     <LinearLayout
         android:id="@+id/sliding_panel"
         android:layout_width="match_parent"
@@ -381,19 +401,18 @@
                             android:paddingStart="8dp" />
                     </LinearLayout>
                     <!-- Weather Details -->
-
                     <ScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp">
-                    <TextView
-                        android:id="@+id/weatherText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textColor="#34495E"
-                        android:lineSpacingExtra="4dp"
-                        android:layout_marginTop="8dp" />
+                        <TextView
+                            android:id="@+id/weatherText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp"
+                            android:textColor="#34495E"
+                            android:lineSpacingExtra="4dp"
+                            android:layout_marginTop="8dp" />
                     </ScrollView>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -506,8 +525,6 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:padding="16dp"/>
-
-
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/save_recycler_view"

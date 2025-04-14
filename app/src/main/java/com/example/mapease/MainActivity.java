@@ -1,11 +1,18 @@
 package com.example.mapease;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -36,6 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.PopupMenu;
@@ -50,11 +58,17 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.mapease.AsyncTask.FetchPlacesTasks;
+import com.example.mapease.Remote.PlacesAPIHelper;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.adapter.ReviewAdapter;
 import com.example.mapease.databinding.ActivityMainBinding;
+import com.example.mapease.databinding.CustomPlaceButtonBinding;
 import com.example.mapease.events.SendLocationToActivity;
 import com.example.mapease.model.Review;
 import com.google.android.gms.common.api.Status;
@@ -68,11 +82,14 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.CircularBounds;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.PlaceLikelihood;
@@ -85,6 +102,7 @@ import com.google.android.libraries.places.api.net.FetchPhotoRequest;
 import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.api.net.SearchNearbyRequest;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.snackbar.Snackbar;
@@ -124,6 +142,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap myMap;
     private PlacesClient placesClient;
     private Marker currentMarker = null;
+    private final List<Marker> currentMarkers = new ArrayList<>();
+    private final Map<Marker, Place> markerPlaceMap = new HashMap<>();
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
 
@@ -216,33 +236,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
-                    case 0: // Overview tab
-                        overviewTab.setVisibility(View.VISIBLE);
-                        exploreTab.setVisibility(View.GONE);
-                        reviewsTab.setVisibility(View.GONE);
-                        saveLocationTab.setVisibility(View.GONE);
-                        break;
-                    case 1: // Reviews tab
-                        overviewTab.setVisibility(View.GONE);
-                        exploreTab.setVisibility(View.GONE);
-                        reviewsTab.setVisibility(View.VISIBLE);
-                        saveLocationTab.setVisibility(View.GONE);
-                        break;
-                    case 2: // Explore tab
-                        overviewTab.setVisibility(View.GONE);
-                        exploreTab.setVisibility(View.VISIBLE);
-                        reviewsTab.setVisibility(View.GONE);
-                        saveLocationTab.setVisibility(View.GONE);
-                        break;
-                    case 3: // Save Location tab
-                        overviewTab.setVisibility(View.GONE);
-                        exploreTab.setVisibility(View.GONE);
-                        reviewsTab.setVisibility(View.GONE);
-                        saveLocationTab.setVisibility(View.VISIBLE);
-                        break;
-
-                }
+                switchTab(tab.getPosition());
             }
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {}
@@ -251,6 +245,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    //0-overview, 1-reviews, 2-explore, 3-save location
+    public void switchTab(int tabIndex) {
+        if (tabIndex >= 0 && tabIndex < tabLayout.getTabCount()) {
+            TabLayout.Tab tab = tabLayout.getTabAt(tabIndex);
+            switch(tabIndex)
+            {
+                case 0:
+                    overviewTab.setVisibility(View.VISIBLE);
+                    reviewsTab.setVisibility(View.GONE);
+                    exploreTab.setVisibility(View.GONE);
+                    saveLocationTab.setVisibility(View.GONE);
+                    break;
+                case 1:
+                    overviewTab.setVisibility(View.GONE);
+                    reviewsTab.setVisibility(View.VISIBLE);
+                    exploreTab.setVisibility(View.GONE);
+                    saveLocationTab.setVisibility(View.GONE);
+                    break;
+                case 2:
+                    overviewTab.setVisibility(View.GONE);
+                    reviewsTab.setVisibility(View.GONE);
+                    exploreTab.setVisibility(View.VISIBLE);
+                    saveLocationTab.setVisibility(View.GONE);
+                    break;
+                case 3:
+                    overviewTab.setVisibility(View.GONE);
+                    reviewsTab.setVisibility(View.GONE);
+                    exploreTab.setVisibility(View.GONE);
+                    saveLocationTab.setVisibility(View.VISIBLE);
+                    break;
+            }
+            if (tab != null) {
+                tab.select();
+            }
+        }
+    }
     private void showProfileMenu(View view) {
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -985,9 +1015,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // get place details
                     List<Place.Field> fullFields = Arrays.asList(
                             Place.Field.ID,
-                            Place.Field.NAME,
-                            Place.Field.ADDRESS,
-                            Place.Field.LAT_LNG,
+                            Place.Field.DISPLAY_NAME,
+                            Place.Field.FORMATTED_ADDRESS,
+                            Place.Field.LOCATION,
                             Place.Field.PHOTO_METADATAS,
                             Place.Field.INTERNATIONAL_PHONE_NUMBER,
                             Place.Field.WEBSITE_URI,
@@ -1006,14 +1036,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (isPOI) {
                             //POI search
                             getWeatherDetails();
-                            findPlaceDetailsFromLocation(fullPlace.getLatLng(), fullPlace.getName(), fullPlace.getId());
+                            findPlaceDetailsFromLocation(fullPlace.getLocation(), fullPlace.getName(), fullPlace.getId());
                             selectedName = place.getDisplayName();
                             getReviews(true, fullPlace.getId());
                             getSaveLocation(true, fullPlace.getId());
 
                         } else {
                             getWeatherDetails();
-                            findPlaceDetailsFromLocation(place.getLatLng(), null, null);
+                            findPlaceDetailsFromLocation(place.getLocation(), null, null);
                             selectedName = place.getDisplayName();
                             getReviews(false, null);
                             getSaveLocation(false, null);
@@ -1389,26 +1419,211 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void setupButtonListenersForPlacesType() {
-        findViewById(R.id.btn_restaurant).setOnClickListener(v -> fetchNearbyPlaces("restaurant"));
-        findViewById(R.id.btn_hotel).setOnClickListener(v -> fetchNearbyPlaces("hotel"));
-        findViewById(R.id.btn_cafe).setOnClickListener(v -> fetchNearbyPlaces("cafe"));
-        findViewById(R.id.btn_mall).setOnClickListener(v -> fetchNearbyPlaces("mall"));
+                // Restaurant button
+                CustomPlaceButtonBinding restaurantBinding = CustomPlaceButtonBinding.bind(binding.restaurantButton.getRoot());
+                restaurantBinding.placeName.setText("Restaurant");
+                restaurantBinding.placeIcon.setImageResource(R.drawable.ic_restaurant);
 
+                // Coffee button
+                CustomPlaceButtonBinding coffeeBinding = CustomPlaceButtonBinding.bind(binding.coffeeButton.getRoot());
+                coffeeBinding.placeName.setText(getString(R.string.coffee));
+                coffeeBinding.placeIcon.setImageResource(R.drawable.ic_coffee);
+
+                // Hotels button
+                CustomPlaceButtonBinding hotelsBinding = CustomPlaceButtonBinding.bind(binding.hotelsButton.getRoot());
+                hotelsBinding.placeName.setText(getString(R.string.hotels));
+                hotelsBinding.placeIcon.setImageResource(R.drawable.ic_hotel);
+
+                // Shopping button
+                CustomPlaceButtonBinding shoppingBinding = CustomPlaceButtonBinding.bind(binding.shoppingButton.getRoot());
+                shoppingBinding.placeName.setText(getString(R.string.shopping));
+                shoppingBinding.placeIcon.setImageResource(R.drawable.ic_shopping);
+
+                // Gas button
+                CustomPlaceButtonBinding gasBinding = CustomPlaceButtonBinding.bind(binding.gasButton.getRoot());
+                gasBinding.placeName.setText(getString(R.string.gas));
+                gasBinding.placeIcon.setImageResource(R.drawable.ic_gas);
+
+                // Groceries button
+                CustomPlaceButtonBinding groceriesBinding = CustomPlaceButtonBinding.bind(binding.groceriesButton.getRoot());
+                groceriesBinding.placeName.setText(getString(R.string.groceries));
+                groceriesBinding.placeIcon.setImageResource(R.drawable.ic_groceries);
+
+                // Hospital button
+                CustomPlaceButtonBinding hospitalBinding = CustomPlaceButtonBinding.bind(binding.hospitalButton.getRoot());
+                hospitalBinding.placeName.setText(getString(R.string.hospital_clinics));
+                hospitalBinding.placeIcon.setImageResource(R.drawable.ic_hospital);
+
+                // Optional: Add click listeners
+                restaurantBinding.getRoot().setOnClickListener(v -> {
+                    // Handle restaurant click
+                    fetchNearbyPlaces("restaurant");
+                });
+                coffeeBinding.getRoot().setOnClickListener(v -> {
+                    // Handle coffee click
+                    fetchNearbyPlaces("coffee_shop");
+                });
+                hotelsBinding.getRoot().setOnClickListener(v -> {
+                    // Handle hotels click
+                    fetchNearbyPlaces("lodging");
+                });
+                shoppingBinding.getRoot().setOnClickListener(v -> {
+                    // Handle shopping click
+                    fetchNearbyPlaces("shopping_mall");
+                });
+                gasBinding.getRoot().setOnClickListener(v -> {
+                    // Handle gas click
+                    fetchNearbyPlaces("gas_station");
+                });
+                groceriesBinding.getRoot().setOnClickListener(v -> {
+                    // Handle groceries click
+                    fetchNearbyPlaces("grocery_store");
+                });
+                hospitalBinding.getRoot().setOnClickListener(v -> {
+                    // Handle hospital click
+                    fetchNearbyPlaces("hospital");
+                });
     }
 
-    public void fetchNearbyPlaces(String placeType) {
-        if (currentLatLng == null) {
-            Toast.makeText(this, "Fetching location, please wait...", Toast.LENGTH_SHORT).show();
-            return;
+    public void clearMarkers() {
+        // Clear all markers from the map
+        for (Marker marker : currentMarkers) {
+            marker.remove();
         }
+        currentMarkers.clear();
+        // Clear the markerPlaceMap
+        if(markerPlaceMap != null)
+            markerPlaceMap.clear();
+    }
 
-        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
-                + "location=" + currentLatLng.latitude + "," + currentLatLng.longitude
-                + "&radius=1500"
-                + "&type=" + placeType
-                + "&key=" + getString(R.string.ggMapAPIKey);
+    // Fetch nearby places based on the selected type
+    public void fetchNearbyPlaces(String placeType) {
+        Log.d("Places", "Received: " + placeType);
 
-        new FetchPlacesTasks(myMap).execute(url);
+        // Check if currentMarkers is not null and clear them
+        if(!currentMarkers.isEmpty())
+            clearMarkers();
+
+        // Define a list of fields to include in the response for each returned place.
+        final List<Place.Field> placeFields = Arrays.asList(Place.Field.ID,
+                                                            Place.Field.DISPLAY_NAME,
+                                                            Place.Field.LOCATION,
+                                                            Place.Field.ICON_BACKGROUND_COLOR,
+                                                            Place.Field.ICON_MASK_URL, Place.Field.FORMATTED_ADDRESS);
+
+        // Define the search area as a 1000 meter diameter circle around the current location.
+        LatLng center = currentLatLng; // currentLatLng should be the current location
+        CircularBounds circle = CircularBounds.newInstance(center, 1000); // 1000 meters radius
+
+        // Define a list of types to include.
+        final List<String> includedTypes = Arrays.asList(placeType); // Place type (e.g., "restaurant", "hospital")
+
+
+        // Build the searchNearbyRequest object.
+        SearchNearbyRequest searchNearbyRequest = SearchNearbyRequest.builder(circle, placeFields)
+                .setIncludedTypes(includedTypes)
+                .setMaxResultCount(20) // Max results
+                .build();
+
+        // Perform the nearby search
+        placesClient.searchNearby(searchNearbyRequest)
+                .addOnSuccessListener(response -> {
+                    // Process the returned List of Place objects
+                    List<Place> places = response.getPlaces();
+                    // Iterate over the places and process each one
+                    for (Place place : places) {
+                        String name = place.getDisplayName(); // Place name
+                        LatLng latLng = place.getLocation(); // Get latitude and longitude
+                        String iconUrl = place.getIconMaskUrl(); // Icon URL
+                        int iconBackgroundColor = place.getIconBackgroundColor();
+                        String iconBackgroundColorHex = String.format("#%06X", (0xFFFFFF & iconBackgroundColor));
+
+                        Log.d("Marker", "drawing marker for " + name);
+
+                        // Call method to add the custom marker to the map
+                        addCustomMarker(this, myMap, latLng, name, iconUrl, iconBackgroundColorHex,
+                                marker -> {
+                                    if (marker != null) {
+                                        markerPlaceMap.put(marker, place); // 💡 Store Place directly
+                                        currentMarkers.add(marker);
+                                    }
+                                }); // Background color
+
+                        slidingPanel.setVisibility(View.VISIBLE);
+                        slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                        // Disable the Reviews tab in TabLayout
+                        tabLayout.getTabAt(1).view.setEnabled(false);
+                        tabLayout.getTabAt(1).view.setAlpha(0.5f);
+                        switchTab(2); // Switch to the Explore tab
+                    }
+                })
+                .addOnFailureListener(exception -> {
+                    // Handle failure (e.g., network error)
+                    Log.e("Places", "Error fetching nearby places: " + exception.getMessage());
+                });
+
+        myMap.setOnMarkerClickListener(marker -> {
+            Place place = markerPlaceMap.get(marker);
+            if (place != null) {
+                selectedLatLng = place.getLatLng();
+                currentLatitude = String.valueOf(selectedLatLng.latitude);
+                currentLongitude = String.valueOf(selectedLatLng.longitude);
+                selectedName = place.getDisplayName();
+                getWeatherDetails();
+                findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
+                getReviews(true, place.getId());
+                getSaveLocation(true, place.getId());
+            }
+            return true;
+        });
+    }
+    public interface OnMarkerReadyCallback {
+        void onMarkerReady(Marker marker);
+    }
+
+    public void addCustomMarker(Context context, GoogleMap map, LatLng position, String title, String iconUrl, String backgroundColorHex, OnMarkerReadyCallback callback) {
+        int size = 50; // Kích thước marker (px)
+
+        Glide.with(context)
+                .asBitmap()
+                .load(iconUrl)
+                .into(new CustomTarget<Bitmap>(size, size) {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap iconBitmap, @Nullable Transition<? super Bitmap> transition) {
+                        // Vẽ nền tròn có màu backgroundColorHex
+                        Log.d("Marker", "Icon URL: " + iconUrl);
+                        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+                        Canvas canvas = new Canvas(output);
+
+                        Paint bgPaint = new Paint();
+                        bgPaint.setAntiAlias(true);
+                        bgPaint.setColor(Color.parseColor(backgroundColorHex));
+                        canvas.drawCircle(size / 2f, size / 2f, size / 2f, bgPaint);
+
+                        // Tính vị trí để icon nằm giữa nền
+                        int iconSize = (int) (size * 0.4); // thu nhỏ icon một chút
+                        int left = (size - iconSize) / 2;
+                        int top = (size - iconSize) / 2;
+
+                        Bitmap scaledIcon = Bitmap.createScaledBitmap(iconBitmap, iconSize, iconSize, false);
+                        canvas.drawBitmap(scaledIcon, left, top, null);
+
+
+                        // Thêm marker vào bản đồ
+                        Marker marker = map.addMarker(new MarkerOptions()
+                                .position(position)
+                                .title(title)
+                                .icon(BitmapDescriptorFactory.fromBitmap(output)));
+
+
+                        if (callback != null) {
+                            callback.onMarkerReady(marker);
+                        }
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
     }
 
     public void showLanguageMenu(View view) {

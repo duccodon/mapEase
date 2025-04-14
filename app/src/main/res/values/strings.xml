@@ -80,4 +80,14 @@
     <string name="admin_open_menu">Open menu</string>
     <string name="admin_close_menu">Close menu</string>
 
+
+    <string name="place_icon">Place Icon</string>
+    <string name="place_name">Place Name</string>
+    <string name="restaurant">Restaurants</string>
+    <string name="coffee">Coffee Shops</string>
+    <string name="hotels">Hotels</string>
+    <string name="shopping">Shopping</string>
+    <string name="gas">Gas Stations</string>
+    <string name="groceries">Groceries</string>
+    <string name="hospital_clinics">Hospitals Clinics</string>
 </resources>
