@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="search_here">Search here</string>
+    <string name="search_here">Tìm kiếm</string>
     <string name="title_activity_route">RouteActivity</string>
     <string name="search_review">Find a place to review</string>
 
@@ -81,5 +81,14 @@
     <string name="gas">Cây xăng</string>
     <string name="groceries">Cửa hàng</string>
     <string name="hospital_clinics">Bệnh viện</string>
+    <string name="second">giây</string>
+    <string name="minute">phút</string>
+    <string name="DIRECTION">ĐƯỜNG ĐI</string>
+    <string name="SAVE">LƯU</string>
+    <string name="YourLocation">Vị trí của bạn</string>
+    <string name="Drive">Xe hơi</string>
+    <string name="Ride">Xe máy</string>
+    <string name="Walk">Đi bộ</string>
+    <string name="routeStatus">Tuyến đường nhanh nhất, giao thông ít hơn bình thường</string>
 </resources>
 

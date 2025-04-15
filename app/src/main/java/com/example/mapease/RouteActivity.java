@@ -10,8 +10,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.mapease.Remote.RouteData;
@@ -45,6 +43,7 @@ import android.widget.Toast;
 
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Remote.Step;
+import com.example.mapease.Utils.LanguageHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.events.SendLocationToActivity;
 import com.google.android.gms.common.api.Status;
@@ -211,7 +210,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 return true;
             });
 
-            setAutocompleteText(R.id.autocomplete_origin, "Your Location");
+            setAutocompleteText(R.id.autocomplete_origin, getString(R.string.YourLocation));
             setAutocompleteText(R.id.autocomplete_destination, sendLocationToActivity.getDestinationName());
 
         } else {
@@ -235,7 +234,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         Log.d("RouteActivity", "Requesting path: " + origin.toString() + " to " + destination.toString());
         mMap.clear();
         // Gửi request và nhận `JSONObject`
-        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", mode, response -> {
+        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", mode, getLanguageCode(), response -> {
             try {
                 Log.d("API_RETURN", "Response JSON: " + response.toString());
                 // Lưu lại response JSON (ví dụ có thể lưu vào biến toàn cục hoặc xử lý tiếp)
@@ -326,6 +325,17 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         });
     }
 
+    private String getLanguageCode()
+    {
+        Locale currentLocale = LanguageHelper.getCurrentLocale(this);
+        String languageCode = currentLocale.toLanguageTag();  // e.g., "en-US", "vi-VN"
+        if (languageCode.equals("en")) {
+            languageCode = "en-US";
+        } else if (languageCode.equals("vi")) {
+            languageCode = "vi-VN";
+        }
+        return languageCode;
+    }
     private void drawPolylineOnMap(LatLng origin, LatLng destination, String mode) {
         List<LatLng> polylineList = new ArrayList<>();
         if(mode == "DRIVE")
@@ -385,7 +395,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 160));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(mMap.getCameraPosition().zoom - 1));
     }
-    private void drawPath(LatLng origin, LatLng destination) throws JSONException {
+/*    private void drawPath(LatLng origin, LatLng destination) throws JSONException {
         if (origin == null || destination == null) {
             Toast.makeText(this, "Origin or Destination is null", Toast.LENGTH_SHORT).show();
             return;
@@ -395,7 +405,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         Log.d("RouteActivity", "Requesting path: " + origin.toString() + " to " + destination.toString());
         mMap.clear();
         // Gửi request và nhận `JSONObject`
-        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", "DRIVE", response -> {
+        RoutesAPIHelper.requestRoute(this, origin.latitude, origin.longitude, destination.latitude, destination.longitude, "*", "DRIVE",getLanguageCode(), response -> {
             try {
                 Log.d("API_RETURN", "Response JSON: " + response.toString());
                 saveJsonToExternalStorage(response.toString(), "api_response.txt");
@@ -511,13 +521,13 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 String durationText = duration.getString("text");
                 String distanceText = distance.getString("text");
-/*
+*//*
                 // Lấy vị trí bắt đầu/kết thúc từ JSON của Route API
                 JSONObject startLocation = legInfo.getJSONObject("startLocation").getJSONObject("latLng");
                 JSONObject endLocation = legInfo.getJSONObject("endLocation").getJSONObject("latLng");
 
                 String startLatLng = startLocation.getDouble("latitude") + "," + startLocation.getDouble("longitude");
-                String endLatLng = endLocation.getDouble("latitude") + "," + endLocation.getDouble("longitude");*/
+                String endLatLng = endLocation.getDouble("latitude") + "," + endLocation.getDouble("longitude");*//*
                 addDestinationMarker();
 
                 TextView tvDurationDistance = findViewById(R.id.tv_duration_distance);
@@ -531,7 +541,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 Toast.makeText(this, "Error parsing JSON", Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    }*/
     private void setupAutocomplete() {
         Places.initialize(this, getString(R.string.ggMapAPIKey));
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -702,11 +712,11 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
             if (isCurrentLocation(sendLocationToActivity.getOrigin()))
             {
-                origin_text = "Your Location";
+                origin_text = getString(R.string.YourLocation);
             }
             else if (isCurrentLocation(sendLocationToActivity.getDestination()))
             {
-                destination_text = "Your Location";
+                destination_text = getString(R.string.YourLocation);
             }
 
             setAutocompleteText(R.id.autocomplete_origin, origin_text);
@@ -770,15 +780,15 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
                     switch (position) {
                         case 0:
-                            tab.setText("Drive");
+                            tab.setText(getString(R.string.Drive));
                             tab.setIcon(R.drawable.ic_drive); // Thêm icon cho tab Drive
                             break;
                         case 1:
-                            tab.setText("Ride");
+                            tab.setText(getString(R.string.Ride));
                             tab.setIcon(R.drawable.ic_ride); // Thêm icon cho tab Ride
                             break;
                         case 2:
-                            tab.setText("Walk");
+                            tab.setText(getString(R.string.Walk));
                             tab.setIcon(R.drawable.ic_walk); // Thêm icon cho tab Walk
                             break;
                     }

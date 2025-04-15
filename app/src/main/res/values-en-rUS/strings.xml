@@ -84,4 +84,13 @@
     <string name="gas">Gas Stations</string>
     <string name="groceries">Groceries</string>
     <string name="hospital_clinics">Hospitals Clinics</string>
+    <string name="second">sec</string>
+    <string name="minute">min</string>
+    <string name="DIRECTION">DIRECTION</string>
+    <string name="SAVE">SAVE</string>
+    <string name="YourLocation">Your Location</string>
+    <string name="Drive">Drive</string>
+    <string name="Ride">Ride</string>
+    <string name="Walk">Walk</string>
+    <string name="routeStatus">Fastest route, lighter traffic than usual</string>
 </resources>

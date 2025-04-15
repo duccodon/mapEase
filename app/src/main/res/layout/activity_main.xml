@@ -290,7 +290,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/long_button"
                     android:drawableStart="@drawable/baseline_assistant_direction_24"
-                    android:text="Direction"
+                    android:text="@string/DIRECTION"
                     android:layout_marginEnd="10dp"
                     android:textColor="#000000"
                     android:paddingStart="8dp"
@@ -309,7 +309,7 @@
                     android:layout_marginStart="16dp"
                     android:background="@drawable/long_button"
                     android:drawableStart="@drawable/save_button"
-                    android:text="Save"
+                    android:text="@string/SAVE"
                     android:layout_marginEnd="10dp"
                     android:textColor="#000000"
                     android:paddingStart="8dp"
@@ -496,19 +496,42 @@
             android:visibility="gone">
 
             <!-- Add your Explore content here -->
-            <TextView
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nearby Places"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:padding="16dp"/>
+                android:padding="2dp">
+
+                <TextView
+                    android:id="@+id/explore_tab_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Nearby Places"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/explore_close_button"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_marginEnd="8dp"/>
+
+                <ImageButton
+                    android:id="@+id/explore_close_button"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="@drawable/round_button"
+                    android:src="@drawable/icon_close"
+                    android:scaleType="centerInside"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/explore_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="8dp"/>
+                android:padding="2dp"/>
         </LinearLayout>
 
         <LinearLayout

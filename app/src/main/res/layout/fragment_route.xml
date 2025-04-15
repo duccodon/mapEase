@@ -32,7 +32,7 @@
             android:id="@+id/tv_route_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fastest route, lighter traffic than usual"
+            android:text="@string/routeStatus"
             android:textSize="14sp"
             android:textColor="@color/gray"/>
         <View
@@ -99,7 +99,7 @@
                     android:textSize="16sp"
                     android:textColor="@color/black"
                     android:textStyle="bold"
-                    android:text="Your Location" />
+                    android:text="@string/YourLocation" />
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"

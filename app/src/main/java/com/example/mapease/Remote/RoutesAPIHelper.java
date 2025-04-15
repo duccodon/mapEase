@@ -20,7 +20,7 @@ public class RoutesAPIHelper {
     private static final String ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
 
     public static void requestRoute(Context context, double originLat, double originLng,
-                                    double destLat, double destLng, String fieldMask, String travelMode,
+                                    double destLat, double destLng, String fieldMask, String travelMode, String languageCode,
                                     Response.Listener<JSONObject> listener) {
         JSONObject jsonRequest = new JSONObject();
         if (travelMode == null || travelMode.isEmpty()) {
@@ -43,7 +43,7 @@ public class RoutesAPIHelper {
             jsonRequest.put("destination", destination);
             jsonRequest.put("travelMode", travelMode);
             jsonRequest.put("computeAlternativeRoutes", false);
-            jsonRequest.put("languageCode", "en-US");
+            jsonRequest.put("languageCode", languageCode);
             jsonRequest.put("units", "METRIC");
 
         } catch (JSONException e) {

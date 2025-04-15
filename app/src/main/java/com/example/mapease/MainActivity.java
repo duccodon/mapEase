@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -24,6 +25,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -39,6 +41,8 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -50,6 +54,7 @@ import com.bumptech.glide.request.transition.Transition;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.LanguageHelper;
 import com.example.mapease.Utils.SlidingPanelHelper;
+import com.example.mapease.adapter.NearbyPlaceAdapter;
 import com.example.mapease.adapter.ReviewAdapter;
 import com.example.mapease.adapter.SaveLocationAdapter;
 import com.example.mapease.databinding.ActivityMainBinding;
@@ -85,6 +90,7 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.api.net.SearchNearbyRequest;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -122,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PlacesClient placesClient;
     private Marker currentMarker = null;
     private final List<Marker> currentMarkers = new ArrayList<>();
+    private List<Place> nearbyPlaces = new ArrayList<>();
     private final Map<Marker, Place> markerPlaceMap = new HashMap<>();
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
@@ -141,6 +148,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageView placeImage;
 
     private ListView saveListView;
+    private RecyclerView recyclerView;
+    private NearbyPlaceAdapter adapter;
+
     private SaveLocationAdapter saveAdapter;
     List<favoriteLocation> saveLocationList = new ArrayList<>();
 
@@ -356,12 +366,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     .addOnSuccessListener(location -> {
                                         if (location != null) {
                                             LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                            myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f));
-
+                                            myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
                                             // Update instance variables
                                             currentLatitude = String.valueOf(location.getLatitude());
                                             currentLongitude = String.valueOf(location.getLongitude());
-                                            currentName = "Your Location";
+                                            currentName = getString(R.string.YourLocation);
                                             getWeatherDetails();
                                             currentLatLng = userLatLng;
                                         } else {
@@ -403,7 +412,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             getWeatherDetails();
 
             findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
-
             getReviews(true, poi.placeId);
             getSaveLocation(true, poi.placeId);
         });
@@ -628,11 +636,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .title(place.getName()));
 
                 // Expand panel
-                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
                 //CALCULATE DISTANCE AND DURATION
                 if (currentLatLng != null && place.getLatLng() != null) {
                     RoutesAPIHelper.requestRoute(this, currentLatLng.latitude , currentLatLng.longitude, place.getLatLng().latitude, place.getLatLng().longitude,
-                            "routes.distanceMeters,routes.duration", "DRIVE", // ✅ Get distance and duration
+                            "routes.distanceMeters,routes.duration", "DRIVE", getLanguageCode(), // ✅ Get distance and duration
                             response -> {
                                 try {
                                     // Lấy data từ response JSON
@@ -667,10 +675,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         }
 
                                         if (duration < 60) { // If duration is less than 1 minute, show in seconds
-                                            duration_calc.setText(duration + " sec");
+                                            duration_calc.setText(duration + " " + getString(R.string.second));
                                         } else { // If duration is more than or equal to 1 minute, show in minutes
                                             int minutes = duration / 60;
-                                            duration_calc.setText(minutes + " min");
+                                            duration_calc.setText(minutes + " " + getString(R.string.minute));
                                         }
 
                                     } else {
@@ -714,7 +722,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .title("Selected Location"));
 
                 // Expand panel
-                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
 
                 Log.d("DetailInfor", "Address: " + fullAddress);
             }
@@ -736,8 +744,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             tabLayout.getTabAt(1).view.setEnabled(true);
             tabLayout.getTabAt(1).view.setAlpha(1f);
 
-            tabLayout.getTabAt(2).view.setEnabled(true);
-            tabLayout.getTabAt(2).view.setAlpha(1f);
+            /*tabLayout.getTabAt(2).view.setEnabled(true);
+            tabLayout.getTabAt(2).view.setAlpha(1f);*/
 
             tabLayout.selectTab(tabLayout.getTabAt(0));
 
@@ -1017,11 +1025,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onPlaceSelected(@NonNull Place place) {
                 if (place.getLocation() != null) {
-                    currentLatitude = String.valueOf(place.getLatLng().latitude);
-                    currentLongitude = String.valueOf(place.getLatLng().longitude);
+                    currentLatitude = String.valueOf(place.getLocation().latitude);
+                    currentLongitude = String.valueOf(place.getLocation().longitude);
                     getWeatherDetails();
 
-                    selectedLatLng = place.getLatLng();
+                    selectedLatLng = place.getLocation();
 
                     placeName = findViewById(R.id.location_title);
                     placeAddress = findViewById(R.id.place_address);
@@ -1056,17 +1064,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (isPOI) {
                             //POI search
                             getWeatherDetails();
-                            findPlaceDetailsFromLocation(fullPlace.getLocation(), fullPlace.getName(), fullPlace.getId());
-                            selectedName = place.getDisplayName();
+                            findPlaceDetailsFromLocation(fullPlace.getLocation(), fullPlace.getDisplayName(), fullPlace.getId());
                             getReviews(true, fullPlace.getId());
                             getSaveLocation(true, fullPlace.getId());
+                            selectedName = place.getDisplayName(); //for routing display
 
                         } else {
                             getWeatherDetails();
                             findPlaceDetailsFromLocation(place.getLocation(), null, null);
-                            selectedName = place.getDisplayName();
                             getReviews(false, null);
                             getSaveLocation(false, null);
+                            selectedName = place.getDisplayName();//for routing display
 
                         }
                     }).addOnFailureListener(e -> {
@@ -1074,9 +1082,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     });
 
                     // Expand the sliding panel
-                    slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                    slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
 
-                    updateMapLocation(place.getLatLng(), place.getDisplayName());
+                    updateMapLocation(place.getLocation(), place.getDisplayName());
                 } else {
                     Snackbar.make(findViewById(android.R.id.content),
                             "No coordinates found for this place!",
@@ -1100,10 +1108,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 currentLatLng = newPosition;
 
                 // Sử dụng animateCamera thay vì moveCamera
-                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, myMap.getCameraPosition().zoom),
-                        1000, // Thời gian animation: 1 giây
-                        null); // Không cần callback
-                setRestrictPlacesInCountry(locationResult.getLastLocation());
+                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, myMap.getCameraPosition().zoom), 1000,null); // Không cần callback
+                //setRestrictPlacesInCountry(locationResult.getLastLocation());
             }
         };
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -1253,7 +1259,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .position(latLng)
                 .title(placeName));
         // Move the camera to the new location with zoom level
-        myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f)); // 15f is zoom level
+        myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18f)); // 15f is zoom level
     }
 
     public void getWeatherDetails() {
@@ -1349,6 +1355,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void setupSlidingPanel() {
         slidingLayout = findViewById(R.id.sliding_layout);
         slidingPanel = findViewById(R.id.sliding_panel);
+
         if (slidingLayout == null || slidingPanel == null) {
             Log.e("SlidingPanel", "SlidingUpPanelLayout, panel, or drag handle not found!");
             return;
@@ -1437,72 +1444,122 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         EventBus.getDefault().postSticky(new SendLocationToActivity(currentLatLng, selectedLatLng, currentName, selectedName));
         startActivity(intent);
     }
-
     public void setupButtonListenersForPlacesType() {
-                // Restaurant button
-                CustomPlaceButtonBinding restaurantBinding = CustomPlaceButtonBinding.bind(binding.restaurantButton.getRoot());
-                restaurantBinding.placeName.setText("Restaurant");
-                restaurantBinding.placeIcon.setImageResource(R.drawable.ic_restaurant);
+        TextView exploreTitle = findViewById(R.id.explore_tab_title);
 
-                // Coffee button
-                CustomPlaceButtonBinding coffeeBinding = CustomPlaceButtonBinding.bind(binding.coffeeButton.getRoot());
-                coffeeBinding.placeName.setText(getString(R.string.coffee));
-                coffeeBinding.placeIcon.setImageResource(R.drawable.ic_coffee);
+        List<MaterialButton> placeButtons = Arrays.asList(
+                binding.restaurantButton.placeTypeButton,
+                binding.coffeeButton.placeTypeButton,
+                binding.hotelsButton.placeTypeButton,
+                binding.shoppingButton.placeTypeButton,
+                binding.gasButton.placeTypeButton,
+                binding.groceriesButton.placeTypeButton,
+                binding.hospitalButton.placeTypeButton
+        );
 
-                // Hotels button
-                CustomPlaceButtonBinding hotelsBinding = CustomPlaceButtonBinding.bind(binding.hotelsButton.getRoot());
-                hotelsBinding.placeName.setText(getString(R.string.hotels));
-                hotelsBinding.placeIcon.setImageResource(R.drawable.ic_hotel);
+        Map<MaterialButton, String> typeMap = new HashMap<>();
+        typeMap.put(binding.restaurantButton.placeTypeButton, "restaurant");
+        typeMap.put(binding.coffeeButton.placeTypeButton, "coffee_shop");
+        typeMap.put(binding.hotelsButton.placeTypeButton, "lodging");
+        typeMap.put(binding.shoppingButton.placeTypeButton, "shopping_mall");
+        typeMap.put(binding.gasButton.placeTypeButton, "gas_station");
+        typeMap.put(binding.groceriesButton.placeTypeButton, "grocery_store");
+        typeMap.put(binding.hospitalButton.placeTypeButton, "hospital");
 
-                // Shopping button
-                CustomPlaceButtonBinding shoppingBinding = CustomPlaceButtonBinding.bind(binding.shoppingButton.getRoot());
-                shoppingBinding.placeName.setText(getString(R.string.shopping));
-                shoppingBinding.placeIcon.setImageResource(R.drawable.ic_shopping);
+        Map<MaterialButton, Integer> titleMap = new HashMap<>();
+        titleMap.put(binding.restaurantButton.placeTypeButton, R.string.restaurant);
+        titleMap.put(binding.coffeeButton.placeTypeButton, R.string.coffee);
+        titleMap.put(binding.hotelsButton.placeTypeButton, R.string.hotels);
+        titleMap.put(binding.shoppingButton.placeTypeButton, R.string.shopping);
+        titleMap.put(binding.gasButton.placeTypeButton, R.string.gas);
+        titleMap.put(binding.groceriesButton.placeTypeButton, R.string.groceries);
+        titleMap.put(binding.hospitalButton.placeTypeButton, R.string.hospital_clinics);
 
-                // Gas button
-                CustomPlaceButtonBinding gasBinding = CustomPlaceButtonBinding.bind(binding.gasButton.getRoot());
-                gasBinding.placeName.setText(getString(R.string.gas));
-                gasBinding.placeIcon.setImageResource(R.drawable.ic_gas);
+        // Set the text and icon for each button
+        for (Map.Entry<MaterialButton, Integer> entry : titleMap.entrySet()) {
+            MaterialButton button = entry.getKey();
+            Integer titleResId = entry.getValue();
 
-                // Groceries button
-                CustomPlaceButtonBinding groceriesBinding = CustomPlaceButtonBinding.bind(binding.groceriesButton.getRoot());
-                groceriesBinding.placeName.setText(getString(R.string.groceries));
-                groceriesBinding.placeIcon.setImageResource(R.drawable.ic_groceries);
+            // Set the button text from the map
+            button.setText(titleResId);
+            button.setIconTintResource(R.color.black); // or any visible color
+            String placeType = getString(titleResId);  // Get the string value
+            Log.d("Place type", "Choosing " + placeType);
+            // Set the correct icon for each button
+            switch (placeType) {
+                case "Restaurant":
+                case "Nhà hàng":
+                    button.setIconResource(R.drawable.ic_restaurant);
+                    break;
+                case "Coffee Shops":
+                case "Cà phê":
+                    button.setIconResource(R.drawable.ic_coffee);
+                    break;
+                case "Hotels":
+                case "Khách sạn":
+                    button.setIconResource(R.drawable.ic_hotel);
+                    break;
+                case "Shopping":
+                case"Mua sắm":
+                    button.setIconResource(R.drawable.ic_shopping);
+                    break;
+                case "Gas Stations":
+                case "Cây xăng":
+                    button.setIconResource(R.drawable.ic_gas);
+                    break;
+                case "Groceries":
+                case "Cửa hàng":
+                    button.setIconResource(R.drawable.ic_groceries);
+                    break;
+                case "Hospitals Clinics":
+                case "Bệnh viện":
+                    button.setIconResource(R.drawable.ic_hospital);
+                    break;
+                default:
+                    button.setIconResource(R.drawable.ic_restaurant);  // No icon in case of an undefined place type
+                    break;
+            }
 
-                // Hospital button
-                CustomPlaceButtonBinding hospitalBinding = CustomPlaceButtonBinding.bind(binding.hospitalButton.getRoot());
-                hospitalBinding.placeName.setText(getString(R.string.hospital_clinics));
-                hospitalBinding.placeIcon.setImageResource(R.drawable.ic_hospital);
+        }
 
-                // Optional: Add click listeners
-                restaurantBinding.getRoot().setOnClickListener(v -> {
-                    // Handle restaurant click
-                    fetchNearbyPlaces("restaurant");
-                });
-                coffeeBinding.getRoot().setOnClickListener(v -> {
-                    // Handle coffee click
-                    fetchNearbyPlaces("coffee_shop");
-                });
-                hotelsBinding.getRoot().setOnClickListener(v -> {
-                    // Handle hotels click
-                    fetchNearbyPlaces("lodging");
-                });
-                shoppingBinding.getRoot().setOnClickListener(v -> {
-                    // Handle shopping click
-                    fetchNearbyPlaces("shopping_mall");
-                });
-                gasBinding.getRoot().setOnClickListener(v -> {
-                    // Handle gas click
-                    fetchNearbyPlaces("gas_station");
-                });
-                groceriesBinding.getRoot().setOnClickListener(v -> {
-                    // Handle groceries click
-                    fetchNearbyPlaces("grocery_store");
-                });
-                hospitalBinding.getRoot().setOnClickListener(v -> {
-                    // Handle hospital click
-                    fetchNearbyPlaces("hospital");
-                });
+        // Optional: Clear all when one is selected
+        for (MaterialButton button : placeButtons) {
+            button.setOnClickListener(v -> {
+                resetPlaceButtons(placeButtons);
+
+
+                button.setChecked(true);
+                button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.mocha)));
+                button.setStrokeColorResource(com.karumi.dexter.R.color.design_default_color_primary_dark);
+                button.setTextColor(Color.WHITE);
+                button.setIconTint(ColorStateList.valueOf(Color.WHITE));
+
+                exploreTitle.setText(titleMap.get(button));
+                fetchNearbyPlaces(typeMap.get(button));
+            });
+        }
+
+        ImageButton closeButton = findViewById(R.id.explore_close_button);
+        closeButton.setOnClickListener(v -> {
+            clearMarkers(); //clear all marker
+            nearbyPlaces = new ArrayList<>();
+            adapter.notifyDataSetChanged();
+            resetPlaceButtons(placeButtons);
+            switchTab(0);
+            slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            tabLayout.getTabAt(2).view.setEnabled(false);
+            tabLayout.getTabAt(2).view.setAlpha(.5f);
+        });
+    }
+
+    private void resetPlaceButtons(List<MaterialButton> placeButtons) {
+        for (MaterialButton b : placeButtons) {
+            b.setChecked(false);
+            b.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+            b.setStrokeColorResource(R.color.gray);
+            b.setTextColor(ContextCompat.getColor(this, R.color.black));
+            b.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.black)));
+        }
     }
 
     public void clearMarkers() {
@@ -1529,7 +1586,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                             Place.Field.DISPLAY_NAME,
                                                             Place.Field.LOCATION,
                                                             Place.Field.ICON_BACKGROUND_COLOR,
-                                                            Place.Field.ICON_MASK_URL, Place.Field.FORMATTED_ADDRESS);
+                                                            Place.Field.ICON_MASK_URL,
+                                                            Place.Field.FORMATTED_ADDRESS,
+                                                            Place.Field.NATIONAL_PHONE_NUMBER,
+                                                            Place.Field.WEBSITE_URI,
+                                                            Place.Field.OPENING_HOURS,
+                                                            Place.Field.PHOTO_METADATAS);
 
         // Define the search area as a 1000 meter diameter circle around the current location.
         LatLng center = currentLatLng; // currentLatLng should be the current location
@@ -1544,14 +1606,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .setIncludedTypes(includedTypes)
                 .setMaxResultCount(20) // Max results
                 .build();
-
-        // Perform the nearby search
+      // Perform the nearby search
         placesClient.searchNearby(searchNearbyRequest)
                 .addOnSuccessListener(response -> {
                     // Process the returned List of Place objects
-                    List<Place> places = response.getPlaces();
+                    nearbyPlaces = response.getPlaces();
                     // Iterate over the places and process each one
-                    for (Place place : places) {
+                    for (Place place : nearbyPlaces) {
                         String name = place.getDisplayName(); // Place name
                         LatLng latLng = place.getLocation(); // Get latitude and longitude
                         String iconUrl = place.getIconMaskUrl(); // Icon URL
@@ -1574,8 +1635,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         // Disable the Reviews tab in TabLayout
                         tabLayout.getTabAt(1).view.setEnabled(false);
                         tabLayout.getTabAt(1).view.setAlpha(0.5f);
+
+                        tabLayout.getTabAt(2).view.setEnabled(true);
+                        tabLayout.getTabAt(2).view.setAlpha(1f);
                         switchTab(2); // Switch to the Explore tab
+
                     }
+
+                    recyclerView = findViewById(R.id.explore_recycler_view);
+                    recyclerView.setLayoutManager(new LinearLayoutManager(this));
+                    adapter = new NearbyPlaceAdapter(this, nearbyPlaces, place -> {
+                        //Toast.makeText(this, "Clicked: " + place.getDisplayName(), Toast.LENGTH_SHORT).show();
+
+                        selectedLatLng = place.getLocation();
+                        currentLatitude = String.valueOf(selectedLatLng.latitude);
+                        currentLongitude = String.valueOf(selectedLatLng.longitude);
+                        selectedName = place.getDisplayName();
+                        getWeatherDetails();
+                        findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
+                        getReviews(true, place.getId());
+                        getSaveLocation(true, place.getId());
+                        updateMapLocation(selectedLatLng, "");
+                    });
+
+                    recyclerView.setAdapter(adapter);
+                    recyclerView.setNestedScrollingEnabled(true);
+                    slidingLayout.setScrollableView(recyclerView);
                 })
                 .addOnFailureListener(exception -> {
                     // Handle failure (e.g., network error)
@@ -1585,7 +1670,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         myMap.setOnMarkerClickListener(marker -> {
             Place place = markerPlaceMap.get(marker);
             if (place != null) {
-                selectedLatLng = place.getLatLng();
+                selectedLatLng = place.getLocation();
                 currentLatitude = String.valueOf(selectedLatLng.latitude);
                 currentLongitude = String.valueOf(selectedLatLng.longitude);
                 selectedName = place.getDisplayName();
@@ -1645,7 +1730,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });
     }
-
+    private String getLanguageCode()
+    {
+        Locale currentLocale = LanguageHelper.getCurrentLocale(this);
+        String languageCode = currentLocale.toLanguageTag();  // e.g., "en-US", "vi-VN"
+        if (languageCode.equals("en")) {
+            languageCode = "en-US";
+        } else if (languageCode.equals("vi")) {
+            languageCode = "vi-VN";
+        }
+        return languageCode;
+    }
     public void showLanguageMenu(View view) {
         if (view == null) {
             Log.e("LanguageMenu", "View is null. Cannot show menu.");
