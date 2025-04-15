@@ -154,7 +154,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SaveLocationAdapter saveAdapter;
     List<favoriteLocation> saveLocationList = new ArrayList<>();
 
-
+    private boolean isFetchingLocation = false;
+    private boolean isFirstLocationUpdate = true;
 
 
 
@@ -205,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(binding.getRoot());
         slidingLayout = findViewById(R.id.sliding_layout);
         slidingPanel = findViewById(R.id.sliding_panel);
-
+        init();
         SlidingPanelHelper.setupPanel(this, slidingLayout, slidingPanel);
         //EdgeToEdge.enable(this);
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -216,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });*/
-        init();
+        //init();
         //locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         assert mapFragment != null;
@@ -349,6 +350,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         myMap.getUiSettings().setZoomControlsEnabled(true);
         myMap.getUiSettings().setCompassEnabled(true);
         myMap.setPadding(0, 220, 0, 220);
+
         Dexter.withContext(this)
                 .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 .withListener(new PermissionListener() {
@@ -362,23 +364,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         myMap.setMyLocationEnabled(true);
                         myMap.getUiSettings().setMyLocationButtonEnabled(true);
                         myMap.setOnMyLocationButtonClickListener(() -> {
-                            fusedLocationProviderClient.getLastLocation()
-                                    .addOnFailureListener(e ->
-                                            Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show())
-                                    .addOnSuccessListener(location -> {
-                                        if (location != null) {
-                                            LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                            myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
-                                            // Update instance variables
-                                            currentLatitude = String.valueOf(location.getLatitude());
-                                            currentLongitude = String.valueOf(location.getLongitude());
-                                            currentName = getString(R.string.YourLocation);
-                                            getWeatherDetails();
-                                            currentLatLng = userLatLng;
-                                        } else {
-                                            Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                            if (isFetchingLocation) {
+                                Toast.makeText(MainActivity.this, "Waiting for current location...", Toast.LENGTH_SHORT).show();
+                            } else if (currentLatLng != null) {
+                                fusedLocationProviderClient.getLastLocation()
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show())
+                                        .addOnSuccessListener(location -> {
+                                            if (location != null) {
+                                                LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                                                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f), 1000, null);
+                                                // Update instance variables
+                                                currentLatitude = String.valueOf(location.getLatitude());
+                                                currentLongitude = String.valueOf(location.getLongitude());
+                                                currentName = getString(R.string.YourLocation);
+                                                getWeatherDetails();
+                                                currentLatLng = userLatLng;
+                                            } else {
+                                                Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            } else {
+                                Toast.makeText(MainActivity.this, "Location not available yet", Toast.LENGTH_SHORT).show();
+                            }
                             return true;
                         });
                         View locationButton = ((View) mapFragment.getView().findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
@@ -434,7 +442,136 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             getSaveLocation(false, null);
         });
     }
+    private void init()
+    {
+        Places.initialize(this, getString(R.string.ggMapAPIKey), currentLocale);
+        placesClient = Places.createClient(this);
 
+
+        autocompleteSupportFragment = (AutocompleteSupportFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.autocomplete_fragment);
+        assert autocompleteSupportFragment != null;
+
+        autocompleteSupportFragment.setPlaceFields(Arrays.asList(
+                Place.Field.ID,
+                Place.Field.FORMATTED_ADDRESS,
+                Place.Field.DISPLAY_NAME,
+                Place.Field.LAT_LNG,
+                Place.Field.NAME,
+                Place.Field.ADDRESS
+        ));
+        autocompleteSupportFragment.setHint(getString(R.string.search_here));
+
+        if (autocompleteSupportFragment != null) {
+            searchView = autocompleteSupportFragment.getView();
+            if (searchView != null) {
+                searchView.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_search_view));
+            }
+        }
+
+        autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                if (place.getLocation() != null) {
+                    currentLatitude = String.valueOf(place.getLocation().latitude);
+                    currentLongitude = String.valueOf(place.getLocation().longitude);
+                    getWeatherDetails();
+
+                    selectedLatLng = place.getLocation();
+
+                    placeName = findViewById(R.id.location_title);
+                    placeAddress = findViewById(R.id.place_address);
+                    placeImage = findViewById(R.id.place_image);
+
+                    // Update instance variables
+                    placeName.setText(place.getDisplayName());
+                    placeAddress.setText("Address: " + place.getAddress());
+
+
+                    // get place details
+                    List<Place.Field> fullFields = Arrays.asList(
+                            Place.Field.ID,
+                            Place.Field.DISPLAY_NAME,
+                            Place.Field.FORMATTED_ADDRESS,
+                            Place.Field.LOCATION,
+                            Place.Field.PHOTO_METADATAS,
+                            Place.Field.INTERNATIONAL_PHONE_NUMBER,
+                            Place.Field.WEBSITE_URI,
+                            Place.Field.OPENING_HOURS,
+                            Place.Field.PRICE_LEVEL,
+                            Place.Field.BUSINESS_STATUS,
+                            Place.Field.TYPES
+                    );
+                    FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(place.getId(), fullFields).build();
+                    placesClient.fetchPlace(fullRequest).addOnSuccessListener(fullResponse -> {
+                        Place fullPlace = fullResponse.getPlace();
+
+                        boolean isPOI = isPointOfInterest(fullPlace.getTypes());
+
+
+                        if (isPOI) {
+                            //POI search
+                            getWeatherDetails();
+                            findPlaceDetailsFromLocation(fullPlace.getLocation(), fullPlace.getDisplayName(), fullPlace.getId());
+                            getReviews(true, fullPlace.getId());
+                            getSaveLocation(true, fullPlace.getId());
+                            selectedName = place.getDisplayName(); //for routing display
+
+                        } else {
+                            getWeatherDetails();
+                            findPlaceDetailsFromLocation(place.getLocation(), null, null);
+                            getReviews(false, null);
+                            getSaveLocation(false, null);
+                            selectedName = place.getDisplayName();//for routing display
+
+                        }
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(MainActivity.this,"Failed to fetch place details: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+
+                    // Expand the sliding panel
+                    slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
+
+                    updateMapLocation(place.getLocation(), place.getDisplayName());
+                } else {
+                    Snackbar.make(findViewById(android.R.id.content),
+                            "No coordinates found for this place!",
+                            Snackbar.LENGTH_SHORT).show();
+                }
+                Log.d("Selected name", "origin Name:: " + currentName+ " selected namee: " + selectedName);
+            }
+            @Override
+            public void onError(@NonNull Status status) {
+            }
+        });
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000)
+                .setMinUpdateIntervalMillis(500)
+                .setMinUpdateDistanceMeters(1f)
+                .build();
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
+                currentLatLng = newPosition;
+
+                if (isFirstLocationUpdate) {
+                    isFirstLocationUpdate = false;
+                    isFetchingLocation = false;
+                    Toast.makeText(MainActivity.this, "Fetched current location", Toast.LENGTH_SHORT).show();
+                    myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, 18f), 1000, null);
+                }// Không cần callback
+                //setRestrictPlacesInCountry(locationResult.getLastLocation());
+            }
+        };
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        {
+            isFetchingLocation = true;
+            Toast.makeText(this, "Getting current location...", Toast.LENGTH_SHORT).show(); // Tránh bấm nhầm nút
+            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+        }
+    }
     private void findPlaceDetailsFromLocation(LatLng latLng, String placeName, String placeID) {
         List<Place.Field> fields = Arrays.asList(
                 Place.Field.ID,
@@ -996,130 +1133,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         return super.onOptionsItemSelected(item);
     }
-    private void init()
-    {
-        Places.initialize(this, getString(R.string.ggMapAPIKey), currentLocale);
-        placesClient = Places.createClient(this);
 
-
-        autocompleteSupportFragment = (AutocompleteSupportFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.autocomplete_fragment);
-        assert autocompleteSupportFragment != null;
-
-        autocompleteSupportFragment.setPlaceFields(Arrays.asList(
-                Place.Field.ID,
-                Place.Field.FORMATTED_ADDRESS,
-                Place.Field.DISPLAY_NAME,
-                Place.Field.LAT_LNG,
-                Place.Field.NAME,
-                Place.Field.ADDRESS
-        ));
-        autocompleteSupportFragment.setHint(getString(R.string.search_here));
-
-        if (autocompleteSupportFragment != null) {
-            searchView = autocompleteSupportFragment.getView();
-            if (searchView != null) {
-                searchView.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_search_view));
-            }
-        }
-
-        autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
-            @Override
-            public void onPlaceSelected(@NonNull Place place) {
-                if (place.getLocation() != null) {
-                    currentLatitude = String.valueOf(place.getLocation().latitude);
-                    currentLongitude = String.valueOf(place.getLocation().longitude);
-                    getWeatherDetails();
-
-                    selectedLatLng = place.getLocation();
-
-                    placeName = findViewById(R.id.location_title);
-                    placeAddress = findViewById(R.id.place_address);
-                    placeImage = findViewById(R.id.place_image);
-
-                    // Update instance variables
-                    placeName.setText(place.getDisplayName());
-                    placeAddress.setText("Address: " + place.getAddress());
-
-
-                    // get place details
-                    List<Place.Field> fullFields = Arrays.asList(
-                            Place.Field.ID,
-                            Place.Field.DISPLAY_NAME,
-                            Place.Field.FORMATTED_ADDRESS,
-                            Place.Field.LOCATION,
-                            Place.Field.PHOTO_METADATAS,
-                            Place.Field.INTERNATIONAL_PHONE_NUMBER,
-                            Place.Field.WEBSITE_URI,
-                            Place.Field.OPENING_HOURS,
-                            Place.Field.PRICE_LEVEL,
-                            Place.Field.BUSINESS_STATUS,
-                            Place.Field.TYPES
-                    );
-                    FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(place.getId(), fullFields).build();
-                    placesClient.fetchPlace(fullRequest).addOnSuccessListener(fullResponse -> {
-                        Place fullPlace = fullResponse.getPlace();
-
-                        boolean isPOI = isPointOfInterest(fullPlace.getTypes());
-
-
-                        if (isPOI) {
-                            //POI search
-                            getWeatherDetails();
-                            findPlaceDetailsFromLocation(fullPlace.getLocation(), fullPlace.getDisplayName(), fullPlace.getId());
-                            getReviews(true, fullPlace.getId());
-                            getSaveLocation(true, fullPlace.getId());
-                            selectedName = place.getDisplayName(); //for routing display
-
-                        } else {
-                            getWeatherDetails();
-                            findPlaceDetailsFromLocation(place.getLocation(), null, null);
-                            getReviews(false, null);
-                            getSaveLocation(false, null);
-                            selectedName = place.getDisplayName();//for routing display
-
-                        }
-                    }).addOnFailureListener(e -> {
-                        Toast.makeText(MainActivity.this,"Failed to fetch place details: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-
-                    // Expand the sliding panel
-                    slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
-
-                    updateMapLocation(place.getLocation(), place.getDisplayName());
-                } else {
-                    Snackbar.make(findViewById(android.R.id.content),
-                            "No coordinates found for this place!",
-                            Snackbar.LENGTH_SHORT).show();
-                }
-                Log.d("Selected name", "origin Name:: " + currentName+ " selected namee: " + selectedName);
-            }
-            @Override
-            public void onError(@NonNull Status status) {
-            }
-        });
-        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
-                .setMinUpdateIntervalMillis(500)
-                .setMinUpdateDistanceMeters(1f)
-                .build();
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-                LatLng newPosition = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
-                currentLatLng = newPosition;
-
-                // Sử dụng animateCamera thay vì moveCamera
-                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, myMap.getCameraPosition().zoom), 1000,null); // Không cần callback
-                //setRestrictPlacesInCountry(locationResult.getLastLocation());
-            }
-        };
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-        {
-            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
-        }
-    }
 
     private boolean isPointOfInterest(List<Place.Type> types) {
         if (types == null) return false;
