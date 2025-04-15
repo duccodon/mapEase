@@ -1,6 +1,9 @@
 package com.example.mapease.adapter;
 
+
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
@@ -9,8 +12,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.example.mapease.SaveLocation;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,6 +39,15 @@ public class SaveLocationAdapter extends ArrayAdapter<favoriteLocation> {
 
     private Context context;
     private List<favoriteLocation> favoriteLocations;
+    private OnLocationRemovedListener listener;
+
+    public  interface  OnLocationRemovedListener {
+        void onLocationRemoved(String locationId);
+    }
+
+    public void setOnLocationRemovedListener(OnLocationRemovedListener listener) {
+        this.listener = listener;
+    }
 
     private static final int MAX_ITEMS_TO_DISPLAY = 5;
 
@@ -58,6 +72,7 @@ public class SaveLocationAdapter extends ArrayAdapter<favoriteLocation> {
         TextView nameTextView = convertView.findViewById(R.id.saveName);
         TextView addressTextView = convertView.findViewById(R.id.saveAddress);
         ImageView imageView = convertView.findViewById(R.id.saveImageView);
+        Button removeButton = convertView.findViewById(R.id.removeButton);
 
         if (fl != null) {
             nameTextView.setText(fl.getLocationName());
@@ -71,6 +86,31 @@ public class SaveLocationAdapter extends ArrayAdapter<favoriteLocation> {
                 Log.d("SaveLocationAdapter", "Image URL is null or empty");
             }
         }
+
+        removeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (fl == null) {
+                    Log.d("SaveLocationAdapter", "favoriteLocation is null");
+                    return;
+                }
+
+                new AlertDialog.Builder(context)
+                        .setTitle("Remove Location")
+                        .setMessage("Are you sure you want to remove this location?")
+                        .setPositiveButton("Yes", (dialog, which) -> {
+                            Intent intent = new Intent(context, SaveLocation.class);
+                            intent.putExtra("selectedPlaceID", fl.getLocationID());
+                            intent.putExtra("context", "remove");
+
+                            context.startActivity(intent);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> {
+                            dialog.dismiss(); // User cancelled
+                        })
+                        .show();
+            }
+        });
 
         return convertView;
     }
@@ -108,7 +148,7 @@ public class SaveLocationAdapter extends ArrayAdapter<favoriteLocation> {
             }
         } catch (ParseException e) {
             e.printStackTrace();
-            return isoTime; //return origin if fail
+            return isoTime;
         }
     }
 

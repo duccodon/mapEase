@@ -7,6 +7,7 @@
     android:orientation="vertical"
     android:layout_margin="12dp"
     app:cardCornerRadius="16dp"
+
     app:cardElevation="4dp">
 
     <TextView
@@ -44,5 +45,17 @@
         android:layout_marginBottom="16dp"
         android:lineSpacingExtra="2dp"
         tools:text="This place has amazing food and great service. Highly recommended!" />
+
+
+    <Button
+        android:id="@+id/removeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Remove"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1F51FF"
+        android:layout_gravity="end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"/>
 
 </LinearLayout>

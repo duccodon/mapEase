@@ -99,4 +99,14 @@
     <string name="Ride">Ride</string>
     <string name="Walk">Walk</string>
     <string name="routeStatus">Fastest route, lighter traffic than usual</string>
+
+    <string-array name="location_types">
+        <item>All</item>
+        <item>Restaurant</item>
+        <item>Park</item>
+        <item>Museum</item>
+        <item>Shopping Mall</item>
+        <item>Cafe</item>
+    </string-array>
+
 </resources>
