@@ -82,7 +82,12 @@ public class SaveLocation extends AppCompatActivity {
             imageUrls = extras.getString("placeImageBase64");
         }
 
-        saveFavoriteLocationToDB(locationId, locationName, locationAddress, locationNotes, locationType, locationLatLng, imageUrls);
+        if (context != null && context.equals("remove")) {
+            // Remove the location from favorites
+            removeFavoriteLocationFromDB(userId + "_" + locationId);
+        } else {
+            saveFavoriteLocationToDB(locationId, locationName, locationAddress, locationNotes, locationType, locationLatLng, imageUrls);
+        }
         finish();
     }
 
@@ -102,6 +107,18 @@ public class SaveLocation extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(SaveLocation.this, "Save location successfully failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private  void removeFavoriteLocationFromDB (String favoriteId) {
+
+        mDatabase.child(favoriteId).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(SaveLocation.this, "Remove location successfully", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(SaveLocation.this, "Remove location failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 

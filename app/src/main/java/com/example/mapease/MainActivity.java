@@ -146,6 +146,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
+
+
     private String currentLatitude = "";
     private String currentLongitude = "";
     private LatLng currentLatLng = null;
@@ -1785,7 +1787,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         List<favoriteLocation> savedPlaces = new ArrayList<>();
         String currentUserID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        saveLocationRef.addListenerForSingleValueEvent(new ValueEventListener(){
+
+
+        saveLocationRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 savedPlaces.clear();

@@ -84,4 +84,14 @@
     <string name="gas">Gas Stations</string>
     <string name="groceries">Groceries</string>
     <string name="hospital_clinics">Hospitals Clinics</string>
+
+    <string-array name="location_types">
+        <item>All</item>
+        <item>Restaurant</item>
+        <item>Park</item>
+        <item>Museum</item>
+        <item>Shopping Mall</item>
+        <item>Cafe</item>
+    </string-array>
+
 </resources>

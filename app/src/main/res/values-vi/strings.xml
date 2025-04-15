@@ -81,5 +81,15 @@
     <string name="gas">Cây xăng</string>
     <string name="groceries">Cửa hàng</string>
     <string name="hospital_clinics">Bệnh viện</string>
+
+    <string-array name="location_types">
+        <item>Tất cả</item>
+        <item>Nhà hàng</item>
+        <item>Công viên</item>
+        <item>Bảo tàng</item>
+        <item>Trung tâm mua sắm</item>
+        <item>Quán cà phê</item>
+    </string-array>
+
 </resources>
 
