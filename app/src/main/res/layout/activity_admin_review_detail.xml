@@ -1,110 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:app="http://schemas.android.com/apk/res-auto"
-xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:orientation="vertical"
-tools:context=".Admin_ReviewDetail">
-
-<TextView
-    android:id="@+id/detailTitle"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Review Detail"
-    android:layout_marginTop="14dp"
-    android:textSize="24sp"
-    android:layout_gravity="center"
-    android:layout_marginBottom="12dp"
-    android:textColor="@color/lavender"/>
-
-<!-- Username -->
-<TextView
-    android:id="@+id/reviewUser"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Username"
-    android:layout_gravity="center"
-    android:textSize="20sp"
-    android:textColor="@color/lavender"/>
-
-<!-- Location -->
-<TextView
-    android:id="@+id/reviewLocation"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
-    android:padding="20dp"
-    android:text="Location"
-    android:textSize="18sp"
-    android:textColor="@color/lavender"/>
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:layout_marginTop="50dp"
+    tools:context=".Admin_ReviewDetail">
 
-<!-- Rating -->
-<RatingBar
-    android:id="@+id/reviewRating"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:layout_marginTop="10dp"
-    android:numStars="5"
-    android:stepSize="1.0"
-    android:isIndicator="true"
-    style="?android:attr/ratingBarStyle"/>
-
-<!-- Time -->
-<TextView
-    android:id="@+id/reviewTime"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
-    android:padding="20dp"
-    android:text="Time"
-    android:textSize="18sp"
-    android:textColor="@color/lavender"/>
-
-<!-- Content -->
-<TextView
-    android:id="@+id/reviewContent"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
-    android:padding="20dp"
-    android:text="Content"
-    android:textSize="18sp"
-    android:textColor="@color/lavender"/>
-
-<!-- Like Icon and Count -->
-<LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:layout_gravity="center"
-    android:layout_marginTop="10dp">
-
-    <ImageView
-        android:id="@+id/reviewLikeIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/outline_heart"/>
-
-    <TextView
-        android:id="@+id/reviewLikeCount"
-        android:layout_width="wrap_content"
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/headerLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
-        android:text="0"
-        android:textSize="18sp"
-        android:textColor="@color/lavender"/>
-</LinearLayout>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_margin="16dp"
+        android:background="#FFFFFF"
+        android:padding="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-<!-- Images Recycler -->
-<androidx.recyclerview.widget.RecyclerView
-    android:id="@+id/reviewImagesRecycler"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
-    android:orientation="horizontal"
-    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+        <ImageButton
+            android:id="@+id/backButtonDetailReview"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_back"
+            app:tint="@color/lavender"
+            android:contentDescription="Back"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/detailReportTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Review Details"
+            android:textSize="24sp"
+            android:textColor="@color/lavender"
+            android:layout_marginStart="8dp"
+            android:textStyle="bold"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- Main Content Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/adminReviewCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/headerLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <!-- Image Gallery -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/adminReviewImagesRecycler"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:orientation="horizontal"
+                tools:listitem="@layout/item_review_image" />
+
+            <!-- User and Rating Header -->
+            <TextView
+                android:id="@+id/adminReviewUser"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#D81B60"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:layout_constraintTop_toBottomOf="@id/adminReviewImagesRecycler"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/adminReviewRating"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="8dp"
+                tools:text="John Doe" />
+
+            <RatingBar
+                android:id="@+id/adminReviewRating"
+                style="@style/Widget.AppCompat.RatingBar.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:rating="4.5"
+                android:isIndicator="true"
+                android:stepSize="0.5"
+                app:layout_constraintTop_toTopOf="@id/adminReviewUser"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/adminReviewUser" />
+
+            <!-- Review Content -->
+            <TextView
+                android:id="@+id/adminReviewContent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#1A237E"
+                android:lineSpacingExtra="4dp"
+                app:layout_constraintTop_toBottomOf="@id/adminReviewUser"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="12dp"
+                tools:text="This place has amazing food and great service. The ambiance was perfect, and the staff was very friendly. Highly recommended!" />
+
+            <!-- Location -->
+            <TextView
+                android:id="@+id/adminReviewLocation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="#F57C00"
+                android:maxLines="1"
+                android:ellipsize="end"
+                app:layout_constraintTop_toBottomOf="@id/adminReviewContent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp"
+                tools:text="New York, USA" />
+
+            <!-- Timestamp -->
+            <TextView
+                android:id="@+id/adminReviewTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="#388E3C"
+                app:layout_constraintTop_toBottomOf="@id/adminReviewLocation"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp"
+                tools:text="Posted on April 10, 2025" />
+
+            <!-- Review ID -->
+            <TextView
+                android:id="@+id/adminReviewId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                app:layout_constraintTop_toBottomOf="@id/adminReviewTime"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp"
+                tools:text="Review ID: rev_123456" />
+
+            <!-- Like Section -->
+            <LinearLayout
+                android:id="@+id/adminReviewLikeLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                app:layout_constraintTop_toBottomOf="@id/adminReviewId"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="12dp">
+
+                <ImageView
+                    android:id="@+id/adminReviewLikeIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/heart"
+                    app:tint="#F44336"
+                    android:contentDescription="Like" />
+
+                <TextView
+                    android:id="@+id/adminReviewLikeCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="@color/black"
+                    android:layout_marginStart="8dp"
+                    tools:text="24" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
