@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.example.mapease.SaveLocation;
+import com.example.mapease.MainActivity;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -86,6 +87,25 @@ public class SaveLocationAdapter extends ArrayAdapter<favoriteLocation> {
                 Log.d("SaveLocationAdapter", "Image URL is null or empty");
             }
         }
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (fl == null) {
+                    Log.d("SaveLocationAdapter", "favoriteLocation is null");
+                    return;
+                }
+
+                Intent intent = new Intent(context, MainActivity.class);
+                intent.putExtra("selectedPlaceID", fl.getLocationID());
+                intent.putExtra("selectedPlaceName", fl.getLocationName());
+                intent.putExtra("selectedLatitude", fl.getLocationLatitude());
+                intent.putExtra("selectedLongitude", fl.getLocationLongitude());
+                intent.putExtra("context", "viewSaveLocation");
+
+                context.startActivity(intent);
+            }
+        });
 
         removeButton.setOnClickListener(new View.OnClickListener() {
             @Override
