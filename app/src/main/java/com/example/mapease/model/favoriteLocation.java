@@ -23,7 +23,7 @@ public class favoriteLocation {
         this.favoriteId = favoriteId;
         this.userID = userID;
         this.locationID = locationID;
-       this.locationLatitude = lng.latitude;
+        this.locationLatitude = lng.latitude;
         this.locationLongitude = lng.longitude;
         this.locationName = locationName;
         this.locationAddress = locationAddress;

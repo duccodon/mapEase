@@ -2,6 +2,7 @@ package com.example.mapease;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -17,14 +18,17 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.text.InputType;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -36,6 +40,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.PopupMenu;
@@ -53,6 +58,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Utils.LanguageHelper;
+import com.example.mapease.Utils.MapUtils;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.adapter.NearbyPlaceAdapter;
 import com.example.mapease.adapter.ReviewAdapter;
@@ -60,6 +66,7 @@ import com.example.mapease.adapter.SaveLocationAdapter;
 import com.example.mapease.databinding.ActivityMainBinding;
 import com.example.mapease.databinding.CustomPlaceButtonBinding;
 import com.example.mapease.events.SendLocationToActivity;
+import com.example.mapease.model.HazardReport;
 import com.example.mapease.model.Review;
 import com.example.mapease.model.favoriteLocation;
 import com.google.android.gms.common.api.Status;
@@ -115,8 +122,10 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -188,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DatabaseReference reviewRef;
 
     private  DatabaseReference saveLocationRef;
+    private DatabaseReference hazardReportRef;
 
     public static Locale currentLocale;
 
@@ -195,7 +205,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         loadLocale();
         super.onCreate(savedInstanceState);
-
         currentLocale = LanguageHelper.getCurrentLocale(this);
 
         if (!Places.isInitialized()) {
@@ -249,6 +258,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         auth = FirebaseAuth.getInstance();
         reviewRef = db.getReference("reviews");
         saveLocationRef = db.getReference("favoriteLocations");
+        hazardReportRef = db.getReference("hazardReport");
+
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -260,9 +271,128 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onTabReselected(TabLayout.Tab tab) {}
         });
+
+
+        // Bước 1: Tìm kiếm button và gán sự kiện click
+        ImageButton reportButton = findViewById(R.id.report_button);
+        reportButton.setVisibility(View.VISIBLE);  // Hiển thị nút khi cần
+
+        reportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showReportDialog();
+            }
+        });
     }
 
-    //0-overview, 1-reviews, 2-explore, 3-save location
+    // Bước 2: Tạo hàm showReportDialog để hiển thị lựa chọn các loại khu vực nguy hiểm
+    private void showReportDialog() {
+        // Sử dụng AlertDialog để tạo menu lựa chọn các loại cờ
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.report_dialog_title));
+
+        // Các lựa chọn cho khu vực nguy hiểm
+        String[] options = new String[]{
+                getString(R.string.report_type_accident),
+                getString(R.string.report_type_construction),
+                getString(R.string.report_type_congestion),
+                getString(R.string.report_type_flood),
+                getString(R.string.report_type_pothole),
+                getString(R.string.report_type_crime)};
+
+        // Cài đặt adapter và sự kiện chọn
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String selectedOption = options[which];
+                Toast.makeText(MainActivity.this, "Đã chọn: " + selectedOption, Toast.LENGTH_SHORT).show();
+                showDescriptionrReportDialog(MainActivity.this, selectedOption);
+            }
+        });
+        // Tạo dialog
+        builder.create().show();
+    }
+    private void showDescriptionrReportDialog(Context context, String hazardType) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View view = inflater.inflate(R.layout.dialog_description, null);
+        EditText input = view.findViewById(R.id.edit_description);
+
+        new AlertDialog.Builder(context)
+                .setTitle(context.getString(R.string.enter_description_title, hazardType))
+                .setView(view)
+                .setPositiveButton(R.string.submit, (dialog, which) -> {
+                    String description = input.getText().toString().trim();
+                    if (description.isEmpty()) {
+                        Toast.makeText(context, R.string.description_required, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (selectedLatLng == null) {
+                        Toast.makeText(context, "Location not selected", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Chuẩn bị dữ liệu
+                    String createdAt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(new Date());
+                    String reporterId = FirebaseAuth.getInstance().getCurrentUser() != null
+                            ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                            : "anonymous";
+
+                    HazardReport report = new HazardReport(
+                            hazardType,
+                            description,
+                            selectedLatLng.latitude,
+                            selectedLatLng.longitude,
+                            createdAt,
+                            reporterId
+                    );
+
+
+                    // Tạo key mới
+                    String key = hazardReportRef.push().getKey();
+                    if (key != null) {
+                        hazardReportRef.child(key).setValue(report)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(context, "Report submitted!", Toast.LENGTH_SHORT).show();
+                                    //vẽ tạm marker
+                                    MapUtils.addCustomMarkerSimple(this, myMap, selectedLatLng, hazardType);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(context, "Failed to submit: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                })
+
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void loadHazardReports() {
+        hazardReportRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot reportSnapshot : snapshot.getChildren()) {
+                    HazardReport report = reportSnapshot.getValue(HazardReport.class);
+                    if (report != null) {
+                        Log.d("HazardReport", "Type: " + report.getHazardType());
+                        Log.d("HazardReport", "Desc: " + report.getDescription());
+                        Log.d("HazardReport", "Lat: " + report.getLatitude());
+                        Log.d("HazardReport", "Lng: " + report.getLongitude());
+                        Log.d("HazardReport", "UserID: " + report.getReporterId());
+                        Log.d("HazardReport", "-------------------------");
+                        MapUtils.addCustomMarkerSimple(MainActivity.this, myMap, new LatLng(report.getLatitude(), report.getLongitude()), report.getHazardType());
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("HazardReport", "Failed to read: " + error.getMessage());
+            }
+        });
+    }
+
+
     public void switchTab(int tabIndex) {
         if (tabIndex >= 0 && tabIndex < tabLayout.getTabCount()) {
             TabLayout.Tab tab = tabLayout.getTabAt(tabIndex);
@@ -346,6 +476,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+
+        isFetchingLocation = false;
+        isFirstLocationUpdate = true;
+        loadHazardReports();
+
         myMap = googleMap;
         myMap.getUiSettings().setZoomControlsEnabled(true);
         myMap.getUiSettings().setCompassEnabled(true);
@@ -408,11 +543,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //hide sliding panel before choose a place
         slidingPanel.setVisibility(View.GONE);
-
+        ImageButton reportFlag = findViewById(R.id.report_button);
         // POI click listener
         myMap.setOnPoiClickListener(poi -> {
             slidingPanel.setVisibility(View.VISIBLE);
-
             Log.d("DetailInfor", "POI click" + poi.placeId);
             selectedLatLng = poi.latLng;
             currentLatitude = String.valueOf(poi.latLng.latitude);
@@ -429,6 +563,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Normal map click listener
         myMap.setOnMapClickListener(latLng -> {
             slidingPanel.setVisibility(View.VISIBLE);
+            reportFlag.setVisibility(View.VISIBLE);
 
             Log.d("DetailInfor", "Normal click");
             selectedLatLng = latLng;
@@ -516,6 +651,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             getReviews(true, fullPlace.getId());
                             getSaveLocation(true, fullPlace.getId());
                             selectedName = place.getDisplayName(); //for routing display
+
+
 
                         } else {
                             getWeatherDetails();
@@ -617,6 +754,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.e("DetailInfor", "Error finding place: " + e.getMessage());
                     getAddressFromLatLng(latLng);
                 });
+                ImageButton reportFlag = findViewById(R.id.report_button);
+                reportFlag.setVisibility(View.GONE);
             }else{
                 getAddressFromLatLng(latLng);
             }
@@ -737,7 +876,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (place != null && address == null && latLng == null) {
                 Log.d("DetailInfor", "Update UI" + place.toString());
 
-                placeName.setText(place.getName() != null ? place.getName() : "Selected Location");
+                placeName.setText(place.getName() != null ? place.getName() : getString(R.string.SelectedLocation));
                 placeAddress.setText(place.getAddress() != null ? place.getAddress() : "Address not available");
 
                 // Handle optional fields
@@ -834,7 +973,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 String fullAddress = address.getAddressLine(0);
 
                 // Update UI with address info
-                placeName.setText("Selected Location");
+                placeName.setText(getString(R.string.SelectedLocation));
                 placeAddress.setText(fullAddress);
 
                 // Hide optional fields
@@ -858,7 +997,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 currentMarker = myMap.addMarker(new MarkerOptions()
                         .position(latLng)
-                        .title("Selected Location"));
+                        .title(getString(R.string.SelectedLocation)));
 
                 // Expand panel
                 slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);

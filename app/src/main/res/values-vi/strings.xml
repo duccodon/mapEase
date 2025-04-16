@@ -100,5 +100,25 @@
     <string name="Ride">Xe máy</string>
     <string name="Walk">Đi bộ</string>
     <string name="routeStatus">Tuyến đường nhanh nhất, giao thông ít hơn bình thường</string>
+
+    <string name="SelectedLocation">Vị trí đã chọn</string>
+    <string name="report_button_description">Báo cáo nguy hiểm</string>
+    <string name="report_dialog_title">Chọn loại khu vực nguy hiểm</string>
+    <string name="report_type_accident">⚠️ Tai nạn giao thông</string>
+    <string name="report_type_construction">🚧 Đang thi công / sửa đường</string>
+    <string name="report_type_congestion">🚗 Ùn tắc nghiêm trọng</string>
+    <string name="report_type_flood">🌧️ Ngập nước / thời tiết xấu</string>
+    <string name="report_type_pothole">🕳️ Đường hư hỏng / ổ gà</string>
+    <string name="report_type_crime">🏚️ Khu vực nguy hiểm về an ninh</string>
+    <string name="report_success_toast">Đã cắm cờ: %1$s</string>
+    <string name="danger_marker_title">Khu vực nguy hiểm</string>
+    <string name="enter_description_title">Mô tả: %1$s</string>
+    <string name="submit">Gửi</string>
+    <string name="cancel">Hủy</string>
+    <string name="description_hint">Nhập mô tả</string>
+    <string name="description_required">Vui lòng nhập mô tả.</string>
+
+
+
 </resources>
 

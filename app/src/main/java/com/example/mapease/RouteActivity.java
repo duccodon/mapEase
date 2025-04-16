@@ -44,8 +44,10 @@ import android.widget.Toast;
 import com.example.mapease.Remote.RoutesAPIHelper;
 import com.example.mapease.Remote.Step;
 import com.example.mapease.Utils.LanguageHelper;
+import com.example.mapease.Utils.MapUtils;
 import com.example.mapease.Utils.SlidingPanelHelper;
 import com.example.mapease.events.SendLocationToActivity;
+import com.example.mapease.model.HazardReport;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -68,6 +70,11 @@ import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.PolyUtil;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -115,6 +122,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private List<RouteData> routeDataList = new ArrayList<>();
     private int completedRequests = 0;
     private int totalRequests = 3; // Number of times you call parseJsonWithMode
+    private FirebaseDatabase db;
+    private DatabaseReference hazardReportRef;
     @Override
     protected void onStart() {
         super.onStart();
@@ -136,6 +145,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        db = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
+        hazardReportRef = db.getReference("hazardReport");
         loadLocale();
         super.onCreate(savedInstanceState);
 
@@ -394,6 +406,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         addDestinationMarker();
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 160));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(mMap.getCameraPosition().zoom - 1));
+        loadHazardReports();
     }
 /*    private void drawPath(LatLng origin, LatLng destination) throws JSONException {
         if (origin == null || destination == null) {
@@ -844,6 +857,33 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         Configuration config = new Configuration();
         config.setLocale(locale);
         getBaseContext().getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+    }
+
+
+    private void loadHazardReports() {
+        hazardReportRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot reportSnapshot : snapshot.getChildren()) {
+                    HazardReport report = reportSnapshot.getValue(HazardReport.class);
+                    if (report != null) {
+                        Log.d("HazardReport in route activity", "::-------------------------");
+                        Log.d("HazardReport", "Type: " + report.getHazardType());
+                        Log.d("HazardReport", "Desc: " + report.getDescription());
+                        Log.d("HazardReport", "Lat: " + report.getLatitude());
+                        Log.d("HazardReport", "Lng: " + report.getLongitude());
+                        Log.d("HazardReport", "UserID: " + report.getReporterId());
+                        Log.d("HazardReport", "-------------------------");
+                        MapUtils.addCustomMarkerSimple(RouteActivity.this, mMap, new LatLng(report.getLatitude(), report.getLongitude()), report.getHazardType());
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("HazardReport", "Failed to read: " + error.getMessage());
+            }
+        });
     }
 
 }

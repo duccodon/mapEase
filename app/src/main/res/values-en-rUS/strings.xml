@@ -94,6 +94,17 @@
     <string name="Walk">Walk</string>
     <string name="routeStatus">Fastest route, lighter traffic than usual</string>
 
+    <string name="report_button_description">Report Danger</string>
+    <string name="report_dialog_title">Select Danger Type</string>
+    <string name="report_type_accident">⚠️ Traffic Accident</string>
+    <string name="report_type_construction">🚧 Road Construction / Maintenance</string>
+    <string name="report_type_congestion">🚗 Heavy Traffic</string>
+    <string name="report_type_flood">🌧️ Flood / Bad Weather</string>
+    <string name="report_type_pothole">🕳️ Pothole / Road Damage</string>
+    <string name="report_type_crime">🏚️ Unsafe Area</string>
+    <string name="report_success_toast">Flagged as: %1$s</string>
+    <string name="danger_marker_title">Danger Zone</string>
+
     <string-array name="location_types">
         <item>All</item>
         <item>Restaurant</item>
@@ -102,5 +113,10 @@
         <item>Shopping Mall</item>
         <item>Cafe</item>
     </string-array>
-
+    <string name="SelectedLocation">Selected Location</string>
+    <string name="enter_description_title">Describe: %1$s</string>
+    <string name="submit">Submit</string>
+    <string name="cancel">Cancel</string>
+    <string name="description_hint">Enter description</string>
+    <string name="description_required">Please enter a description.</string>
 </resources>
