@@ -77,6 +77,7 @@ public class SaveLocation extends AppCompatActivity {
             locationName = extras.getString("selectedName");
             locationLatLng = extras.getParcelable("selectedLatLng");
             locationAddress = extras.getString("selectedAddress");
+            locationType = extras.getString("selectedPlaceType");
             locationId = extras.getString("selectedPlaceID");
             context = extras.getString("context");
             imageUrls = extras.getString("placeImageBase64");

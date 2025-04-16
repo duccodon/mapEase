@@ -29,12 +29,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -179,6 +182,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private  String selectedAddress = "";
 
+    private String selectedLocationType = "";
+
+
+    private Spinner savePlaceTypeSpinner;
+    private boolean isSpinnerInitialized = false;
+
 
     TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
@@ -247,6 +256,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         saveListView = findViewById(R.id.save_list_view);
         saveAdapter = new SaveLocationAdapter(this, saveLocationList);
         saveListView.setAdapter(saveAdapter);
+
+        savePlaceTypeSpinner = findViewById(R.id.save_location_type_spinner);
+        ArrayAdapter<CharSequence> adapterSpinner = ArrayAdapter.createFromResource(
+                this,
+                R.array.location_types,
+                android.R.layout.simple_spinner_item
+        );
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        savePlaceTypeSpinner.setAdapter( adapterSpinner);
 
 
         //button for place types
@@ -422,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     exploreTab.setVisibility(View.GONE);
                     saveLocationTab.setVisibility(View.VISIBLE);
                     //Load save place
-                    loadAllSavePlace(new DataLoadBack<favoriteLocation>() {
+                    loadAllSavePlace("All", new DataLoadBack<favoriteLocation>() {
                         @Override
                         public void onDataLoaded(List<favoriteLocation> data) {
                             saveLocationList.clear();
@@ -435,6 +453,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Log.e("LoadSaveLocation", "Error loading save location: " + e.getMessage());
                         }
                     });
+
+                    updateSaveLocationUI();
                     break;
             }
             if (tab != null) {
@@ -553,29 +573,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentLongitude = String.valueOf(poi.latLng.longitude);
             selectedName = poi.name;
 
-            getWeatherDetails();
 
-            findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
-            getReviews(true, poi.placeId);
-            getSaveLocation(true, poi.placeId);
-        });
+                getWeatherDetails();
+
+                findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
+
+                getReviews(true, poi.placeId);
+                getSaveLocation(true, poi.placeId);
+            });
 
         // Normal map click listener
         myMap.setOnMapClickListener(latLng -> {
             slidingPanel.setVisibility(View.VISIBLE);
             reportFlag.setVisibility(View.VISIBLE);
 
-            Log.d("DetailInfor", "Normal click");
-            selectedLatLng = latLng;
-            currentLatitude = String.valueOf(latLng.latitude);
-            currentLongitude = String.valueOf(latLng.longitude);
+                Log.d("DetailInfor", "Normal click");
+                selectedLatLng = latLng;
+                currentLatitude = String.valueOf(latLng.latitude);
+                currentLongitude = String.valueOf(latLng.longitude);
 
-            getWeatherDetails();
+                getWeatherDetails();
 
-            findPlaceDetailsFromLocation(latLng, null, null);
-            getReviews(false, null);
-            getSaveLocation(false, null);
-        });
+                findPlaceDetailsFromLocation(latLng, null, null);
+                getReviews(false, null);
+                getSaveLocation(false, null);
+            });
+
+
     }
     private void init()
     {
@@ -967,8 +991,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 }
                             });
                 }
-            }
-            else {
+            } else if (getIntent().getExtras() != null && getIntent().getExtras().getString("context").equals("viewSaveLocation")) {
+                fetchFromSaveLocation();
+            } else {
 
                 String fullAddress = address.getAddressLine(0);
 
@@ -1108,6 +1133,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             saveLocationButton.setEnabled(true);
             saveLocationButton.setAlpha(1.0f);
 
+            fetchSaveLocationType(locationID, new placeTypeCallBack() {
+                @Override
+                public void onPlaceTypeLoaded(String type) {
+                    selectedLocationType = type;
+                    Log.e("SaveLocationType", "Type: " + type);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e("SaveLocationType", "Error: " + e.getMessage());
+                }
+            });
+
             fetchPlacePhoto(locationID, new PhotoCallback() {
                 @Override
                 public void onPhotoBase64Ready(String base64Image) {
@@ -1154,6 +1192,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 bundle.putString("selectedName", selectedName);
                 bundle.putString("selectedAddress", selectedAddress);
                 bundle.putString("selectedPlaceID", locationID);
+                bundle.putString("selectedPlaceType", selectedLocationType);
 
                 if (selectedPlaceImage != null) { // 🔧 FIX: now included if ready
                     bundle.putString("placeImageBase64", selectedPlaceImage);
@@ -2031,23 +2070,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         void onError(Exception e);
     }
 
-    private void loadAllSavePlace(DataLoadBack<favoriteLocation> callback){
+    private void loadAllSavePlace(String locationTypes, DataLoadBack<favoriteLocation> callback) {
         List<favoriteLocation> savedPlaces = new ArrayList<>();
         String currentUserID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-
-
-        saveLocationRef.addValueEventListener(new ValueEventListener(){
+        saveLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 savedPlaces.clear();
                 for (DataSnapshot placeSnapshot : snapshot.getChildren()) {
                     try {
                         favoriteLocation place = placeSnapshot.getValue(favoriteLocation.class);
-                        if(place == null) continue;
+                        if (place == null) continue;
 
                         String userId = place.getUserID();
-                        if (userId != null && userId.equals(currentUserID)) {
+                        String placeType = place.getLocationType();
+
+                        boolean isMatchID = userId != null && userId.equals(currentUserID);
+                        boolean isMatchTypes = locationTypes.equals("All") ||
+                                (placeType != null && placeType.equalsIgnoreCase(locationTypes));
+
+                        if (isMatchID && isMatchTypes) {
                             savedPlaces.add(place);
                         }
                     } catch (Exception e) {
@@ -2064,7 +2107,112 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
+    public interface placeTypeCallBack{
+        void onPlaceTypeLoaded(String placeType);
+        void onError(Exception e);
+    }
+
+    private  void fetchSaveLocationType(String placeId, placeTypeCallBack callback){
+        PlacesClient placesClient = Places.createClient(this);
+        List<Place.Field> placeFields = Arrays.asList(Place.Field.TYPES);
+
+        FetchPlaceRequest request = FetchPlaceRequest.builder(placeId, placeFields).build();
+
+        placesClient.fetchPlace(request)
+                .addOnSuccessListener(response -> {
+                    Place place = response.getPlace();
+                    List<Place.Type> types = place.getTypes();
+
+                    if (types != null && !types.isEmpty()) {
+                        callback.onPlaceTypeLoaded(types.get(0).toString()); // You can format it here too
+                    } else {
+                        callback.onPlaceTypeLoaded("UNKNOWN");
+                    }
+                })
+                .addOnFailureListener(callback::onError);
+    }
 
 
+    private void setupLocationTypeFilter(Spinner spinner, DataLoadBack<favoriteLocation> callback) {
+        Map<String, String> typeMap = getStringStringMap();
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedDisplay = parent.getItemAtPosition(position).toString();
+                String internalValue = typeMap.getOrDefault(selectedDisplay, "All");
+                loadAllSavePlace(internalValue, callback);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                loadAllSavePlace("All", callback);
+            }
+        });
+
+        // Optionally trigger default filter
+        String defaultDisplay = spinner.getSelectedItem() != null ? spinner.getSelectedItem().toString() : "All";
+        String internalValue = typeMap.getOrDefault(defaultDisplay, "All");
+        loadAllSavePlace(internalValue, callback);
+    }
+
+    @NonNull
+    private static Map<String, String> getStringStringMap() {
+        Map<String, String> typeMap = new HashMap<>();
+        typeMap.put("All", "All");
+        typeMap.put("Restaurant", "Restaurant");
+        typeMap.put("Park", "Park");
+        typeMap.put("Museum", "Museum");
+        typeMap.put("Shopping Mall", "Shopping Mall");
+        typeMap.put("Cafe", "Cafe");
+
+        typeMap.put("Tất cả", "All");
+        typeMap.put("Nhà hàng", "Restaurant");
+        typeMap.put("Công viên", "Park");
+        typeMap.put("Bảo tàng", "Museum");
+        typeMap.put("Trung tâm thương mại", "Shopping Mall");
+        typeMap.put("Quán cà phê", "Cafe");
+        return typeMap;
+    }
+
+    private void updateSaveLocationUI(){
+        if (!isSpinnerInitialized) {
+            setupLocationTypeFilter(savePlaceTypeSpinner, new DataLoadBack<favoriteLocation>() {
+                @Override
+                public void onDataLoaded(List<favoriteLocation> data) {
+                    saveLocationList.clear();
+                    saveLocationList.addAll(data);
+                    saveAdapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e("LoadSaveLocation", "Error loading filtered location: " + e.getMessage());
+                }
+            });
+            isSpinnerInitialized = true;
+        }
+    }
+
+    private void fetchFromSaveLocation(){
+
+        slidingPanel.setVisibility(View.VISIBLE);
+        myMap.setOnMapClickListener(latLng -> {
+            selectedLatLng = new LatLng(getIntent().getDoubleExtra("selectedLatitude", 0), getIntent().getDoubleExtra("selectedLongitude", 0));
+            currentLatitude = String.valueOf(latLng.latitude);
+            currentLongitude = String.valueOf(latLng.longitude);
+            selectedName = getIntent().getStringExtra("selectedPlaceName");
+            findPlaceDetailsFromLocation(selectedLatLng, selectedName, getIntent().getStringExtra("selectedPlaceID"));
+            getWeatherDetails();
+
+            getReviews(true, getIntent().getStringExtra("selectedPlaceID"));
+            getSaveLocation(true, getIntent().getStringExtra("selectedPlaceID"));
+
+            updateMapLocation(selectedLatLng, selectedName);
+        });
+
+
+
+    }
 
 }

@@ -36,6 +36,7 @@
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
             android:name=".Admin_ReviewDetail"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
             android:exported="false" />
         <activity
             android:name=".Admin_UserDetail"

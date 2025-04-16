@@ -42,6 +42,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
     String reportId, createdAtStr, descriptionStr, reporterIdStr, titleStr, reviewIdStr;
     ImageButton backBtn;
     ArrayList<User> userList;
+    Button viewReviewBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +62,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
         acceptBtn = findViewById(R.id.acceptReportButton);
         declineBtn = findViewById(R.id.declineReportButton);
         backBtn = findViewById(R.id.backButtonDetailReport);
+        viewReviewBtn = findViewById(R.id.viewReviewButton);
 
         userRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -120,6 +122,15 @@ public class Admin_ReportDetail extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 finish();
+            }
+        });
+
+        viewReviewBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getApplicationContext(), Admin_ReviewDetail.class);
+                i.putExtra("reviewId", reviewIdStr);
+                startActivity(i);
             }
         });
     }
