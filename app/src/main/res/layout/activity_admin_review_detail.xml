@@ -75,7 +75,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:orientation="horizontal"
-                tools:listitem="@layout/item_review_image" />
+                tools:listitem="@layout/admin_item_review_image" />
 
             <!-- User and Rating Header -->
             <TextView
@@ -128,7 +128,6 @@
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
                 android:textColor="#F57C00"
-                android:maxLines="1"
                 android:ellipsize="end"
                 app:layout_constraintTop_toBottomOf="@id/adminReviewContent"
                 app:layout_constraintStart_toStartOf="parent"

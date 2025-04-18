@@ -12,7 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.SearchView;
+import androidx.appcompat.widget.SearchView;
 import android.widget.Toast;
 
 import com.example.mapease.adapter.AdminReportAdapter;
@@ -35,6 +35,7 @@ public class Admin_ReportFragment extends Fragment {
     private DatabaseReference myRef;
     private FirebaseAuth auth;
     ArrayList<ReportReview> reportList;
+    ArrayList<ReportReview> filteredList;
     AdminReportAdapter reportAdapter;
     SearchView searchView;
     View view;
@@ -48,20 +49,36 @@ public class Admin_ReportFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         myRef = database.getReference("reports");
-        //searchView = view.findViewById(R.id.search);
-        //searchView.clearFocus();
-        /* fab.setOnClickListener(new View.OnClickListener() {
+
+        // Initialize ListView and lists
+        ListView listView = view.findViewById(R.id.listViewReport);
+        reportList = new ArrayList<>();
+        filteredList = new ArrayList<>();
+        reportAdapter = new AdminReportAdapter(getContext(), filteredList);
+        listView.setAdapter(reportAdapter);
+
+        // Initialize SearchView
+        searchView = view.findViewById(R.id.adminReportSearch);
+        searchView.clearFocus(); // Prevent immediate keyboard popup
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void onClick(View v) {
-                startActivity(new Intent(getContext(), Admin_UploadActivity.class));
+            public boolean onQueryTextSubmit(String query) {
+                return false; // Not handling submit action
             }
-        }); */
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterReports(newText);
+                return true;
+            }
+        });
 
         //load users
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                reportList = new ArrayList<>();
+                reportList.clear();
+                filteredList.clear();
 
                 for (DataSnapshot reportSnapshot : snapshot.getChildren()) {
                     try {
@@ -77,15 +94,14 @@ public class Admin_ReportFragment extends Fragment {
                 /* for (ReportReview report : reportList)
                     Log.d("RetrieveReport", report.toString()); */
 
-                // Update adapter with real reviews
-                reportAdapter = new AdminReportAdapter(getContext(), reportList);
-                ListView listView = view.findViewById(R.id.listViewReport);
-                listView.setAdapter(reportAdapter);
+                // Update filtered list with all reports initially
+                filteredList.addAll(reportList);
+                reportAdapter.notifyDataSetChanged();
 
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        ReportReview clickedReport = reportList.get(position);
+                        ReportReview clickedReport = filteredList.get(position);
                         Intent i = new Intent(getContext(), Admin_ReportDetail.class);
                         i.putExtra("createdAt", clickedReport.getCreatedAt());
                         i.putExtra("description", clickedReport.getDescription());
@@ -106,5 +122,19 @@ public class Admin_ReportFragment extends Fragment {
             }
         });
         return view;
+    }
+    private void filterReports(String query) {
+        filteredList.clear();
+        if (query == null || query.trim().isEmpty()) {
+            filteredList.addAll(reportList);
+        } else {
+            String lowerCaseQuery = query.toLowerCase();
+            for (ReportReview report : reportList) {
+                if (report.getId() != null && report.getId().toLowerCase().contains(lowerCaseQuery)) {
+                    filteredList.add(report);
+                }
+            }
+        }
+        reportAdapter.notifyDataSetChanged();
     }
 }

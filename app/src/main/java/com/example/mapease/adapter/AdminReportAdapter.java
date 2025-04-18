@@ -72,6 +72,7 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
         TextView reportDescription;
         TextView reportReporterName;
         TextView reportTime;
+        TextView reportId;
     }
 
     @NonNull
@@ -94,6 +95,7 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
             myViewHolder.reportDescription = convertView.findViewById(R.id.reportDescription);
             myViewHolder.reportReporterName = convertView.findViewById(R.id.reportReporterName);
             myViewHolder.reportTime = convertView.findViewById(R.id.reportCreatedAt);
+            myViewHolder.reportId = convertView.findViewById(R.id.reportId);
             convertView.setTag(myViewHolder);
         }
         else{
@@ -103,6 +105,7 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
         myViewHolder.reportTitle.setText(report.getTitle());
         myViewHolder.reportTime.setText(formatDate(report.getCreatedAt()));
         myViewHolder.reportDescription.setText(report.getDescription());
+        myViewHolder.reportId.setText(report.getId());
         User user = usersMap.get(report.getReporterId());
         if (user != null) {
             myViewHolder.reportReporterName.setText(user.getUsername());
