@@ -31,6 +31,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -125,9 +126,11 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -151,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout slidingPanel;
     private final String url = "https://api.openweathermap.org/data/2.5/weather?";
     private final String appId = "7b7b6b93a8b58cf10c77b14fc34e06fe";
+    private final String forecastUrl = "https://api.openweathermap.org/data/2.5/forecast?";
 
     private  View searchView;
 
@@ -202,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout reviewsTab;
     private LinearLayout exploreTab;
     private  LinearLayout saveLocationTab;
+    private LinearLayout weatherTab;
     //firbase
     private FirebaseAuth auth;
     private FirebaseDatabase db;
@@ -253,6 +258,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         reviewsTab = findViewById(R.id.reviews_tab);
         exploreTab = findViewById(R.id.explore_tab);
         saveLocationTab = findViewById(R.id.save_tab);
+        weatherTab = findViewById(R.id.weather_tab);
 
         //List view
         saveListView = findViewById(R.id.save_list_view);
@@ -292,6 +298,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
+        // Ensure both HorizontalScrollViews handle touch events
+        HorizontalScrollView hourlyForecastScrollView = findViewById(R.id.hourly_forecast_scroll_view);
+        hourlyForecastScrollView.setOnTouchListener((v, event) -> {
+            v.getParent().requestDisallowInterceptTouchEvent(true);
+            return false;
+        });
+        HorizontalScrollView forecastScrollView = findViewById(R.id.forecast_scroll_view);
+        forecastScrollView.setOnTouchListener((v, event) -> {
+            v.getParent().requestDisallowInterceptTouchEvent(true);
+            return false;
+        });
 
         // Bước 1: Tìm kiếm button và gán sự kiện click
         ImageButton reportButton = findViewById(R.id.report_button);
@@ -423,24 +440,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     reviewsTab.setVisibility(View.GONE);
                     exploreTab.setVisibility(View.GONE);
                     saveLocationTab.setVisibility(View.GONE);
+                    weatherTab.setVisibility(View.GONE);
                     break;
                 case 1:
                     overviewTab.setVisibility(View.GONE);
                     reviewsTab.setVisibility(View.VISIBLE);
                     exploreTab.setVisibility(View.GONE);
                     saveLocationTab.setVisibility(View.GONE);
+                    weatherTab.setVisibility(View.GONE);
                     break;
                 case 2:
                     overviewTab.setVisibility(View.GONE);
                     reviewsTab.setVisibility(View.GONE);
                     exploreTab.setVisibility(View.VISIBLE);
                     saveLocationTab.setVisibility(View.GONE);
+                    weatherTab.setVisibility(View.GONE);
                     break;
                 case 3:
                     overviewTab.setVisibility(View.GONE);
                     reviewsTab.setVisibility(View.GONE);
                     exploreTab.setVisibility(View.GONE);
                     saveLocationTab.setVisibility(View.VISIBLE);
+                    weatherTab.setVisibility(View.GONE);
                     //Load save place
                     loadAllSavePlace("All", new DataLoadBack<favoriteLocation>() {
                         @Override
@@ -458,6 +479,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     updateSaveLocationUI();
                     break;
+
+                case 4:
+                    overviewTab.setVisibility(View.GONE);
+                    reviewsTab.setVisibility(View.GONE);
+                    exploreTab.setVisibility(View.GONE);
+                    saveLocationTab.setVisibility(View.GONE);
+                    weatherTab.setVisibility(View.VISIBLE);
             }
             if (tab != null) {
                 tab.select();
@@ -536,6 +564,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                 currentLongitude = String.valueOf(location.getLongitude());
                                                 currentName = getString(R.string.YourLocation);
                                                 getWeatherDetails();
+                                                getForecastDetails();
                                                 currentLatLng = userLatLng;
                                             } else {
                                                 Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
@@ -580,6 +609,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
                 getWeatherDetails();
+                getForecastDetails();
 
                 findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
 
@@ -601,6 +631,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 currentLongitude = String.valueOf(latLng.longitude);
 
                 getWeatherDetails();
+                getForecastDetails();
 
                 findPlaceDetailsFromLocation(latLng, null, null);
                 getReviews(false, null);
@@ -645,6 +676,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     currentLatitude = String.valueOf(place.getLocation().latitude);
                     currentLongitude = String.valueOf(place.getLocation().longitude);
                     getWeatherDetails();
+                    getForecastDetails();
 
                     selectedLatLng = place.getLocation();
 
@@ -681,6 +713,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (isPOI) {
                             //POI search
                             getWeatherDetails();
+                            getForecastDetails();
                             findPlaceDetailsFromLocation(fullPlace.getLocation(), fullPlace.getDisplayName(), fullPlace.getId());
                             getReviews(true, fullPlace.getId());
                             getSaveLocation(true, fullPlace.getId());
@@ -690,6 +723,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         } else {
                             getWeatherDetails();
+                            getForecastDetails();
                             findPlaceDetailsFromLocation(place.getLocation(), null, null);
                             getReviews(false, null);
                             getSaveLocation(false, null);
@@ -1555,6 +1589,219 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         requestQueue.add(stringRequest);
     }
 
+    // Method for 3-hourly and 5-day forecast
+    public void getForecastDetails() {
+        String lat = currentLatitude;
+        String lon = currentLongitude;
+        LinearLayout hourlyForecastContainer = findViewById(R.id.hourly_forecast_container);
+        LinearLayout dailyForecastContainer = findViewById(R.id.forecast_container);
+
+        // Validate inputs
+        if (lat == null || lat.isEmpty() || lon == null || lon.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "No location for forecast!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Construct API URL
+        String tempUrl = forecastUrl + "lat=" + lat + "&lon=" + lon + "&appid=" + appId;
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, tempUrl, response -> {
+            try {
+                Log.d("WeatherApp", "Forecast response received: " + response);
+                JSONObject jsonResponse = new JSONObject(response);
+                if (!jsonResponse.has("list")) {
+                    throw new JSONException("Invalid API response");
+                }
+
+                // Parse forecast list
+                JSONArray jsonArrayList = jsonResponse.getJSONArray("list");
+                List<ForecastItem> hourlyForecastItems = new ArrayList<>();
+                List<ForecastItem> dailyForecastItems = new ArrayList<>();
+                SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd", Locale.getDefault());
+                SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm", Locale.getDefault());
+
+                // Get current date for filtering today's forecasts
+                Calendar today = Calendar.getInstance();
+                SimpleDateFormat dateOnlyFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                String todayDateStr = dateOnlyFormatter.format(today.getTime());
+
+                String lastDailyDate = "";
+
+                // Process forecasts
+                for (int i = 0; i < jsonArrayList.length(); i++) {
+                    JSONObject jsonObjectForecast = jsonArrayList.getJSONObject(i);
+                    String dateTime = jsonObjectForecast.getString("dt_txt");
+                    Log.d("WeatherApp", "Processing forecast: " + dateTime);
+
+                    // Parse date and time
+                    Date forecastDate = dateParser.parse(dateTime);
+                    String forecastDateStr = dateOnlyFormatter.format(forecastDate);
+
+                    // Parse weather data
+                    JSONArray jsonArrayWeather = jsonObjectForecast.getJSONArray("weather");
+                    JSONObject jsonObjectWeather = jsonArrayWeather.getJSONObject(0);
+                    String description = jsonObjectWeather.getString("description").toUpperCase(Locale.getDefault());
+                    String weatherCode = jsonObjectWeather.getString("icon");
+
+                    // Parse main data
+                    JSONObject jsonObjectMain = jsonObjectForecast.getJSONObject("main");
+                    double temp = jsonObjectMain.getDouble("temp") - 273.15;
+
+                    // Map weather icon
+                    int iconResId;
+                    switch (weatherCode) {
+                        case "01d": case "01n":
+                            iconResId = R.drawable.ic_sunny;
+                            break;
+                        case "02d": case "02n":
+                            iconResId = R.drawable.ic_partly_cloudy;
+                            break;
+                        case "03d": case "03n": case "04d": case "04n":
+                            iconResId = R.drawable.ic_cloudy;
+                            break;
+                        case "09d": case "09n": case "10d": case "10n":
+                            iconResId = R.drawable.ic_rain;
+                            break;
+                        case "11d": case "11n":
+                            iconResId = R.drawable.ic_thunderstorm;
+                            break;
+                        case "13d": case "13n":
+                            iconResId = R.drawable.ic_snow;
+                            break;
+                        default:
+                            Log.w("WeatherApp", "Unknown weather code: " + weatherCode);
+                            iconResId = R.drawable.ic_weather_default;
+                    }
+
+                    // 3-Hourly Forecast for Today
+                    if (forecastDateStr.equals(todayDateStr)) {
+                        String timeStr = timeFormatter.format(forecastDate);
+                        hourlyForecastItems.add(new ForecastItem(timeStr, temp, description, iconResId));
+                        Log.d("WeatherApp", "Added hourly forecast item: " + timeStr + ", " + temp + "°C");
+                    }
+
+                    // 5-Day Forecast (12:00 PM)
+                    if (dateTime.contains("12:00:00")) {
+                        String dateStr = dateFormatter.format(forecastDate);
+                        if (dateStr.equals(lastDailyDate)) {
+                            continue; // Skip if already processed this day
+                        }
+                        lastDailyDate = dateStr;
+                        dailyForecastItems.add(new ForecastItem(dateStr, temp, description, iconResId));
+                        Log.d("WeatherApp", "Added daily forecast item: " + dateStr + ", " + temp + "°C");
+                        if (dailyForecastItems.size() >= 5) {
+                            break; // Limit to 5 days
+                        }
+                    }
+                }
+
+                Log.d("WeatherApp", "Total hourly forecast items: " + hourlyForecastItems.size());
+                Log.d("WeatherApp", "Total daily forecast items: " + dailyForecastItems.size());
+
+                // Clear existing views
+                hourlyForecastContainer.removeAllViews();
+                dailyForecastContainer.removeAllViews();
+
+                // Add Hourly Forecast Cards
+                LayoutInflater inflater = LayoutInflater.from(this);
+                for (ForecastItem item : hourlyForecastItems) {
+                    View cardView = inflater.inflate(R.layout.forecast_day_item, hourlyForecastContainer, false);
+                    TextView dateView = cardView.findViewById(R.id.forecast_date);
+                    TextView tempView = cardView.findViewById(R.id.forecast_temp);
+                    TextView descView = cardView.findViewById(R.id.forecast_description);
+                    ImageView iconView = cardView.findViewById(R.id.forecast_icon);
+
+                    dateView.setText(item.getDate());
+                    tempView.setText(String.format("%s °C", df.format(item.getTemp())));
+                    descView.setText(item.getDescription());
+                    iconView.setImageResource(item.getIconResId());
+
+                    hourlyForecastContainer.addView(cardView);
+                    Log.d("WeatherApp", "Added hourly CardView for: " + item.getDate());
+                }
+
+                // Add Placeholder if No Hourly Forecast
+                if (hourlyForecastItems.isEmpty()) {
+                    TextView placeholder = new TextView(this);
+                    placeholder.setText("No hourly forecast available");
+                    placeholder.setTextColor(Color.parseColor("#34495E"));
+                    hourlyForecastContainer.addView(placeholder);
+                    Log.w("WeatherApp", "No hourly forecast items added");
+                }
+
+                // Add Daily Forecast Cards
+                for (ForecastItem item : dailyForecastItems) {
+                    View cardView = inflater.inflate(R.layout.forecast_day_item, dailyForecastContainer, false);
+                    TextView dateView = cardView.findViewById(R.id.forecast_date);
+                    TextView tempView = cardView.findViewById(R.id.forecast_temp);
+                    TextView descView = cardView.findViewById(R.id.forecast_description);
+                    ImageView iconView = cardView.findViewById(R.id.forecast_icon);
+
+                    dateView.setText(item.getDate());
+                    tempView.setText(String.format("%s °C", df.format(item.getTemp())));
+                    descView.setText(item.getDescription());
+                    iconView.setImageResource(item.getIconResId());
+
+                    dailyForecastContainer.addView(cardView);
+                    Log.d("WeatherApp", "Added daily CardView for: " + item.getDate());
+                }
+
+                // Add Placeholder if No Daily Forecast
+                if (dailyForecastItems.isEmpty()) {
+                    TextView placeholder = new TextView(this);
+                    placeholder.setText("No daily forecast available");
+                    placeholder.setTextColor(Color.parseColor("#34495E"));
+                    dailyForecastContainer.addView(placeholder);
+                    Log.w("WeatherApp", "No daily forecast items added");
+                }
+
+            } catch (JSONException | ParseException e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Error parsing forecast data!", Toast.LENGTH_SHORT).show();
+                Log.e("WeatherApp", "Error parsing forecast: " + e.getMessage());
+            }
+        }, error -> {
+            String errorMsg = error.getMessage() != null ? error.getMessage() : "Network error";
+            Toast.makeText(getApplicationContext(), "Forecast Error: " + errorMsg, Toast.LENGTH_SHORT).show();
+            Log.e("WeatherApp", "Forecast network error: " + errorMsg);
+        });
+
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.add(stringRequest);
+    }
+
+    // Forecast Item Model
+    public static class ForecastItem {
+        private final String date;
+        private final double temp;
+        private final String description;
+        private final int iconResId;
+
+        public ForecastItem(String date, double temp, String description, int iconResId) {
+            this.date = date;
+            this.temp = temp;
+            this.description = description;
+            this.iconResId = iconResId;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public double getTemp() {
+            return temp;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public int getIconResId() {
+            return iconResId;
+        }
+    }
+
     private void setupSlidingPanel() {
         slidingLayout = findViewById(R.id.sliding_layout);
         slidingPanel = findViewById(R.id.sliding_panel);
@@ -1855,6 +2102,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         currentLongitude = String.valueOf(selectedLatLng.longitude);
                         selectedName = place.getDisplayName();
                         getWeatherDetails();
+                        getForecastDetails();
                         findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
                         getReviews(true, place.getId());
                         getSaveLocation(true, place.getId());
@@ -1878,6 +2126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 currentLongitude = String.valueOf(selectedLatLng.longitude);
                 selectedName = place.getDisplayName();
                 getWeatherDetails();
+                getForecastDetails();
                 findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
                 getReviews(true, place.getId());
                 getSaveLocation(true, place.getId());
@@ -2211,6 +2460,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         findPlaceDetailsFromLocation(selectedLatLng, selectedName, getIntent().getStringExtra("selectedPlaceID"));
         getWeatherDetails();
+        getForecastDetails();
 
         getReviews(true, getIntent().getStringExtra("selectedPlaceID"));
         getSaveLocation(true, getIntent().getStringExtra("selectedPlaceID"));

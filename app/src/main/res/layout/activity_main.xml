@@ -61,8 +61,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                >
+                android:gravity="center_vertical">
 
                 <!-- Restaurant Button -->
                 <include
@@ -141,7 +140,6 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="4dp"
             android:background="@drawable/round_button"
-            android:onClick="getWeatherDetails"
             android:scaleType="centerInside"
             android:src="@drawable/profile_user"
             app:layout_constraintEnd_toStartOf="@id/language_button"
@@ -162,7 +160,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Sliding Panel (unchanged) -->
+    <!-- Sliding Panel -->
     <LinearLayout
         android:id="@+id/sliding_panel"
         android:layout_width="match_parent"
@@ -173,7 +171,6 @@
         android:elevation="8dp"
         android:clickable="true"
         android:focusable="true">
-
 
         <!-- Drag Handle -->
         <View
@@ -215,14 +212,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Save" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Weather" />
         </com.google.android.material.tabs.TabLayout>
 
+        <!-- Overview Tab -->
         <LinearLayout
             android:id="@+id/overview_tab"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="visible">
+
             <!-- Location Title -->
             <TextView
                 android:id="@+id/location_title"
@@ -233,6 +237,7 @@
                 android:textStyle="bold"
                 android:textColor="#2C3E50"
                 android:paddingBottom="12dp" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -285,6 +290,7 @@
                     android:scaleType="centerInside"
                     app:tint="@color/red" />
             </LinearLayout>
+
             <!-- BUTTON -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -386,9 +392,175 @@
                 android:textColor="#2C3E50"
                 android:paddingBottom="8dp"/>
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#D0D0D0"/>
+        </LinearLayout>
+
+        <!-- Reviews Tab -->
+        <LinearLayout
+            android:id="@+id/reviews_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Top -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <!-- Rating Number -->
+                    <TextView
+                        android:id="@+id/rating_number"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="4.5"
+                        android:textSize="36sp"
+                        android:textColor="#000000"
+                        android:textStyle="bold"/>
+
+                    <!-- Rating Bar -->
+                    <RatingBar
+                        android:id="@+id/rating_bar"
+                        style="@style/Widget.AppCompat.RatingBar.Small"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:numStars="5"
+                        android:rating="4.5"
+                        android:stepSize="0.5"
+                        android:isIndicator="true"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+                <!-- Write Review Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/write_review_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="#E0F7FA"
+                    android:text="Write review"
+                    android:textColor="#00695C"
+                    android:drawableStart="@drawable/baseline_assistant_direction_24"
+                    android:drawablePadding="6dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"/>
+            </LinearLayout>
+
+            <!-- ListView for Reviews -->
+            <ListView
+                android:id="@+id/reviewListView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:divider="@null"
+                android:dividerHeight="0dp" />
+        </LinearLayout>
+
+        <!-- Explore Tab -->
+        <LinearLayout
+            android:id="@+id/explore_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2dp">
+
+                <TextView
+                    android:id="@+id/explore_tab_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Nearby Places"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/explore_close_button"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_marginEnd="8dp"/>
+
+                <ImageButton
+                    android:id="@+id/explore_close_button"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="@drawable/round_button"
+                    android:src="@drawable/icon_close"
+                    android:scaleType="centerInside"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/explore_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2dp"/>
+        </LinearLayout>
+
+        <!-- Save Tab -->
+        <LinearLayout
+            android:id="@+id/save_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Favorite Location"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="16dp"/>
+
+            <Spinner
+                android:id="@+id/save_location_type_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="8dp" />
+
+            <ListView
+                android:id="@+id/save_list_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <!-- Weather Tab -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/weather_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <!-- Weather Information Card -->
+            <TextView
+                android:id="@+id/present_weather_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="Present"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#2C3E50" />
             <androidx.cardview.widget.CardView
+                android:id="@+id/current_weather_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -439,151 +611,59 @@
                     </ScrollView>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-        </LinearLayout>
 
-        <!-- Reviews tab -->
-        <LinearLayout
-            android:id="@+id/reviews_tab"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <!-- top -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="10dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <!-- rating number -->
-                    <TextView
-                        android:id="@+id/rating_number"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="4.5"
-                        android:textSize="36sp"
-                        android:textColor="#000000"
-                        android:textStyle="bold"/>
-
-                    <!-- Rating bar -->
-                    <RatingBar
-                        android:id="@+id/rating_bar"
-                        style="@style/Widget.AppCompat.RatingBar.Small"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:numStars="5"
-                        android:rating="4.5"
-                        android:stepSize="0.5"
-                        android:isIndicator="true"
-                        android:layout_marginTop="4dp"/>
-                </LinearLayout>
-
-                <!-- Write review button -->
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/write_review_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#E0F7FA"
-                    android:text="Write review"
-                    android:textColor="#00695C"
-                    android:drawableStart="@drawable/baseline_assistant_direction_24"
-                    android:drawablePadding="6dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"/>
-            </LinearLayout>
-
-            <!-- ListView for Reviews -->
-            <ListView
-                android:id="@+id/reviewListView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_weight="1"
-                android:divider="@null"
-                android:dividerHeight="0dp" />
-        </LinearLayout>
-
-        <!-- Explore tab -->
-        <LinearLayout
-            android:id="@+id/explore_tab"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <!-- Add your Explore content here -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="2dp">
-
-                <TextView
-                    android:id="@+id/explore_tab_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="Nearby Places"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/explore_close_button"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:layout_marginEnd="8dp"/>
-
-                <ImageButton
-                    android:id="@+id/explore_close_button"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/round_button"
-                    android:src="@drawable/icon_close"
-                    android:scaleType="centerInside"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"/>
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/explore_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="2dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/save_tab"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
+            <!-- 3-Hourly Forecast Title -->
             <TextView
+                android:id="@+id/hourly_forecast_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Favorite Location"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="3-Hourly Forecast"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:padding="16dp"/>
-
-            <Spinner
-                android:id="@+id/save_location_type_spinner"
+                android:textColor="#2C3E50" />
+            <HorizontalScrollView
+                android:id="@+id/hourly_forecast_scroll_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginTop="16dp"
+                android:scrollbars="horizontal"
+                android:fillViewport="true">
+                <LinearLayout
+                    android:id="@+id/hourly_forecast_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="8dp" />
+            </HorizontalScrollView>
 
-            <ListView
-                android:id="@+id/save_list_view"
+            <!-- 5-Day Forecast Title -->
+            <TextView
+                android:id="@+id/daily_forecast_title"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="5-Day Forecast"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#2C3E50" />
+            <!-- 5-Day Forecast Horizontal ScrollView -->
+            <HorizontalScrollView
+                android:id="@+id/forecast_scroll_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+                <LinearLayout
+                    android:id="@+id/forecast_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="8dp" />
+            </HorizontalScrollView>
         </LinearLayout>
-
+        </ScrollView>
     </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
