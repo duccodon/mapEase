@@ -174,6 +174,7 @@
         android:clickable="true"
         android:focusable="true">
 
+
         <!-- Drag Handle -->
         <View
             android:id="@+id/drag_handle"
@@ -274,6 +275,15 @@
                         android:paddingEnd="4dp"
                         android:visibility="gone"/>
                 </LinearLayout>
+                <ImageButton
+                    android:id="@+id/report_problem_logo"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/round_button"
+                    android:src="@drawable/ic_report_flag"
+                    android:contentDescription="Report Problem"
+                    android:scaleType="centerInside"
+                    app:tint="@color/red" />
             </LinearLayout>
             <!-- BUTTON -->
             <LinearLayout
@@ -327,8 +337,8 @@
                     android:layout_marginEnd="4dp"
                     android:background="@drawable/long_button"
                     android:src="@drawable/ic_report_flag"
-                    android:visibility="gone"
                     android:scaleType="centerInside"
+                    android:visibility="gone"
                     app:tint="@color/red" />
             </LinearLayout>
 

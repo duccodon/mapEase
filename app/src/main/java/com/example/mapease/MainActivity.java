@@ -188,6 +188,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Spinner savePlaceTypeSpinner;
     private boolean isSpinnerInitialized = false;
 
+    private ImageButton reportFlag;
+
 
     TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
@@ -563,15 +565,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //hide sliding panel before choose a place
         slidingPanel.setVisibility(View.GONE);
-        ImageButton reportFlag = findViewById(R.id.report_button);
+
         // POI click listener
-        myMap.setOnPoiClickListener(poi -> {
-            slidingPanel.setVisibility(View.VISIBLE);
-            Log.d("DetailInfor", "POI click" + poi.placeId);
-            selectedLatLng = poi.latLng;
-            currentLatitude = String.valueOf(poi.latLng.latitude);
-            currentLongitude = String.valueOf(poi.latLng.longitude);
-            selectedName = poi.name;
+        if (getIntent().getExtras() != null && getIntent().getExtras().getString("context").equals("viewSaveLocation")) {
+            fetchFromSaveLocation();
+        }else {
+            myMap.setOnPoiClickListener(poi -> {
+                slidingPanel.setVisibility(View.VISIBLE);
+                Log.d("DetailInfor", "POI click" + poi.placeId);
+                selectedLatLng = poi.latLng;
+                currentLatitude = String.valueOf(poi.latLng.latitude);
+                currentLongitude = String.valueOf(poi.latLng.longitude);
+                selectedName = poi.name;
 
 
                 getWeatherDetails();
@@ -579,13 +584,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 findPlaceDetailsFromLocation(poi.latLng, poi.name, poi.placeId);
 
                 getReviews(true, poi.placeId);
+
                 getSaveLocation(true, poi.placeId);
+
+                getReportProblemListener(true, poi.placeId);
             });
 
-        // Normal map click listener
-        myMap.setOnMapClickListener(latLng -> {
-            slidingPanel.setVisibility(View.VISIBLE);
-            reportFlag.setVisibility(View.VISIBLE);
+            // Normal map click listener
+            myMap.setOnMapClickListener(latLng -> {
+                slidingPanel.setVisibility(View.VISIBLE);
+                reportFlag.setVisibility(View.VISIBLE);
 
                 Log.d("DetailInfor", "Normal click");
                 selectedLatLng = latLng;
@@ -597,7 +605,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 findPlaceDetailsFromLocation(latLng, null, null);
                 getReviews(false, null);
                 getSaveLocation(false, null);
+                getReportProblemListener(false, null);
             });
+        }
 
 
     }
@@ -694,7 +704,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
 
                     updateMapLocation(place.getLocation(), place.getDisplayName());
-                } else {
+
+                }else {
                     Snackbar.make(findViewById(android.R.id.content),
                             "No coordinates found for this place!",
                             Snackbar.LENGTH_SHORT).show();
@@ -991,8 +1002,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 }
                             });
                 }
-            } else if (getIntent().getExtras() != null && getIntent().getExtras().getString("context").equals("viewSaveLocation")) {
-                fetchFromSaveLocation();
             } else {
 
                 String fullAddress = address.getAddressLine(0);
@@ -2197,22 +2206,44 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void fetchFromSaveLocation(){
 
         slidingPanel.setVisibility(View.VISIBLE);
-        myMap.setOnMapClickListener(latLng -> {
-            selectedLatLng = new LatLng(getIntent().getDoubleExtra("selectedLatitude", 0), getIntent().getDoubleExtra("selectedLongitude", 0));
-            currentLatitude = String.valueOf(latLng.latitude);
-            currentLongitude = String.valueOf(latLng.longitude);
-            selectedName = getIntent().getStringExtra("selectedPlaceName");
-            findPlaceDetailsFromLocation(selectedLatLng, selectedName, getIntent().getStringExtra("selectedPlaceID"));
-            getWeatherDetails();
+        selectedLatLng = new LatLng(getIntent().getDoubleExtra("selectedLatitude", 0), getIntent().getDoubleExtra("selectedLongitude", 0));
+        selectedName = getIntent().getStringExtra("selectedPlaceName");
 
-            getReviews(true, getIntent().getStringExtra("selectedPlaceID"));
-            getSaveLocation(true, getIntent().getStringExtra("selectedPlaceID"));
+        findPlaceDetailsFromLocation(selectedLatLng, selectedName, getIntent().getStringExtra("selectedPlaceID"));
+        getWeatherDetails();
 
-            updateMapLocation(selectedLatLng, selectedName);
+        getReviews(true, getIntent().getStringExtra("selectedPlaceID"));
+        getSaveLocation(true, getIntent().getStringExtra("selectedPlaceID"));
+
+        updateMapLocation(selectedLatLng, selectedName);
+
+    }
+
+    private void getReportProblemListener(boolean isPOI, String locationID) {
+        ImageButton reportFlag = findViewById(R.id.report_problem_logo);
+
+        fetchAddressFromPlaceId(locationID, new AddressCallback() {
+            @Override
+            public void onAddressFetched(String address) {
+                selectedAddress = address;
+                Log.d("Address", "Address: " + address);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("Address", "Error: " + e.getMessage());
+            }
         });
 
-
-
+        reportFlag.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ReportProblemActivity.class);
+            intent.putExtra("locationID", locationID);
+            intent.putExtra("selectedLatitude", selectedLatLng.latitude);
+            intent.putExtra("selectedLongitude", selectedLatLng.longitude);
+            intent.putExtra("selectedName", selectedName);
+            intent.putExtra("selectedAddress", selectedAddress);
+            startActivity(intent);
+        });
     }
 
 }
