@@ -66,9 +66,7 @@ public class ReportProblemActivity extends AppCompatActivity {
         // Get the location ID from the intent
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            locationId = extras.getString("locationID");
             placeName = getIntent().getStringExtra("selectedName");
-            placeAddress = getIntent().getStringExtra("selectedAddress");
             locationLatitude = getIntent().getDoubleExtra("selectedLatitude", 0.0);
             locationLongitude = getIntent().getDoubleExtra("selectedLongitude", 0.0);
 

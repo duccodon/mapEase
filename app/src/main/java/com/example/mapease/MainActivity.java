@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isSpinnerInitialized = false;
 
     private ImageButton reportFlag;
-
+    private ImageButton reportFlagByUser;
 
     TextView weather;
     DecimalFormat df = new DecimalFormat("#.##");
@@ -312,11 +312,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return false;
         });
 
-        // Bước 1: Tìm kiếm button và gán sự kiện click
-        ImageButton reportButton = findViewById(R.id.report_button);
-        reportButton.setVisibility(View.VISIBLE);  // Hiển thị nút khi cần
 
-        reportButton.setOnClickListener(new View.OnClickListener() {
+        //admin check
+        reportFlag = findViewById(R.id.report_button);
+        reportFlag.setVisibility(View.VISIBLE);  // Hiển thị nút khi cần
+
+        //user check
+        reportFlagByUser = findViewById(R.id.report_problem_logo);
+        reportFlagByUser.setVisibility(View.VISIBLE); // Hiển thị nút khi cần
+
+
+
+        reportFlag.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showReportDialog();
@@ -618,14 +625,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 getReviews(true, poi.placeId);
 
                 getSaveLocation(true, poi.placeId);
-
-                getReportProblemListener(true, poi.placeId);
             });
 
             // Normal map click listener
             myMap.setOnMapClickListener(latLng -> {
                 slidingPanel.setVisibility(View.VISIBLE);
+
+                //admin check
                 reportFlag.setVisibility(View.VISIBLE);
+
+
+                //user check
+                reportFlagByUser.setVisibility(View.VISIBLE);
 
                 Log.d("DetailInfor", "Normal click");
                 selectedLatLng = latLng;
@@ -638,7 +649,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 findPlaceDetailsFromLocation(latLng, null, null);
                 getReviews(false, null);
                 getSaveLocation(false, null);
-                getReportProblemListener(false, null);
+                getReportProblemListener();
             });
         }
 
@@ -825,7 +836,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.e("DetailInfor", "Error finding place: " + e.getMessage());
                     getAddressFromLatLng(latLng);
                 });
-                ImageButton reportFlag = findViewById(R.id.report_button);
+                reportFlagByUser.setVisibility(View.GONE);
                 reportFlag.setVisibility(View.GONE);
             }else{
                 getAddressFromLatLng(latLng);
@@ -2474,29 +2485,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void getReportProblemListener(boolean isPOI, String locationID) {
-        ImageButton reportFlag = findViewById(R.id.report_problem_logo);
-
-        fetchAddressFromPlaceId(locationID, new AddressCallback() {
-            @Override
-            public void onAddressFetched(String address) {
-                selectedAddress = address;
-                Log.d("Address", "Address: " + address);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Log.e("Address", "Error: " + e.getMessage());
-            }
-        });
-
-        reportFlag.setOnClickListener(v -> {
+    private void getReportProblemListener() {
+        getAddressFromLatLng(selectedLatLng); //get selectedName
+        reportFlagByUser.setOnClickListener(v -> {
             Intent intent = new Intent(this, ReportProblemActivity.class);
-            intent.putExtra("locationID", locationID);
             intent.putExtra("selectedLatitude", selectedLatLng.latitude);
             intent.putExtra("selectedLongitude", selectedLatLng.longitude);
             intent.putExtra("selectedName", selectedName);
-            intent.putExtra("selectedAddress", selectedAddress);
             startActivity(intent);
         });
     }
