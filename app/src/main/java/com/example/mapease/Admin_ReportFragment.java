@@ -11,8 +11,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import androidx.appcompat.widget.SearchView;
+
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.mapease.adapter.AdminReportAdapter;
@@ -38,6 +41,8 @@ public class Admin_ReportFragment extends Fragment {
     ArrayList<ReportReview> filteredList;
     AdminReportAdapter reportAdapter;
     SearchView searchView;
+    private Spinner stateFilterSpinner;
+    private int selectedState = -1; // -1 for "All", 0 for Pending, 1 for Accept, 2 for Decline
     View view;
 
     @Override
@@ -49,6 +54,7 @@ public class Admin_ReportFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         myRef = database.getReference("reports");
+        stateFilterSpinner = view.findViewById(R.id.stateFilterSpinner);
 
         // Initialize ListView and lists
         ListView listView = view.findViewById(R.id.listViewReport);
@@ -70,6 +76,32 @@ public class Admin_ReportFragment extends Fragment {
             public boolean onQueryTextChange(String newText) {
                 filterReports(newText);
                 return true;
+            }
+        });
+
+        // Initialize Spinner
+        ArrayList<String> stateOptions = new ArrayList<>();
+        stateOptions.add("All");
+        stateOptions.add("Pending");
+        stateOptions.add("Accept");
+        stateOptions.add("Decline");
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                getContext(), android.R.layout.simple_spinner_item, stateOptions);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        stateFilterSpinner.setAdapter(spinnerAdapter);
+
+        // Spinner selection listener
+        stateFilterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedState = position - 1; // Map position to state: -1 (All), 0 (Pending), 1 (Accept), 2 (Decline)
+                filterReports(searchView.getQuery().toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedState = -1; // Default to All
+                filterReports(searchView.getQuery().toString());
             }
         });
 
@@ -109,6 +141,7 @@ public class Admin_ReportFragment extends Fragment {
                         i.putExtra("title", clickedReport.getTitle());
                         i.putExtra("reviewId", clickedReport.getReviewId());
                         i.putExtra("Id", clickedReport.getId());
+                        i.putExtra("state", String.valueOf(clickedReport.getState()));
                         startActivity(i);
                     }
                 });
@@ -125,14 +158,14 @@ public class Admin_ReportFragment extends Fragment {
     }
     private void filterReports(String query) {
         filteredList.clear();
-        if (query == null || query.trim().isEmpty()) {
-            filteredList.addAll(reportList);
-        } else {
-            String lowerCaseQuery = query.toLowerCase();
-            for (ReportReview report : reportList) {
-                if (report.getId() != null && report.getId().toLowerCase().contains(lowerCaseQuery)) {
-                    filteredList.add(report);
-                }
+        String lowerCaseQuery = query != null ? query.toLowerCase().trim() : "";
+
+        for (ReportReview report : reportList) {
+            boolean matchesQuery = query.isEmpty() || (report.getId() != null && report.getId().toLowerCase().contains(lowerCaseQuery));
+            boolean matchesState = selectedState == -1 || report.getState() == selectedState;
+
+            if (matchesQuery && matchesState) {
+                filteredList.add(report);
             }
         }
         reportAdapter.notifyDataSetChanged();

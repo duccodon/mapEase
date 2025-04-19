@@ -59,10 +59,9 @@
 
             <ImageView
                 android:id="@+id/reportStatusIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_report_status"
-                app:tint="@color/lavender"
                 android:contentDescription="Report status" />
         </LinearLayout>
 

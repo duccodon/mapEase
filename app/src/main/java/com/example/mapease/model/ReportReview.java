@@ -7,6 +7,7 @@ public class ReportReview {
     private String title;
     private String description;
     private String createdAt;
+    private int state;
 
     public ReportReview() {
     }
@@ -18,6 +19,7 @@ public class ReportReview {
         this.title = title;
         this.description = description;
         this.createdAt = createdAt;
+        this.state = 0;
     }
 
     public String getId() {
@@ -43,15 +45,15 @@ public class ReportReview {
     public String getCreatedAt() {
         return createdAt;
     }
+    public int getState(){ return state; }
+
 
     public void setId(String id) {
         Id = id;
     }
-
     public void setReporterId(String reporterId) {
         this.reporterId = reporterId;
     }
-
     public void setReviewId(String reviewId) {
         this.reviewId = reviewId;
     }
@@ -67,6 +69,7 @@ public class ReportReview {
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
+    public void setState(int state) {this.state = state;}
 }
 
 

@@ -1,6 +1,7 @@
 package com.example.mapease.adapter;
 
 import android.content.Context;
+import android.media.Image;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -73,6 +74,7 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
         TextView reportReporterName;
         TextView reportTime;
         TextView reportId;
+        ImageView reportState;
     }
 
     @NonNull
@@ -96,6 +98,7 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
             myViewHolder.reportReporterName = convertView.findViewById(R.id.reportReporterName);
             myViewHolder.reportTime = convertView.findViewById(R.id.reportCreatedAt);
             myViewHolder.reportId = convertView.findViewById(R.id.reportId);
+            myViewHolder.reportState = convertView.findViewById(R.id.reportStatusIcon);
             convertView.setTag(myViewHolder);
         }
         else{
@@ -110,6 +113,12 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
         if (user != null) {
             myViewHolder.reportReporterName.setText(user.getUsername());
         }
+        if(report.getState() == 0)
+            myViewHolder.reportState.setImageResource(R.drawable.ic_report_status);
+        else if(report.getState() == 1)
+            myViewHolder.reportState.setImageResource(R.drawable.ic_baseline_accept_24);
+        else
+            myViewHolder.reportState.setImageResource(R.drawable.ic_decline);
 
         result = convertView;
         return result;

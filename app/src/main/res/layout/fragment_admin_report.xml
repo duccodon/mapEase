@@ -4,8 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Admin_ReportFragment"
-    >
+    tools:context=".Admin_ReportFragment">
 
     <androidx.appcompat.widget.SearchView
         android:id="@+id/adminReportSearch"
@@ -19,12 +18,22 @@
         app:queryHint="Search by Report ID..."
         android:focusable="false" />
 
+    <Spinner
+        android:id="@+id/stateFilterSpinner"
+        android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/adminReportSearch"
+    android:layout_marginStart="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="12dp"
+    android:spinnerMode="dropdown" />
+
     <ListView
         android:id="@+id/listViewReport"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/adminReportSearch"
-        android:layout_marginTop="10dp"
-        android:scrollbars="vertical" />
+        android:layout_below="@id/stateFilterSpinner"
+    android:layout_marginTop="10dp"
+    android:scrollbars="vertical" />
 
 </RelativeLayout>

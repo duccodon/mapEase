@@ -46,11 +46,10 @@
         android:layout_marginBottom="16dp">
 
         <ImageView
-            android:id="@+id/reportStatusIcon"
+            android:id="@+id/reportDetailStatus"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_report_status"
-            app:tint="@color/lavender" />
+            android:src="@drawable/ic_report_status" />
 
         <TextView
             android:id="@+id/detailCreatedAt"
