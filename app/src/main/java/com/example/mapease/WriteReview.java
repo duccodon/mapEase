@@ -22,6 +22,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -32,8 +33,11 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.mapease.model.Review;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
@@ -45,7 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class WriteReview extends AppCompatActivity {
-    private TextView placeName;
+    private TextView placeName, userName;
     private LinearLayout starRating;
     private EditText reviewInput;
     private Button postButton;
@@ -58,12 +62,12 @@ public class WriteReview extends AppCompatActivity {
     // Firebase
     private FirebaseAuth auth;
     private FirebaseDatabase database;
-    private DatabaseReference mDatabase;//myRef
+    private DatabaseReference mDatabase, myRef;//myRef
 
     private static final int PICK_IMAGE_REQUEST = 1; // Request code for selecting an image
     private static final int PERMISSION_REQUEST_CODE = 2; // Permission request code
     String context;
-    private String locationId;
+    private String locationId, userId;
     private String locationName;
 
     // For image selection
@@ -87,6 +91,7 @@ public class WriteReview extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         mDatabase = database.getReference("reviews");
+        myRef = database.getReference("user");
 
         // Initialize views
         placeName = findViewById(R.id.place_name);
@@ -95,14 +100,32 @@ public class WriteReview extends AppCompatActivity {
         postButton = findViewById(R.id.post_button);
         btnAddPhoto = findViewById(R.id.add_photos_button);
         imageContainer = findViewById(R.id.image_container);
+        userName = findViewById(R.id.user_name);
 
         // Get intent data
         Intent intent = getIntent();
         locationName = intent.getStringExtra("placeName");
         locationId = intent.getStringExtra("locationID");
+        userId = intent.getStringExtra("userId");
         context = intent.getStringExtra("context");
-
         placeName.setText(locationName);
+
+        myRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d("UserID", userId);
+                if (snapshot.exists()) {
+                    userName.setText(snapshot.child("username").getValue(String.class));
+                } else {
+                    Toast.makeText(getApplicationContext(), "User data not found!", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getApplicationContext(), "Failed to load profile: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // Handle Post button click
         postButton.setOnClickListener(v -> postReview());

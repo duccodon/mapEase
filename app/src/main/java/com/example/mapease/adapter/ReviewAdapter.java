@@ -97,6 +97,8 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         timeTextView.setText(formatDate(review.getCreateAt()));
         setLocation(review, locationTextView);
         contentTextView.setText(review.getContent());
+        if(review.getUserID().contentEquals(currentUserID))
+            reportBtn.setVisibility(View.INVISIBLE);
 
         //new handle likes
         Map<String, Boolean> likes = review.getLikes();

@@ -188,6 +188,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private String selectedLocationType = "";
 
+    private String placeNameWriteReview;
+
 
     private Spinner savePlaceTypeSpinner;
     private boolean isSpinnerInitialized = false;
@@ -946,6 +948,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.d("DetailInfor", "Update UI" + place.toString());
 
                 placeName.setText(place.getName() != null ? place.getName() : getString(R.string.SelectedLocation));
+                placeNameWriteReview = place.getName() != null ? place.getName() : getString(R.string.SelectedLocation);
                 placeAddress.setText(place.getAddress() != null ? place.getAddress() : "Address not available");
 
                 // Handle optional fields
@@ -1140,6 +1143,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     intent.putExtra("context", "main");
                     Log.e("WriteReview", "Location ID " + locationID);
                     intent.putExtra("locationID", locationID);
+                    intent.putExtra("placeName", placeNameWriteReview);
+                    intent.putExtra("userId", auth.getCurrentUser().getUid());
                     startActivity(intent);
                 }
             });
