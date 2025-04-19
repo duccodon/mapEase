@@ -119,4 +119,6 @@
     <string name="cancel">Cancel</string>
     <string name="description_hint">Enter description</string>
     <string name="description_required">Please enter a description.</string>
+    <string name="MapItem">Map</string>
+    <string name="REPORTHAZARD">Report Danger</string>
 </resources>

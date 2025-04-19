@@ -136,6 +136,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private final int FINE_PERMISSION_CODE = 1;
@@ -194,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Spinner savePlaceTypeSpinner;
     private boolean isSpinnerInitialized = false;
 
-    private ImageButton reportFlag;
+    private AppCompatButton reportFlag;
     private ImageButton reportFlagByUser;
 
     TextView weather;
@@ -218,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DatabaseReference hazardReportRef;
 
     public static Locale currentLocale;
+    String userType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -228,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.ggMapAPIKey), currentLocale);
         }
+
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -276,9 +279,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         savePlaceTypeSpinner.setAdapter( adapterSpinner);
 
-
         //button for place types
         setupButtonListenersForPlacesType();
+        reportFlag = findViewById(R.id.report_button);
+        reportFlagByUser = findViewById(R.id.report_problem_logo);
 
         //firebase
         db = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
@@ -313,15 +317,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-        //admin check
-        reportFlag = findViewById(R.id.report_button);
-        reportFlag.setVisibility(View.VISIBLE);  // Hiển thị nút khi cần
-
-        //user check
-        reportFlagByUser = findViewById(R.id.report_problem_logo);
-        reportFlagByUser.setVisibility(View.VISIBLE); // Hiển thị nút khi cần
-
-
+        userType = getIntent().getStringExtra("user_type");
+        if (userType == null) {
+            userType = "user";
+        }
+        initUIByUserType(userType);
 
         reportFlag.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -503,6 +503,54 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void initUIByUserType(String userType)
+    {
+
+        HorizontalScrollView locationTypeScroll = findViewById(R.id.location_type_scroll);
+
+
+        if(Objects.equals(userType, "admin"))
+        {
+            reportFlag.setVisibility(View.VISIBLE);
+            reportFlagByUser.setVisibility(View.GONE);
+            locationTypeScroll.setVisibility(View.GONE); //Location type scroll list
+            //binding.profileButton.setVisibility(View.GONE);
+            binding.languageButton.setVisibility(View.GONE);
+            binding.directionButton.setVisibility(View.GONE); // Ẩn Direction Button
+            binding.saveButton.setVisibility(View.GONE); // Ẩn Save Button
+            binding.writeReviewButton.setVisibility(View.GONE);
+
+            tabLayout.getTabAt(1).view.setEnabled(false);
+            tabLayout.getTabAt(1).view.setAlpha(.5f);
+            tabLayout.getTabAt(2).view.setEnabled(false);
+            tabLayout.getTabAt(2).view.setAlpha(.5f);
+            tabLayout.getTabAt(3).view.setEnabled(false);
+            tabLayout.getTabAt(3).view.setAlpha(.5f);
+
+        } else if (Objects.equals(userType, "user")) {
+            reportFlagByUser.setVisibility(View.VISIBLE);
+            reportFlag.setVisibility(View.GONE);
+            binding.locationTypeScroll.setVisibility(View.VISIBLE);
+            binding.profileButton.setVisibility(View.VISIBLE);
+            binding.languageButton.setVisibility(View.VISIBLE);
+            binding.directionButton.setVisibility(View.VISIBLE); // Hiển thị Direction Button
+            binding.writeReviewButton.setVisibility(View.VISIBLE);
+
+            binding.saveButton.setVisibility(View.VISIBLE); // Hiển thị Save Button
+
+            tabLayout.getTabAt(1).view.setEnabled(true);
+            tabLayout.getTabAt(1).view.setAlpha(.5f);
+            tabLayout.getTabAt(2).view.setEnabled(true);
+            tabLayout.getTabAt(2).view.setAlpha(.5f);
+            tabLayout.getTabAt(3).view.setEnabled(true);
+            tabLayout.getTabAt(3).view.setAlpha(.5f);
+
+        }
+        else {
+            Toast.makeText(this, "Không xác định được quyền truy cập", Toast.LENGTH_SHORT).show();
+            finish(); // hoặc quay về login
+        }
+    }
     private void showProfileMenu(View view) {
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -530,7 +578,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             return false;
         });
-        popup.show(); // Display the menu
+        if(Objects.equals(userType, "admin"))
+            finish();
+        else
+        {
+            popup.show(); // Display the menu
+        }
     }
 
     @Override
@@ -631,12 +684,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             myMap.setOnMapClickListener(latLng -> {
                 slidingPanel.setVisibility(View.VISIBLE);
 
-                //admin check
-                reportFlag.setVisibility(View.VISIBLE);
+                if(Objects.equals(userType, "admin"))
+                {
+                    //admin check
+                    reportFlag.setVisibility(View.VISIBLE);
+                }
+                else if (Objects.equals(userType, "user"))
+                {
+                    //user check
+                    reportFlagByUser.setVisibility(View.VISIBLE);
+                }
 
 
-                //user check
-                reportFlagByUser.setVisibility(View.VISIBLE);
 
                 Log.d("DetailInfor", "Normal click");
                 selectedLatLng = latLng;
@@ -836,8 +895,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.e("DetailInfor", "Error finding place: " + e.getMessage());
                     getAddressFromLatLng(latLng);
                 });
+
                 reportFlagByUser.setVisibility(View.GONE);
+
                 reportFlag.setVisibility(View.GONE);
+
             }else{
                 getAddressFromLatLng(latLng);
             }
@@ -1050,7 +1112,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 }
                             });
                 }
-            } else {
+            } else //normal location - non-poi
+            {
 
                 String fullAddress = address.getAddressLine(0);
 
@@ -1099,8 +1162,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if(isPOI) {
             //enable tab
-            reviewsTab.setVisibility(View.VISIBLE);
-            writeReviewButton.setVisibility(View.VISIBLE);
+            if(Objects.equals(userType, "user"))
+            {
+                reviewsTab.setVisibility(View.VISIBLE);
+                writeReviewButton.setVisibility(View.VISIBLE);
+            }
+            else {
+                writeReviewButton.setVisibility(View.GONE);
+            }
+
             tabLayout.getTabAt(1).view.setEnabled(true);
             tabLayout.getTabAt(1).view.setAlpha(1f);
 
@@ -1112,7 +1182,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             //check data from firebase
             writeReviewButton.setEnabled(true);
             writeReviewButton.setAlpha(1.0f);
-            writeReviewButton.setText("write review");
+            writeReviewButton.setText(getString(R.string.write_review));
             loadAllReviews(locationID, new ReviewsLoadCallback() {
                 @Override
                 public void onReviewsLoaded(List<Review> reviews) {

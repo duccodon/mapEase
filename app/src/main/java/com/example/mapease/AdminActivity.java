@@ -50,6 +50,13 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Admin_ReviewFragment()).commit();
         else if(id == R.id.nav_report)
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Admin_ReportFragment()).commit();
+        else if(id == R.id.nav_map)
+        {
+            Intent intent = new Intent(AdminActivity.this, MainActivity.class);
+            intent.putExtra("user_type", "admin");
+            intent.putExtra("context", "drawHazardMarkers"); // để phân biệt bên MainActivity
+            startActivity(intent);
+        }
         else if(id == R.id.nav_logout)
         {
             Toast.makeText(this, "Logout!", Toast.LENGTH_SHORT).show();

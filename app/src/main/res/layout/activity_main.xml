@@ -335,17 +335,37 @@
                     android:minHeight="0dp" />
 
                 <!-- Report Flag Button -->
-                <ImageButton
+  <!--              <ImageButton
                     android:id="@+id/report_button"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="4dp"
                     android:background="@drawable/long_button"
-                    android:src="@drawable/ic_report_flag"
+                    android:backgroundTint="@color/red"
+                    android:src="@drawable/ic_warning"
                     android:scaleType="centerInside"
                     android:visibility="gone"
-                    app:tint="@color/red" />
+                    app:tint="@color/yellow" />-->
+                <!-- Direction Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/report_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/long_button"
+                    android:drawableStart="@drawable/ic_warning"
+                    android:backgroundTint="@color/red"
+                    android:text="@string/REPORTHAZARD"
+                    app:tint="@color/yellow"
+                    android:layout_marginEnd="10dp"
+                    android:textColor="#000000"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:drawablePadding="6dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:visibility="gone"
+                    />
             </LinearLayout>
 
             <!-- Location Image -->
@@ -444,7 +464,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:backgroundTint="#E0F7FA"
-                    android:text="Write review"
+                    android:text="@string/write_review"
                     android:textColor="#00695C"
                     android:drawableStart="@drawable/baseline_assistant_direction_24"
                     android:drawablePadding="6dp"

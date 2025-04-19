@@ -21,6 +21,11 @@
             android:id="@+id/nav_report"
             android:icon="@drawable/aklogo"
             android:title="Report"/>
+
+        <item
+            android:id="@+id/nav_map"
+            android:title="@string/MapItem"
+            android:icon="@drawable/ic_map_type" />
     </group>
     <item
         android:title="">
@@ -31,7 +36,5 @@
                 android:icon="@drawable/aklogo"
                 android:title="Logout"/>
         </menu>
-
     </item>
-
 </menu>

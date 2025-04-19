@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class ReportProblemActivity extends AppCompatActivity {
 
@@ -61,7 +62,7 @@ public class ReportProblemActivity extends AppCompatActivity {
         mDatabase = database.getReference("reportProblem");
 
         //get the current user ID
-        String userId = auth.getCurrentUser().getUid();
+        String userId = Objects.requireNonNull(auth.getCurrentUser()).getUid();
 
         // Get the location ID from the intent
         Bundle extras = getIntent().getExtras();

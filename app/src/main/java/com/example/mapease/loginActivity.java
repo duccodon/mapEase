@@ -204,10 +204,35 @@
                 }
                 auth.signInWithEmailAndPassword(email, pass).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                     @Override
-                    public void onSuccess (AuthResult authResult){
-                        Toast.makeText(loginActivity.this, "Login successfully", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(loginActivity.this, MainActivity.class));
-                        finish();
+                    public void onSuccess(AuthResult authResult) {
+                        String uid = auth.getCurrentUser().getUid();
+                        DatabaseReference roleRef = myRef.child(uid).child("role");
+
+                        roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                String role = snapshot.getValue(String.class);
+                                if (role == null) role = "user"; // fallback nếu không có role
+
+                                Toast.makeText(loginActivity.this, "Login successfully", Toast.LENGTH_SHORT).show();
+
+                                Intent intent;
+                                if (role.equals("admin")) {
+                                    intent = new Intent(loginActivity.this, AdminActivity.class);
+                                } else {
+                                    intent = new Intent(loginActivity.this, MainActivity.class);
+                                    intent.putExtra("context", "loginByUser");
+                                    intent.putExtra("user_type", role);
+                                }
+                                startActivity(intent);
+                                finish();
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Toast.makeText(loginActivity.this, "Error getting user role", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 }).addOnFailureListener(new OnFailureListener(){
                     @Override
