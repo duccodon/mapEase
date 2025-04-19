@@ -22,6 +22,7 @@
             android:layout_height="24dp"
             android:src="@drawable/ic_back"
             app:tint="@color/lavender"
+            android:backgroundTint="@color/white"
             android:contentDescription="Back" />
 
         <TextView
