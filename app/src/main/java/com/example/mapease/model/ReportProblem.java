@@ -35,7 +35,7 @@ public class ReportProblem {
     }
 
     public String getPlaceName() { return placeName; }
-    public List<String> getIssueTypes() { return issueTypes; }
+    public String getIssueTypes() { return String.join("-", issueTypes); }
 
     public String getExtraComments() { return extraComments; }
     public String getCreateAt() { return createAt; }

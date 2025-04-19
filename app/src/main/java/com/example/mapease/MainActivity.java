@@ -408,7 +408,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 });
                     }
                 })
-
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }

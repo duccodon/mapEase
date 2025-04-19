@@ -12,6 +12,8 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.mapease.Utils.MapUtils;
 import com.example.mapease.model.User;
 import com.example.mapease.model.HazardReport;
 
@@ -35,8 +37,11 @@ public class Admin_ReportProblemDetails extends AppCompatActivity {
     FloatingActionButton acceptBtn, declineBtn;
     private FirebaseDatabase database;
     private DatabaseReference reportRef, userRef;
+    private DatabaseReference hazardReportRef;
     private FirebaseAuth auth;
-    String reportId, createdAtStr, descriptionStr, reporterIdStr, titleStr, reviewIdStr;
+    String reportId, createdAtStr, descriptionStr, reporterIdStr, titleStr, issueType;
+    double latitude, longitude;
+
     ImageButton backBtn;
     ArrayList<User> userList;
     Button viewReviewBtn;
@@ -52,6 +57,7 @@ public class Admin_ReportProblemDetails extends AppCompatActivity {
 
         reportRef = database.getReference("reportProblem");
         userRef = database.getReference("user");
+        hazardReportRef = database.getReference("hazardReport");
 
         title = findViewById(R.id.detailReportTitle);
         createdAt = findViewById(R.id.detailCreatedAt);
@@ -80,19 +86,24 @@ public class Admin_ReportProblemDetails extends AppCompatActivity {
 
                 Intent intent = getIntent();
                 createdAtStr = intent.getStringExtra("createdAt");
-                createdAt.setText(formatDate(createdAtStr));
                 descriptionStr = intent.getStringExtra("description");
-                description.setText(descriptionStr);
                 reporterIdStr = intent.getStringExtra("reporterId");
                 for(User user : userList){
                     if(user != null && user.getId().contentEquals(reporterIdStr)){
                         reporterName.setText(user.getUsername());
                     }
                 }
+
+
                 titleStr = intent.getStringExtra("title");
+                reportId = intent.getStringExtra("reportId");
+                issueType = intent.getStringExtra("issueType");
+                latitude = intent.getDoubleExtra("latitude", 0.0);
+                longitude = intent.getDoubleExtra("longitude", 0.0);
+
                 title.setText(titleStr);
-                reviewIdStr = intent.getStringExtra("reviewId");
-                reportId = intent.getStringExtra("Id");
+                description.setText(descriptionStr);
+                createdAt.setText(formatDate(createdAtStr));
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -105,14 +116,60 @@ public class Admin_ReportProblemDetails extends AppCompatActivity {
         acceptBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Chuẩn bị dữ liệu
+                String createdAt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()).format(new Date());
+                String reporterId = FirebaseAuth.getInstance().getCurrentUser() != null
+                        ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                        : "anonymous";
 
+                HazardReport report = new HazardReport(
+                        issueType,
+                        descriptionStr,
+                        latitude,
+                        longitude,
+                        createdAt,
+                        reporterIdStr
+                );
+
+
+                // Tạo key mới
+                String key = hazardReportRef.push().getKey();
+                if (key != null) {
+                    hazardReportRef.child(key).setValue(report)
+                            .addOnSuccessListener(aVoid -> {
+                                //Toast.makeText(Admin_ReportProblemDetails.this, "Report submitted!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(Admin_ReportProblemDetails.this, "Failed to submit: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                }
+
+                reportRef.child(reportId).removeValue()
+                        .addOnSuccessListener(aVoid -> {
+                            // Xóa thành công
+                            Toast.makeText(Admin_ReportProblemDetails.this, "Submit successfully", Toast.LENGTH_SHORT).show();
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            // Xóa thất bại
+                            Toast.makeText(Admin_ReportProblemDetails.this, "Failed to delete: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
             }
         });
 
         declineBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                reportRef.child(reportId).removeValue()
+                        .addOnSuccessListener(aVoid -> {
+                            // Xóa thành công
+                            Toast.makeText(Admin_ReportProblemDetails.this, "delete successfully", Toast.LENGTH_SHORT).show();
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            // Xóa thất bại
+                            Toast.makeText(Admin_ReportProblemDetails.this, "Failed to delete: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
             }
         });
 

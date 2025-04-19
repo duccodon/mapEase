@@ -107,7 +107,10 @@ public class Admin_ReportProblemFragment extends Fragment {
                         i.putExtra("description", clickedReport.getExtraComments());
                         i.putExtra("reporterId", clickedReport.getUserID());
                         i.putExtra("title", clickedReport.getPlaceName());
-                        i.putExtra("reviewId", clickedReport.getReportID());
+                        i.putExtra("reportId", clickedReport.getReportID());
+                        i.putExtra("latitude", clickedReport.getLocationLatitude());
+                        i.putExtra("longitude", clickedReport.getLocationLongitude());
+                        i.putExtra("issueType",clickedReport.getIssueTypes());
                         startActivity(i);
                     }
                 });
