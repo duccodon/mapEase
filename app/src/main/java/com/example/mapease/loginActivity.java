@@ -196,12 +196,6 @@
 
         private void login (String email, String pass){
             if (!pass.isEmpty()) {
-                if(email.equals("admin@admin.com") && pass.equals("admin@admin"))
-                {
-                    Toast.makeText(loginActivity.this, "Login successfully", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(loginActivity.this, AdminActivity.class));
-                    finish();
-                }
                 auth.signInWithEmailAndPassword(email, pass).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                     @Override
                     public void onSuccess(AuthResult authResult) {
