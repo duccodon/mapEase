@@ -146,6 +146,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final List<Marker> currentMarkers = new ArrayList<>();
     private List<Place> nearbyPlaces = new ArrayList<>();
     private final Map<Marker, Place> markerPlaceMap = new HashMap<>();
+
+    private final Map<Marker, HazardReport> markerLatLngMap = new HashMap<>();
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
 
@@ -425,9 +427,67 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Log.d("HazardReport", "Lng: " + report.getLongitude());
                         Log.d("HazardReport", "UserID: " + report.getReporterId());
                         Log.d("HazardReport", "-------------------------");
-                        MapUtils.addCustomMarkerSimple(MainActivity.this, myMap, new LatLng(report.getLatitude(), report.getLongitude()), report.getHazardType());
+                        Marker marker =  MapUtils.addCustomMarkerSimple(MainActivity.this, myMap, new LatLng(report.getLatitude(), report.getLongitude()), report.getHazardType());
+
+                        markerLatLngMap.put(marker, report);
                     }
                 }
+                myMap.setOnMarkerClickListener(marker -> {
+                    if (markerPlaceMap != null && markerPlaceMap.containsKey(marker)) {
+                        Place place = markerPlaceMap.get(marker);
+                        if (place != null) {
+                            selectedLatLng = place.getLocation();
+                            currentLatitude = String.valueOf(selectedLatLng.latitude);
+                            currentLongitude = String.valueOf(selectedLatLng.longitude);
+                            selectedName = place.getDisplayName();
+                            getWeatherDetails();
+                            getForecastDetails();
+                            findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
+                            getReviews(true, place.getId());
+                            getSaveLocation(true, place.getId());
+
+                        }
+                    }
+                    else if(markerLatLngMap != null && markerLatLngMap.containsKey(marker))
+                    {
+                        double latitude = markerLatLngMap.get(marker).getLatitude();
+                        double longtitude = markerLatLngMap.get(marker).getLongitude();
+                        LatLng latLng = new LatLng(latitude, longtitude);
+                        if (latLng != null) {
+                            slidingPanel.setVisibility(View.VISIBLE);
+                            if(Objects.equals(userType, "admin"))
+                            {
+                                //admin check
+                                reportFlag.setVisibility(View.GONE);
+                            }
+                            else if (Objects.equals(userType, "user"))
+                            {
+                                //user check
+                                reportFlagByUser.setVisibility(View.GONE);
+                            }
+                            Log.d("DetailInfor", "Normal click");
+                            selectedLatLng = latLng;
+                            currentLatitude = String.valueOf(latLng.latitude);
+                            currentLongitude = String.valueOf(latLng.longitude);
+
+
+                            getWeatherDetails();
+                            getForecastDetails();
+
+                            findPlaceDetailsFromLocation(latLng, null, null);
+
+                            TextView hazardType = findViewById(R.id.location_title);
+                            TextView hazardDescription = findViewById(R.id.place_address);
+                            hazardType.setText(markerLatLngMap.get(marker).getHazardType());
+                            hazardDescription.setText(markerLatLngMap.get(marker).getDescription());
+
+
+                            getReviews(false, null);
+                            getSaveLocation(false, null);
+                        }
+                    }
+                    return false;
+                });
             }
 
             @Override
@@ -682,7 +742,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Normal map click listener
             myMap.setOnMapClickListener(latLng -> {
                 slidingPanel.setVisibility(View.VISIBLE);
-
                 if(Objects.equals(userType, "admin"))
                 {
                     //admin check
@@ -693,9 +752,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //user check
                     reportFlagByUser.setVisibility(View.VISIBLE);
                 }
-
-
-
                 Log.d("DetailInfor", "Normal click");
                 selectedLatLng = latLng;
                 currentLatitude = String.valueOf(latLng.latitude);
@@ -1016,7 +1072,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ImageView car_icon = findViewById(R.id.car_icon);
 
 
-            if (place != null && address == null && latLng == null) {
+            if (place != null && address == null && latLng == null) //poi
+            {
                 Log.d("DetailInfor", "Update UI" + place.toString());
 
                 placeName.setText(place.getName() != null ? place.getName() : getString(R.string.SelectedLocation));
@@ -2180,7 +2237,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     recyclerView = findViewById(R.id.explore_recycler_view);
                     recyclerView.setLayoutManager(new LinearLayoutManager(this));
                     adapter = new NearbyPlaceAdapter(this, nearbyPlaces, place -> {
-                        //Toast.makeText(this, "Clicked: " + place.getDisplayName(), Toast.LENGTH_SHORT).show();
 
                         selectedLatLng = place.getLocation();
                         currentLatitude = String.valueOf(selectedLatLng.latitude);
@@ -2202,22 +2258,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // Handle failure (e.g., network error)
                     Log.e("Places", "Error fetching nearby places: " + exception.getMessage());
                 });
-
-        myMap.setOnMarkerClickListener(marker -> {
-            Place place = markerPlaceMap.get(marker);
-            if (place != null) {
-                selectedLatLng = place.getLocation();
-                currentLatitude = String.valueOf(selectedLatLng.latitude);
-                currentLongitude = String.valueOf(selectedLatLng.longitude);
-                selectedName = place.getDisplayName();
-                getWeatherDetails();
-                getForecastDetails();
-                findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
-                getReviews(true, place.getId());
-                getSaveLocation(true, place.getId());
-            }
-            return true;
-        });
     }
     public interface OnMarkerReadyCallback {
         void onMarkerReady(Marker marker);

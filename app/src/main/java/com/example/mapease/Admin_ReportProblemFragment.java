@@ -85,6 +85,7 @@ public class Admin_ReportProblemFragment extends Fragment {
                         ReportProblem report = reportSnapshot.getValue(ReportProblem.class);
                         //if (user != null && user.getId().contentEquals(Id))
                         //report.setId(reportSnapshot.getKey());
+                        Log.d("Report problem added", "added report one");
                         reportList.add(report);
                     } catch (Exception e) {
                         Log.e("RetrieveReview", "Error parsing review", e);
@@ -110,7 +111,7 @@ public class Admin_ReportProblemFragment extends Fragment {
                         i.putExtra("reportId", clickedReport.getReportID());
                         i.putExtra("latitude", clickedReport.getLocationLatitude());
                         i.putExtra("longitude", clickedReport.getLocationLongitude());
-                        i.putExtra("issueType",clickedReport.getIssueTypes());
+                        i.putExtra("issueType", String.join("-", clickedReport.getIssueTypes()));
                         startActivity(i);
                     }
                 });
