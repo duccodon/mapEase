@@ -46,8 +46,8 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
         int id = item.getItemId();
         if(id == R.id.nav_user)
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Admin_UserFragment()).commit();
-        else if(id == R.id.nav_review)
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Admin_ReviewFragment()).commit();
+        else if(id == R.id.nav_problem)
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Admin_ReportProblemFragment()).commit();
         else if(id == R.id.nav_report)
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Admin_ReportFragment()).commit();
         else if(id == R.id.nav_logout)

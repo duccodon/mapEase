@@ -13,14 +13,14 @@
             android:title="User"/>
 
         <item
-            android:id="@+id/nav_review"
+            android:id="@+id/nav_problem"
             android:icon="@drawable/aklogo"
-            android:title="Review"/>
+            android:title="Report problem"/>
 
         <item
             android:id="@+id/nav_report"
             android:icon="@drawable/aklogo"
-            android:title="Report"/>
+            android:title="Report review"/>
     </group>
     <item
         android:title="">

@@ -104,6 +104,7 @@
     <string name="report_type_crime">🏚️ Unsafe Area</string>
     <string name="report_success_toast">Flagged as: %1$s</string>
     <string name="danger_marker_title">Danger Zone</string>
+    <string name="review_image_description">Review image</string>
 
     <string-array name="location_types">
         <item>All</item>

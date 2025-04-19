@@ -35,6 +35,10 @@
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
+            android:name=".Admin_ReportProblemDetails"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
+        <activity
             android:name=".Admin_ReviewDetail"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
             android:exported="false" />

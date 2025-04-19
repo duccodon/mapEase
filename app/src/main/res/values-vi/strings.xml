@@ -113,6 +113,7 @@
     <string name="report_success_toast">Đã cắm cờ: %1$s</string>
     <string name="danger_marker_title">Khu vực nguy hiểm</string>
     <string name="enter_description_title">Mô tả: %1$s</string>
+    <string name="review_image_description">Xem lại hình ảnh</string>
     <string name="submit">Gửi</string>
     <string name="cancel">Hủy</string>
     <string name="description_hint">Nhập mô tả</string>
