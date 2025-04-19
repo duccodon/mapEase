@@ -22,7 +22,6 @@
             android:layout_height="24dp"
             android:src="@drawable/ic_back"
             app:tint="@color/lavender"
-            android:backgroundTint="@color/white"
             android:contentDescription="Back" />
 
         <TextView
@@ -47,10 +46,11 @@
         android:layout_marginBottom="16dp">
 
         <ImageView
-            android:id="@+id/reportDetailStatus"
+            android:id="@+id/reportStatusIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_report_status" />
+            android:src="@drawable/ic_report_status"
+            app:tint="@color/lavender" />
 
         <TextView
             android:id="@+id/detailCreatedAt"
@@ -107,7 +107,7 @@
         android:id="@+id/viewReviewButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="View Review"
+        android:text="Accept"
         android:textSize="14sp"
         android:textColor="@android:color/white"
         android:backgroundTint="@color/lavender"

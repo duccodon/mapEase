@@ -6,15 +6,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.mapease.model.User;
+import com.example.mapease.model.HazardReport;
+
 import com.github.clans.fab.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -30,17 +30,16 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class Admin_ReportDetail extends AppCompatActivity {
+public class Admin_ReportProblemDetails extends AppCompatActivity {
     TextView title, createdAt, description, reporterName;
     FloatingActionButton acceptBtn, declineBtn;
     private FirebaseDatabase database;
     private DatabaseReference reportRef, userRef;
     private FirebaseAuth auth;
-    String reportId, createdAtStr, descriptionStr, reporterIdStr, titleStr, reviewIdStr, stateStr;
+    String reportId, createdAtStr, descriptionStr, reporterIdStr, titleStr, reviewIdStr;
     ImageButton backBtn;
     ArrayList<User> userList;
     Button viewReviewBtn;
-    ImageView reportState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +49,8 @@ public class Admin_ReportDetail extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
-        reportRef = database.getReference("reports");
+
+        reportRef = database.getReference("reportProblem");
         userRef = database.getReference("user");
 
         title = findViewById(R.id.detailReportTitle);
@@ -61,7 +61,6 @@ public class Admin_ReportDetail extends AppCompatActivity {
         declineBtn = findViewById(R.id.declineReportButton);
         backBtn = findViewById(R.id.backButtonDetailReport);
         viewReviewBtn = findViewById(R.id.viewReviewButton);
-        reportState = findViewById(R.id.reportDetailStatus);
 
         userRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -94,9 +93,6 @@ public class Admin_ReportDetail extends AppCompatActivity {
                 title.setText(titleStr);
                 reviewIdStr = intent.getStringExtra("reviewId");
                 reportId = intent.getStringExtra("Id");
-                stateStr = intent.getStringExtra("state");
-                int state = Integer.parseInt(stateStr);
-                updateStateUI(state);
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -109,14 +105,14 @@ public class Admin_ReportDetail extends AppCompatActivity {
         acceptBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateReportState(1); // Accept
+
             }
         });
 
         declineBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateReportState(2); // Decline
+
             }
         });
 
@@ -130,84 +126,11 @@ public class Admin_ReportDetail extends AppCompatActivity {
         viewReviewBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(getApplicationContext(), Admin_ReviewDetail.class);
-                i.putExtra("reviewId", reviewIdStr);
-                startActivity(i);
+
             }
         });
-
     }
 
-    private void updateReportState(int newState) {
-        if (reportId == null || reportId.isEmpty()) {
-            Toast.makeText(this, "Invalid report ID", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        int currentState = Integer.parseInt(stateStr);
-        if (currentState == newState) {
-            Toast.makeText(this, "Report is already " + (newState == 1 ? "accepted" : "declined"), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Update report state
-        reportRef.child(reportId).child("state").setValue(newState)
-                .addOnSuccessListener(aVoid -> {
-                    stateStr = String.valueOf(newState);
-                    updateStateUI(newState);
-                    acceptBtn.setEnabled(false);
-                    declineBtn.setEnabled(false);
-
-                    if (newState == 1) { // Accept: Delete the review
-                        if (reviewIdStr == null || reviewIdStr.isEmpty()) {
-                            Toast.makeText(this, "Invalid review ID", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        DatabaseReference reviewRef = database.getReference("reviews").child(reviewIdStr);
-                        reviewRef.removeValue()
-                                .addOnSuccessListener(aVoid2 -> {
-                                    Toast.makeText(this, "Report accepted and review deleted successfully", Toast.LENGTH_SHORT).show();
-                                    // Optionally, finish() to return to the previous screen
-                                    finish();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(this, "Failed to delete review: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                });
-                    } else {
-                        Toast.makeText(this, "Report declined successfully", Toast.LENGTH_SHORT).show();
-                        // Optionally, finish() to return to the previous screen
-                        finish();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to update report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-    private void updateStateUI(int state) {
-        switch (state) {
-            case 0:
-                reportState.setImageResource(R.drawable.ic_report_status);
-                acceptBtn.setEnabled(true);
-                declineBtn.setEnabled(true);
-                break;
-            case 1:
-                reportState.setImageResource(R.drawable.ic_baseline_accept_24);
-                acceptBtn.setEnabled(false);
-                declineBtn.setEnabled(false);
-                break;
-            case 2:
-                reportState.setImageResource(R.drawable.ic_decline);
-                acceptBtn.setEnabled(false);
-                declineBtn.setEnabled(false);
-                break;
-            default:
-                reportState.setImageResource(R.drawable.ic_report_status);
-                acceptBtn.setEnabled(true);
-                declineBtn.setEnabled(true);
-                break;
-        }
-    }
     private String formatDate(String isoTime) {
         try {
             SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());

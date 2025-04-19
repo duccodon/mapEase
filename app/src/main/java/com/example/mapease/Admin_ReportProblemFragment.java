@@ -11,15 +11,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import androidx.appcompat.widget.SearchView;
-
-import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.example.mapease.adapter.AdminReportAdapter;
-import com.example.mapease.model.ReportReview;
+import com.example.mapease.adapter.AdminReportProblemAdapter;
+import com.example.mapease.model.ReportProblem;
 import com.example.mapease.model.User;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -31,18 +28,16 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class Admin_ReportFragment extends Fragment {
+public class Admin_ReportProblemFragment extends Fragment {
 
     FloatingActionButton fab;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private FirebaseAuth auth;
-    ArrayList<ReportReview> reportList;
-    ArrayList<ReportReview> filteredList;
-    AdminReportAdapter reportAdapter;
+    ArrayList<ReportProblem> reportList;
+    ArrayList<ReportProblem> filteredList;
+    AdminReportProblemAdapter reportAdapter;
     SearchView searchView;
-    private Spinner stateFilterSpinner;
-    private int selectedState = -1; // -1 for "All", 0 for Pending, 1 for Accept, 2 for Decline
     View view;
 
     @Override
@@ -53,14 +48,13 @@ public class Admin_ReportFragment extends Fragment {
         //fab = view.findViewById(R.id.fab);
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
-        myRef = database.getReference("reports");
-        stateFilterSpinner = view.findViewById(R.id.stateFilterSpinner);
+        myRef = database.getReference("reportProblem");
 
         // Initialize ListView and lists
         ListView listView = view.findViewById(R.id.listViewReport);
         reportList = new ArrayList<>();
         filteredList = new ArrayList<>();
-        reportAdapter = new AdminReportAdapter(getContext(), filteredList);
+        reportAdapter = new AdminReportProblemAdapter(getContext(), filteredList);
         listView.setAdapter(reportAdapter);
 
         // Initialize SearchView
@@ -79,32 +73,6 @@ public class Admin_ReportFragment extends Fragment {
             }
         });
 
-        // Initialize Spinner
-        ArrayList<String> stateOptions = new ArrayList<>();
-        stateOptions.add("All");
-        stateOptions.add("Pending");
-        stateOptions.add("Accept");
-        stateOptions.add("Decline");
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                getContext(), android.R.layout.simple_spinner_item, stateOptions);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        stateFilterSpinner.setAdapter(spinnerAdapter);
-
-        // Spinner selection listener
-        stateFilterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedState = position - 1; // Map position to state: -1 (All), 0 (Pending), 1 (Accept), 2 (Decline)
-                filterReports(searchView.getQuery().toString());
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                selectedState = -1; // Default to All
-                filterReports(searchView.getQuery().toString());
-            }
-        });
-
         //load users
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -114,9 +82,9 @@ public class Admin_ReportFragment extends Fragment {
 
                 for (DataSnapshot reportSnapshot : snapshot.getChildren()) {
                     try {
-                        ReportReview report = reportSnapshot.getValue(ReportReview.class);
+                        ReportProblem report = reportSnapshot.getValue(ReportProblem.class);
                         //if (user != null && user.getId().contentEquals(Id))
-                        report.setId(reportSnapshot.getKey());
+                        //report.setId(reportSnapshot.getKey());
                         reportList.add(report);
                     } catch (Exception e) {
                         Log.e("RetrieveReview", "Error parsing review", e);
@@ -133,15 +101,13 @@ public class Admin_ReportFragment extends Fragment {
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        ReportReview clickedReport = filteredList.get(position);
-                        Intent i = new Intent(getContext(), Admin_ReportDetail.class);
-                        i.putExtra("createdAt", clickedReport.getCreatedAt());
-                        i.putExtra("description", clickedReport.getDescription());
-                        i.putExtra("reporterId", clickedReport.getReporterId());
-                        i.putExtra("title", clickedReport.getTitle());
-                        i.putExtra("reviewId", clickedReport.getReviewId());
-                        i.putExtra("Id", clickedReport.getId());
-                        i.putExtra("state", String.valueOf(clickedReport.getState()));
+                        ReportProblem clickedReport = filteredList.get(position);
+                        Intent i = new Intent(getContext(), Admin_ReportProblemDetails.class);
+                        i.putExtra("createdAt", clickedReport.getCreateAt());
+                        i.putExtra("description", clickedReport.getExtraComments());
+                        i.putExtra("reporterId", clickedReport.getUserID());
+                        i.putExtra("title", clickedReport.getPlaceName());
+                        i.putExtra("reviewId", clickedReport.getReportID());
                         startActivity(i);
                     }
                 });
@@ -158,14 +124,14 @@ public class Admin_ReportFragment extends Fragment {
     }
     private void filterReports(String query) {
         filteredList.clear();
-        String lowerCaseQuery = query != null ? query.toLowerCase().trim() : "";
-
-        for (ReportReview report : reportList) {
-            boolean matchesQuery = query.isEmpty() || (report.getId() != null && report.getId().toLowerCase().contains(lowerCaseQuery));
-            boolean matchesState = selectedState == -1 || report.getState() == selectedState;
-
-            if (matchesQuery && matchesState) {
-                filteredList.add(report);
+        if (query == null || query.trim().isEmpty()) {
+            filteredList.addAll(reportList);
+        } else {
+            String lowerCaseQuery = query.toLowerCase();
+            for (ReportProblem report : reportList) {
+                if (report.getReportID() != null && report.getReportID().toLowerCase().contains(lowerCaseQuery)) {
+                    filteredList.add(report);
+                }
             }
         }
         reportAdapter.notifyDataSetChanged();

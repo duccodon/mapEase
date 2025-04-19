@@ -9,6 +9,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- Back Button Icon -->
+        <ImageView
+            android:id="@+id/btn_back_reportProblem"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginBottom="12dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="Back"
+            android:clickable="true"
+            android:focusable="true" />
+
         <TextView
             android:id="@+id/place_info"
             android:layout_width="match_parent"
@@ -18,16 +29,21 @@
             android:layout_marginBottom="10dp" />
 
         <TextView
+            android:id="@+id/issues_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Select Issues:"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="6dp" />
 
-        <CheckBox android:id="@+id/cb_trash" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Trash Overflow" />
-        <CheckBox android:id="@+id/cb_lights" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Broken Street Light" />
-        <CheckBox android:id="@+id/cb_graffiti" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Graffiti" />
-        <CheckBox android:id="@+id/cb_road" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Road Damage" />
-        <CheckBox android:id="@+id/cb_other" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Other" />
+        <CheckBox android:id="@+id/cb_accident" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/report_type_accident" />
+        <CheckBox android:id="@+id/cb_construction" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/report_type_construction"/>
+        <CheckBox android:id="@+id/cb_congestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/report_type_congestion"/>
+        <CheckBox android:id="@+id/cb_flood" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/report_type_flood"/>
+        <CheckBox android:id="@+id/cb_pothole" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/report_type_pothole"/>
+        <CheckBox android:id="@+id/cb_crime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/report_type_crime"/>
 
         <EditText
             android:id="@+id/extra_input"
@@ -44,5 +60,6 @@
             android:layout_height="wrap_content"
             android:text="Submit Report"
             android:layout_marginTop="20dp" />
+
     </LinearLayout>
 </ScrollView>

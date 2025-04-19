@@ -20,7 +20,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/reportTitle"
+                android:id="@+id/reportProblemTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -31,7 +31,7 @@
                 android:ellipsize="end"/>
 
             <TextView
-                android:id="@+id/reportCreatedAt"
+                android:id="@+id/reportProblemCreatedAt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Date"
@@ -47,7 +47,7 @@
             android:layout_marginTop="4dp">
 
             <TextView
-                android:id="@+id/reportId"
+                android:id="@+id/reportProblemId"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -58,15 +58,16 @@
                 android:ellipsize="end"/>
 
             <ImageView
-                android:id="@+id/reportStatusIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:id="@+id/reportProblemStatusIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_report_status"
+                app:tint="@color/lavender"
                 android:contentDescription="Report status" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/reportDescription"
+            android:id="@+id/reportProblemDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -83,7 +84,7 @@
             android:layout_marginTop="8dp">
 
             <TextView
-                android:id="@+id/reportReporterName"
+                android:id="@+id/reportProblemReporterName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

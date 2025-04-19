@@ -1,22 +1,21 @@
 package com.example.mapease.adapter;
 
 import android.content.Context;
-import android.media.Image;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.example.mapease.R;
-import com.example.mapease.model.ReportReview;
+import com.example.mapease.model.ReportProblem;
 import com.example.mapease.model.User;
+
+import com.example.mapease.R;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,13 +30,13 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
+public class AdminReportProblemAdapter extends ArrayAdapter<ReportProblem> {
     Context context;
-    private ArrayList<ReportReview> reportsArrayList;
+    private ArrayList<ReportProblem> reportsArrayList;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private HashMap<String, User> usersMap;
-    public AdminReportAdapter(Context context, ArrayList<ReportReview> reportsArrayList) {
+    public AdminReportProblemAdapter(Context context, ArrayList<ReportProblem> reportsArrayList) {
         super(context, R.layout.admin_report_list_item, reportsArrayList);
         this.context = context;
         this.reportsArrayList = reportsArrayList;
@@ -74,13 +73,12 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
         TextView reportReporterName;
         TextView reportTime;
         TextView reportId;
-        ImageView reportState;
     }
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        ReportReview report = getItem(position);
+        ReportProblem report = getItem(position);
         viewHolder myViewHolder;
         final View result;
 
@@ -88,37 +86,30 @@ public class AdminReportAdapter extends ArrayAdapter<ReportReview> {
             myViewHolder = new viewHolder();
             LayoutInflater inflater = LayoutInflater.from(getContext());
             convertView = inflater.inflate(
-                    R.layout.admin_report_list_item,
+                    R.layout.admin_list_report_problem,
                     parent,
                     false
             );
             //myViewHolder.userImage = convertView.findViewById(R.id.imageView);
-            myViewHolder.reportTitle = convertView.findViewById(R.id.reportTitle);
-            myViewHolder.reportDescription = convertView.findViewById(R.id.reportDescription);
-            myViewHolder.reportReporterName = convertView.findViewById(R.id.reportReporterName);
-            myViewHolder.reportTime = convertView.findViewById(R.id.reportCreatedAt);
-            myViewHolder.reportId = convertView.findViewById(R.id.reportId);
-            myViewHolder.reportState = convertView.findViewById(R.id.reportStatusIcon);
+            myViewHolder.reportTitle = convertView.findViewById(R.id.reportProblemTitle);
+            myViewHolder.reportDescription = convertView.findViewById(R.id.reportProblemDescription);
+            myViewHolder.reportReporterName = convertView.findViewById(R.id.reportProblemReporterName);
+            myViewHolder.reportTime = convertView.findViewById(R.id.reportProblemCreatedAt);
+            myViewHolder.reportId = convertView.findViewById(R.id.reportProblemId);
             convertView.setTag(myViewHolder);
         }
         else{
             myViewHolder = (viewHolder) convertView.getTag();
         }
 
-        myViewHolder.reportTitle.setText(report.getTitle());
-        myViewHolder.reportTime.setText(formatDate(report.getCreatedAt()));
-        myViewHolder.reportDescription.setText(report.getDescription());
-        myViewHolder.reportId.setText(report.getId());
-        User user = usersMap.get(report.getReporterId());
+        myViewHolder.reportTitle.setText(report.getPlaceName());
+        myViewHolder.reportTime.setText(formatDate(report.getCreateAt()));
+        myViewHolder.reportDescription.setText(report.getExtraComments());
+        myViewHolder.reportId.setText(report.getReportID());
+        User user = usersMap.get(report.getUserID());
         if (user != null) {
             myViewHolder.reportReporterName.setText(user.getUsername());
         }
-        if(report.getState() == 0)
-            myViewHolder.reportState.setImageResource(R.drawable.ic_report_status);
-        else if(report.getState() == 1)
-            myViewHolder.reportState.setImageResource(R.drawable.ic_baseline_accept_24);
-        else
-            myViewHolder.reportState.setImageResource(R.drawable.ic_decline);
 
         result = convertView;
         return result;
