@@ -45,8 +45,8 @@ public class yourProfileActivity extends AppCompatActivity {
     private String userID;
 
     private ImageView avatar;
-    private TextView username, bio;
-    private Button writeReviewBtn;
+    private TextView username, bio, contribution;
+    private Button writeReviewBtn, editProfileBtn;
     private ImageButton backToHomeButton;
 
     @Override
@@ -57,12 +57,20 @@ public class yourProfileActivity extends AppCompatActivity {
         // Find the back to home button (ImageButton)
         backToHomeButton = findViewById(R.id.backToHomeButton);
         writeReviewBtn = findViewById(R.id.writeReview);
+        editProfileBtn = findViewById(R.id.edit_profile_btn);
 
         backToHomeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Intent to go to Home Screen
                 startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            }
+        });
+
+        editProfileBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getApplicationContext(), EditProfile.class));
             }
         });
 
@@ -84,46 +92,10 @@ public class yourProfileActivity extends AppCompatActivity {
         avatar = findViewById(R.id.avatar);
         username = findViewById(R.id.username);
         bio = findViewById(R.id.bio);
+        contribution = findViewById(R.id.reviews_count);
 
         loadUserProfile();
         loadAllReviews();
-
-        // Sample user data for reviews ZbfpPC8DkegTta8kYEjdORcw6cs2
-        //location id testing ChIJzfOsShkvdTERSeoX_lSUTOk ChIJzfOsShkvdTERSeoX_lSUTOk
-        List<String> images1 = Arrays.asList(
-                "https://imgur.com/DvpvklR.png",
-                "https://picsum.photos/200/300"
-        );
-
-        Map<String, Boolean> likesForReview2 = new HashMap<>();
-        likesForReview2.put("ZbfpPC8DkegTta8kYEjdORcw6cs2", true);
-
-        List<Review> reviews = new ArrayList<>();
-        reviews.add(new Review(
-                "1",
-                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
-                "LocationID",
-                "Greate service, nice staff",
-                5.0f,
-                "yyyy-MM-dd'T'HH:mm:ssZ",
-                images1,
-                new HashMap<>()
-        ));
-        reviews.add(new Review(
-                "2",
-                "ZbfpPC8DkegTta8kYEjdORcw6cs2",
-                "LocationID",
-                "Haidilao vạn hạnh mall , nhan vien nhiet tinh",
-                4.0f,
-                "yyyy-MM-dd'T'HH:mm:ssZ",
-                images1,
-                likesForReview2
-        ));
-
-        // Set up ListView
-        /*ListView listView = findViewById(R.id.reviewListView);
-        ReviewAdapter adapter = new ReviewAdapter(this, reviews);
-        listView.setAdapter(adapter);*/
     }
 
     private void loadAllReviews() {
@@ -144,6 +116,7 @@ public class yourProfileActivity extends AppCompatActivity {
 
                 for (Review review : reviews)
                     Log.d("RetrieveReview", review.toString());
+                contribution.setText(String.valueOf(reviews.size()));
 
                 // Update adapter with real reviews
                 ReviewAdapter adapter = new ReviewAdapter(yourProfileActivity.this, reviews);

@@ -104,6 +104,9 @@
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
+            android:name=".EditProfile"
+            android:exported="false"/>
+        <activity
             android:name=".loginActivity"
             android:exported="false" />
         <activity

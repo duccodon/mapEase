@@ -144,20 +144,6 @@
             android:src="@drawable/profile_user"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/location_type_scroll" />
-
-        <ImageButton
-            android:id="@+id/language_button"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_margin="16dp"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/round_button"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_language"
-            android:onClick="showLanguageMenu"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/profile_button" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Sliding Panel -->
