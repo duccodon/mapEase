@@ -131,4 +131,27 @@
     <string name="description_required">Please enter a description.</string>
     <string name="MapItem">Map</string>
     <string name="REPORTHAZARD">Report Danger</string>
+
+
+    <string-array name="report_title">
+        <item>Off topic</item>
+        <item>Spam</item>
+        <item>Conflict of interest</item>
+        <item>Profanity</item>
+        <item>Bullying or harassment</item>
+        <item>Discrimination or hate speech</item>
+        <item>Personal information</item>
+        <item>Not helpful</item>
+    </string-array>
+
+    <string-array name="report_description">
+        <item>Review does not pertain to an experience at or with this business</item>
+        <item>Review is from a bot, a fake account, or contains ads and promotions</item>
+        <item>Review is from someone affiliated with the business or a competitor of business</item>
+        <item>Review contains swear words, has sexually explicit language, or details graphic violence</item>
+        <item>Review personally attacks a specific individual</item>
+        <item>Review has harmful language about an individual or group based on identity</item>
+        <item>Review contains personal information, such as an address or phone number</item>
+        <item>Review does not help people decide whether to go to this place</item>
+    </string-array>
 </resources>

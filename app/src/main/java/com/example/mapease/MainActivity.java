@@ -1730,7 +1730,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                     // 3-Hourly Forecast for Today
-                    if (hourlyForecastItems.size() < 8) {
+                    if (hourlyForecastItems.size() < 9) {
                         String timeStr = timeFormatter.format(forecastDate);
                         hourlyForecastItems.add(new ForecastItem(timeStr, temp, description, iconResId));
                         Log.d("WeatherApp", "Added hourly forecast item: " + timeStr + ", " + temp + "°C");
