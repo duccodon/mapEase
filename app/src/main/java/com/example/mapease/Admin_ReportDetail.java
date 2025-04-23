@@ -379,7 +379,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 // Use an App Password for Gmail
-                return new PasswordAuthentication("nodejs2902@gmail.com", "dcqldosgyevxucvf");
+                return new PasswordAuthentication("mmapease@gmail.com", "jwembnsnfggscemy");
             }
         });
 
@@ -423,7 +423,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
                         "- Content: %s...\n\n" +
                         "Best regards,\n" +
                         "The MapEase Team\n" +
-                        "support@mapease.com",
+                        "mmapease@gmail.com",
                 username, reviewId, createdAt,
                 reviewContent.substring(0, Math.min(reviewContent.length(), 50))
         );
@@ -448,7 +448,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
                         "If you have any questions or need further assistance, please reach out to our support team at support@mapease.com.\n\n" +
                         "Best regards,\n" +
                         "The MapEase Team\n" +
-                        "support@mapease.com",
+                        "mmapease@gmail.com",
                 username, reportId, reviewId, title, createdAt,
                 description != null ? description.substring(0, Math.min(description.length(), 50)) : ""
         );
