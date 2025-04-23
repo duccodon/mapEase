@@ -14,6 +14,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mapease.model.Review;
 import com.example.mapease.model.User;
 import com.github.clans.fab.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -28,7 +29,17 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 public class Admin_ReportDetail extends AppCompatActivity {
     TextView title, createdAt, description, reporterName;
@@ -150,39 +161,152 @@ public class Admin_ReportDetail extends AppCompatActivity {
             return;
         }
 
-        // Update report state
-        reportRef.child(reportId).child("state").setValue(newState)
-                .addOnSuccessListener(aVoid -> {
-                    stateStr = String.valueOf(newState);
-                    updateStateUI(newState);
-                    acceptBtn.setEnabled(false);
-                    declineBtn.setEnabled(false);
+        if (newState == 2) { // Decline: Delete the report and notify reporter
+            userRef.child(reporterIdStr).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    User reporter = snapshot.getValue(User.class);
+                    if (reporter != null) {
+                        reporter.setId(snapshot.getKey());
+                        reportRef.child(reportId).removeValue()
+                                .addOnSuccessListener(aVoid -> {
+                                    sendReportDeletionEmail(reporter.getEmail(), reporter.getUsername(),
+                                            reportId, titleStr, descriptionStr, createdAtStr, reviewIdStr);
+                                    Toast.makeText(Admin_ReportDetail.this,
+                                            "Report declined and deleted successfully", Toast.LENGTH_SHORT).show();
+                                    stateStr = String.valueOf(newState);
+                                    updateStateUI(newState);
+                                    acceptBtn.setEnabled(false);
+                                    declineBtn.setEnabled(false);
+                                    finish();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(Admin_ReportDetail.this,
+                                            "Failed to delete report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                    } else {
+                        Toast.makeText(Admin_ReportDetail.this,
+                                "Failed to load reporter information", Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-                    if (newState == 1) { // Accept: Delete the review
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(Admin_ReportDetail.this,
+                            "Failed to load reporter: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else if (newState == 1) { // Accept: Check report count and act accordingly
+            reportRef.child(reportId).child("state").setValue(newState)
+                    .addOnSuccessListener(aVoid -> {
+                        stateStr = String.valueOf(newState);
+                        updateStateUI(newState);
+                        acceptBtn.setEnabled(false);
+                        declineBtn.setEnabled(false);
+
                         if (reviewIdStr == null || reviewIdStr.isEmpty()) {
                             Toast.makeText(this, "Invalid review ID", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        DatabaseReference reviewRef = database.getReference("reviews").child(reviewIdStr);
-                        reviewRef.removeValue()
-                                .addOnSuccessListener(aVoid2 -> {
-                                    Toast.makeText(this, "Report accepted and review deleted successfully", Toast.LENGTH_SHORT).show();
-                                    // Optionally, finish() to return to the previous screen
+                        reportRef.orderByChild("reviewId").equalTo(reviewIdStr).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                long reportCount = snapshot.getChildrenCount();
+                                if (reportCount >= 1) {
+                                    DatabaseReference reviewRef = database.getReference("reviews").child(reviewIdStr);
+                                    reviewRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot reviewSnapshot) {
+                                            Review review = reviewSnapshot.getValue(Review.class);
+                                            if (review != null) {
+                                                String userId = review.getUserID();
+                                                String reviewContent = review.getContent();
+                                                String reviewCreatedAt = review.getCreateAt();
+                                                userRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                                                    @Override
+                                                    public void onDataChange(@NonNull DataSnapshot userSnapshot) {
+                                                        User reviewAuthor = userSnapshot.getValue(User.class);
+                                                        if (reviewAuthor != null) {
+                                                            reviewAuthor.setId(userSnapshot.getKey());
+                                                            reviewRef.removeValue()
+                                                                    .addOnSuccessListener(aVoid2 -> {
+                                                                        reportRef.orderByChild("reviewId").equalTo(reviewIdStr)
+                                                                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                                                    @Override
+                                                                                    public void onDataChange(@NonNull DataSnapshot reportSnapshot) {
+                                                                                        for (DataSnapshot report : reportSnapshot.getChildren()) {
+                                                                                            report.getRef().removeValue();
+                                                                                        }
+                                                                                        sendReviewDeletionEmail(reviewAuthor.getEmail(),
+                                                                                                reviewAuthor.getUsername(),
+                                                                                                reviewIdStr, reviewContent,
+                                                                                                reviewCreatedAt); // Removed locationName
+                                                                                        Toast.makeText(Admin_ReportDetail.this,
+                                                                                                "Review and all related reports deleted successfully",
+                                                                                                Toast.LENGTH_SHORT).show();
+                                                                                        finish();
+                                                                                    }
+
+                                                                                    @Override
+                                                                                    public void onCancelled(@NonNull DatabaseError error) {
+                                                                                        Toast.makeText(Admin_ReportDetail.this,
+                                                                                                "Failed to delete reports: " + error.getMessage(),
+                                                                                                Toast.LENGTH_SHORT).show();
+                                                                                    }
+                                                                                });
+                                                                    })
+                                                                    .addOnFailureListener(e -> {
+                                                                        Toast.makeText(Admin_ReportDetail.this,
+                                                                                "Failed to delete review: " + e.getMessage(),
+                                                                                Toast.LENGTH_SHORT).show();
+                                                                    });
+                                                        } else {
+                                                            Toast.makeText(Admin_ReportDetail.this,
+                                                                    "Failed to load review author", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(@NonNull DatabaseError error) {
+                                                        Toast.makeText(Admin_ReportDetail.this,
+                                                                "Failed to load review author: " + error.getMessage(),
+                                                                Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                            } else {
+                                                Toast.makeText(Admin_ReportDetail.this,
+                                                        "Failed to load review details", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+                                            Toast.makeText(Admin_ReportDetail.this,
+                                                    "Failed to load review: " + error.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                } else {
+                                    Toast.makeText(Admin_ReportDetail.this,
+                                            "Report accepted successfully. Review has " + reportCount + " report(s).",
+                                            Toast.LENGTH_SHORT).show();
                                     finish();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(this, "Failed to delete review: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                });
-                    } else {
-                        Toast.makeText(this, "Report declined successfully", Toast.LENGTH_SHORT).show();
-                        // Optionally, finish() to return to the previous screen
-                        finish();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to update report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Toast.makeText(Admin_ReportDetail.this,
+                                        "Failed to count reports: " + error.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to update report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }
     }
     private void updateStateUI(int state) {
         switch (state) {
@@ -242,5 +366,92 @@ public class Admin_ReportDetail extends AppCompatActivity {
             e.printStackTrace();
             return isoTime; //return origin if fail
         }
+    }
+    private void send_email(String n_, String t_, String tt_, String receiver) {
+        Properties properties = System.getProperties();
+        properties.put("mail.smtp.host", "smtp.gmail.com");
+        properties.put("mail.smtp.port", "465"); // Fixed typo: "mail.smtp,port" to "mail.smtp.port"
+        properties.put("mail.smtp.ssl.enable", "true");
+        properties.put("mail.smtp.auth", "true");
+
+        Session session = Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                // Use an App Password for Gmail
+                return new PasswordAuthentication("nodejs2902@gmail.com", "dcqldosgyevxucvf");
+            }
+        });
+
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(receiver));
+            message.setSubject(t_);
+            message.setText("From: " + n_ + "\n" + tt_);
+
+            // Run email sending in a background thread
+            new Thread(() -> {
+                try {
+                    Transport.send(message);
+                    runOnUiThread(() -> {
+                        Log.d("Email", "Email sent successfully to " + receiver);
+                    });
+                } catch (MessagingException e) {
+                    e.printStackTrace();
+                    runOnUiThread(() -> {
+                        Toast.makeText(Admin_ReportDetail.this,
+                                "Failed to send email: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }).start();
+        } catch (MessagingException e) {
+            Toast.makeText(this, "Error preparing email: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            throw new RuntimeException(e);
+        }
+    }
+    private void sendReviewDeletionEmail(String email, String username, String reviewId, String reviewContent,
+                                         String createdAt) { // Removed locationName parameter
+        String senderName = "MapEase Team";
+        String subject = "Your Review Has Been Removed from MapEase";
+        String body = String.format(
+                "Dear %s,\n\n" +
+                        "We regret to inform you that your review for a location on MapEase has been removed. " +
+                        "After careful consideration, our moderation team determined that the review violated our community guidelines due to multiple reports from other users.\n\n" +
+                        "Review Details:\n" +
+                        "- Review ID: %s\n" +
+                        "- Posted on: %s\n" +
+                        "- Content: %s...\n\n" +
+                        "Best regards,\n" +
+                        "The MapEase Team\n" +
+                        "support@mapease.com",
+                username, reviewId, createdAt,
+                reviewContent.substring(0, Math.min(reviewContent.length(), 50))
+        );
+
+        send_email(senderName, subject, body, email);
+    }
+
+    private void sendReportDeletionEmail(String email, String username, String reportId, String title,
+                                         String description, String createdAt, String reviewId) {
+        String senderName = "MapEase Team";
+        String subject = "Update on Your Report Submission on MapEase";
+        String body = String.format(
+                "Dear %s,\n\n" +
+                        "Thank you for submitting a report on MapEase. After reviewing your report (ID: %s) regarding a review (ID: %s), " +
+                        "our moderation team has determined that the reported content does not violate our community guidelines. " +
+                        "As a result, the report has been declined and removed from our system.\n\n" +
+                        "Report Details:\n" +
+                        "- Report Title: %s\n" +
+                        "- Submitted on: %s\n" +
+                        "- Description: %s...\n\n" +
+                        "We appreciate your effort to keep MapEase a safe and reliable platform. " +
+                        "If you have any questions or need further assistance, please reach out to our support team at support@mapease.com.\n\n" +
+                        "Best regards,\n" +
+                        "The MapEase Team\n" +
+                        "support@mapease.com",
+                username, reportId, reviewId, title, createdAt,
+                description != null ? description.substring(0, Math.min(description.length(), 50)) : ""
+        );
+
+        send_email(senderName, subject, body, email);
     }
 }

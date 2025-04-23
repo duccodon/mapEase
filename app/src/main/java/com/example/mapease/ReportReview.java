@@ -62,6 +62,7 @@ public class ReportReview extends AppCompatActivity {
                 i.putExtra("reviewId", reviewId);
                 i.putExtra("reporterId", reporterId);
                 startActivity(i);
+                finish();
             }
         });
 
