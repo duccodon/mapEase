@@ -64,8 +64,6 @@ public class WriteReview extends AppCompatActivity {
     private FirebaseDatabase database;
     private DatabaseReference mDatabase, myRef;//myRef
 
-    private static final int PICK_IMAGE_REQUEST = 1; // Request code for selecting an image
-    private static final int PERMISSION_REQUEST_CODE = 2; // Permission request code
     String context;
     private String locationId, userId;
     private String locationName;

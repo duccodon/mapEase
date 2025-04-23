@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(MainActivity.this);
         binding.mapTypeButton.setOnClickListener(v -> showMapTypeMenu(v));
         binding.profileButton.setOnClickListener(v -> showProfileMenu(v));
-        binding.languageButton.setOnClickListener(v -> showLanguageMenu(v));
+        //binding.languageButton.setOnClickListener(v -> showLanguageMenu(v));
         weather = findViewById(R.id.weatherText);
 
         //tab layout
@@ -599,37 +599,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             reportFlagByUser.setVisibility(View.GONE);
             locationTypeScroll.setVisibility(View.GONE); //Location type scroll list
             //binding.profileButton.setVisibility(View.GONE);
-            binding.languageButton.setVisibility(View.GONE);
+            //binding.languageButton.setVisibility(View.GONE);
             binding.directionButton.setVisibility(View.GONE); // Ẩn Direction Button
             binding.saveButton.setVisibility(View.GONE); // Ẩn Save Button
             binding.writeReviewButton.setVisibility(View.GONE);
 
             tabLayout.getTabAt(1).view.setEnabled(false);
-            tabLayout.getTabAt(1).view.setAlpha(.5f);
             tabLayout.getTabAt(2).view.setEnabled(false);
-            tabLayout.getTabAt(2).view.setAlpha(.5f);
             tabLayout.getTabAt(3).view.setEnabled(false);
-            tabLayout.getTabAt(3).view.setAlpha(.5f);
-
         } else if (Objects.equals(userType, "user")) {
             reportFlagByUser.setVisibility(View.VISIBLE);
             reportFlag.setVisibility(View.GONE);
             deleteFlag.setVisibility(View.GONE);
             binding.locationTypeScroll.setVisibility(View.VISIBLE);
             binding.profileButton.setVisibility(View.VISIBLE);
-            binding.languageButton.setVisibility(View.VISIBLE);
+            //binding.languageButton.setVisibility(View.VISIBLE);
             binding.directionButton.setVisibility(View.VISIBLE); // Hiển thị Direction Button
             binding.writeReviewButton.setVisibility(View.VISIBLE);
 
             binding.saveButton.setVisibility(View.VISIBLE); // Hiển thị Save Button
 
             tabLayout.getTabAt(1).view.setEnabled(true);
-            tabLayout.getTabAt(1).view.setAlpha(1f);
             tabLayout.getTabAt(2).view.setEnabled(true);
-            tabLayout.getTabAt(2).view.setAlpha(1f);
             tabLayout.getTabAt(3).view.setEnabled(true);
-            tabLayout.getTabAt(3).view.setAlpha(1f);
-
         }
         else {
             Toast.makeText(this, "Không xác định được quyền truy cập", Toast.LENGTH_SHORT).show();
@@ -651,7 +643,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             } else if (id == R.id.setting) {
                 return true;
-            } else if (id == R.id.logout) {
+            } else if (id == R.id.language) {
+                showLanguageMenu(view);
+                return true;
+            }else if (id == R.id.logout) {
                 FirebaseAuth.getInstance().signOut();
                 Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
 
@@ -989,56 +984,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }else{
             Toast.makeText(MainActivity.this, "Error: Do not have access fine location permission", Toast.LENGTH_SHORT).show();
         }
-
-        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(fields);
-
-            placesClient.findCurrentPlace(request).addOnSuccessListener(response -> {
-                Place bestMatch = null;
-                float minDistance = Float.MAX_VALUE;
-
-                for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
-                    Place place = placeLikelihood.getPlace();
-                    float[] results = new float[1];
-                    Location.distanceBetween(
-                            place.getLatLng().latitude, place.getLatLng().longitude,
-                            latLng.latitude, latLng.longitude,
-                            results
-                    );
-
-                    if (results[0] < minDistance) {
-                        minDistance = results[0];
-                        bestMatch = place;
-                    }
-                }
-
-                if (bestMatch != null && minDistance < 50) { // Within 50 meters
-                    Log.d("DetailInfor", "Found Place ID: " + bestMatch.getId());
-
-                    FetchPlaceRequest fullRequest = FetchPlaceRequest.builder(bestMatch.getId(), fullFields).build();
-                    Task<FetchPlaceResponse> fetchPlaceTask = placesClient.fetchPlace(fullRequest);
-                    fetchPlaceTask.addOnSuccessListener(fullResponse -> {
-                        // Get the place object
-                        Place place = fullResponse.getPlace();
-                        // Do something with the place object
-                        Log.d("DetailInfor", "Full information: " + fullResponse.getPlace());
-                    });
-
-                    updatePlaceUI(bestMatch);
-                } else {
-                    // Fallback to reverse geocoding
-                    getAddressFromLatLng(latLng, placeName);
-                }
-            }).addOnFailureListener(e -> {
-                Log.e("DetailInfor", "Error finding place: " + e.getMessage());
-                getAddressFromLatLng(latLng, placeName);
-            });
-        } else {
-            Log.d("DetailInfor", " Not permitted");
-            getAddressFromLatLng(latLng, placeName);
-        }*/
     }
 
     private void getAddressFromLatLng(LatLng latLng) {
@@ -1057,35 +1002,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             updatePlaceUI(null, null, latLng);
         }
     }
-
-    /*private void getAddressFromLatLng(LatLng latLng, String placeName) {
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-        try {
-            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-
-            Place.Builder placeBuilder = Place.builder()
-                    .setLatLng(latLng);
-
-            if (placeName != null) {
-                placeBuilder.setName(placeName);
-            } else if (!addresses.isEmpty()) {
-                placeBuilder.setName(addresses.get(0).getFeatureName())
-                        .setAddress(addresses.get(0).getAddressLine(0));
-            } else {
-                placeBuilder.setName("Selected Location")
-                        .setAddress(latLng.latitude + ", " + latLng.longitude);
-            }
-
-            updatePlaceUI(placeBuilder.build());
-        } catch (IOException e) {
-            Log.e("DetailInfor", "Geocoder error: " + e.getMessage());
-            updatePlaceUI(Place.builder()
-                    .setName(placeName != null ? placeName : "Selected Location")
-                    .setAddress(latLng.latitude + ", " + latLng.longitude)
-                    .setLatLng(latLng)
-                    .build());
-        }
-    }*/
 
     private void updatePlaceUI(Place place, Address address, LatLng latLng) {
         runOnUiThread(() -> {
@@ -1244,6 +1160,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView averageRatingBar = findViewById(R.id.rating_number);
         RatingBar ratingBar = findViewById(R.id.rating_bar);
 
+        tabLayout.getTabAt(3).view.setAlpha(1f);
+
         if(isPOI) {
             //enable tab
             if(Objects.equals(userType, "user"))
@@ -1271,14 +1189,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void onReviewsLoaded(List<Review> reviews) {
                     ListView listView = findViewById(R.id.reviewListView);
+                    ReviewAdapter adapter = new ReviewAdapter(MainActivity.this, reviews); // Create adapter with current reviews
+
+                    // Always update the list view, even if empty
+                    listView.setAdapter(adapter);
 
                     if (reviews != null && !reviews.isEmpty()) {
-                        ReviewAdapter adapter = new ReviewAdapter(MainActivity.this, reviews);
-
                         //rating
                         float averageRating = adapter.calculateAverageRating();
                         averageRatingBar.setText(String.format("%.1f", averageRating));
                         ratingBar.setRating(averageRating);
+
                         //write review button
                         boolean hasUserReviewed = false;
                         for (Review review : reviews) {
@@ -1291,11 +1212,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         writeReviewButton.setEnabled(!hasUserReviewed);
                         writeReviewButton.setAlpha(hasUserReviewed ? 0.5f : 1.0f);
 
-                        listView.setAdapter(adapter);
                         listView.setVisibility(View.VISIBLE);
                     } else {
+                        // Clear ratings and show empty state
                         averageRatingBar.setText("0");
                         ratingBar.setRating(0);
+                        writeReviewButton.setEnabled(true);
+                        writeReviewButton.setAlpha(1.0f);
+                        writeReviewButton.setText(getString(R.string.write_review));
+                        listView.setVisibility(View.VISIBLE); // Still show the list (empty)
                     }
                 }
             });
@@ -1321,9 +1246,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             tabLayout.getTabAt(1).view.setEnabled(false);
             tabLayout.getTabAt(1).view.setAlpha(0.5f);
 
- /*           //test explore tab
+            //test explore tab
             tabLayout.getTabAt(2).view.setEnabled(false);
-            tabLayout.getTabAt(2).view.setAlpha(0.5f);*/
+            tabLayout.getTabAt(2).view.setAlpha(0.5f);
 
             // Ensure we're showing the Overview tab
             tabLayout.selectTab(tabLayout.getTabAt(0));
@@ -1643,18 +1568,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return false;
     }
 
-    private void setRestrictPlacesInCountry(Location location) {
-        try {
-            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-            List<Address> addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-            if(addressList.size() > 0)
-                autocompleteSupportFragment.setCountries(addressList.get(0).getCountryCode());
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private void updateMapLocation(LatLng latLng, String placeName) {
 
         // Remove the previous marker if it exists
@@ -1845,7 +1758,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                     // 3-Hourly Forecast for Today
-                    if (forecastDateStr.equals(todayDateStr)) {
+                    if (hourlyForecastItems.size() < 9) {
                         String timeStr = timeFormatter.format(forecastDate);
                         hourlyForecastItems.add(new ForecastItem(timeStr, temp, description, iconResId));
                         Log.d("WeatherApp", "Added hourly forecast item: " + timeStr + ", " + temp + "°C");
@@ -2632,5 +2545,4 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             startActivity(intent);
         });
     }
-
 }
