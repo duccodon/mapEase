@@ -52,6 +52,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
     ArrayList<User> userList;
     Button viewReviewBtn;
     ImageView reportState;
+    int maximumReports = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -213,7 +214,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
                                 long reportCount = snapshot.getChildrenCount();
-                                if (reportCount >= 1) {
+                                if (reportCount >= maximumReports) {
                                     DatabaseReference reviewRef = database.getReference("reviews").child(reviewIdStr);
                                     reviewRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
