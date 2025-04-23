@@ -148,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final Map<Marker, Place> markerPlaceMap = new HashMap<>();
 
     private final Map<Marker, HazardReport> markerLatLngMap = new HashMap<>();
+    private final Map<Marker, String> markerKeyMap = new HashMap<>();
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
 
@@ -198,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isSpinnerInitialized = false;
 
     private AppCompatButton reportFlag;
+    private AppCompatButton deleteFlag;
     private ImageButton reportFlagByUser;
 
     TextView weather;
@@ -285,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setupButtonListenersForPlacesType();
         reportFlag = findViewById(R.id.report_button);
         reportFlagByUser = findViewById(R.id.report_problem_logo);
-
+        deleteFlag = findViewById(R.id.delete_marker_button);
         //firebase
         db = FirebaseDatabase.getInstance("https://mapease22127072-default-rtdb.asia-southeast1.firebasedatabase.app");
         reviewRef = db.getReference("reviews");
@@ -325,12 +327,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         initUIByUserType(userType);
 
-        reportFlag.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showReportDialog();
-            }
-        });
+        reportFlag.setOnClickListener(v -> showReportDialog());
     }
 
     // Bước 2: Tạo hàm showReportDialog để hiển thị lựa chọn các loại khu vực nguy hiểm
@@ -403,7 +400,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 .addOnSuccessListener(aVoid -> {
                                     Toast.makeText(context, "Report submitted!", Toast.LENGTH_SHORT).show();
                                     //vẽ tạm marker
-                                    MapUtils.addCustomMarkerSimple(this, myMap, selectedLatLng, hazardType);
+                                    Marker tempMarker = MapUtils.addCustomMarkerSimple(this, myMap, selectedLatLng, hazardType);
+                                    markerLatLngMap.put(tempMarker, report);
+                                    slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
                                 })
                                 .addOnFailureListener(e -> {
                                     Toast.makeText(context, "Failed to submit: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -430,10 +429,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Marker marker =  MapUtils.addCustomMarkerSimple(MainActivity.this, myMap, new LatLng(report.getLatitude(), report.getLongitude()), report.getHazardType());
 
                         markerLatLngMap.put(marker, report);
+                        markerKeyMap.put(marker, reportSnapshot.getKey());
                     }
                 }
                 myMap.setOnMarkerClickListener(marker -> {
-                    if (markerPlaceMap != null && markerPlaceMap.containsKey(marker)) {
+                    if (markerPlaceMap != null && markerPlaceMap.containsKey(marker)) //explore marker
+                    {
                         Place place = markerPlaceMap.get(marker);
                         if (place != null) {
                             selectedLatLng = place.getLocation();
@@ -445,10 +446,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             findPlaceDetailsFromLocation(selectedLatLng, selectedName, place.getId());
                             getReviews(true, place.getId());
                             getSaveLocation(true, place.getId());
-
                         }
                     }
-                    else if(markerLatLngMap != null && markerLatLngMap.containsKey(marker))
+                    else if(markerLatLngMap != null && markerLatLngMap.containsKey(marker))//danger marker
                     {
                         double latitude = markerLatLngMap.get(marker).getLatitude();
                         double longtitude = markerLatLngMap.get(marker).getLongitude();
@@ -459,11 +459,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             {
                                 //admin check
                                 reportFlag.setVisibility(View.GONE);
+                                deleteFlag.setVisibility(View.VISIBLE);
+                                deleteFlag.setOnClickListener(v->{
+                                    new android.app.AlertDialog.Builder(MainActivity.this)
+                                            .setTitle("Remove Location")
+                                            .setMessage("Are you sure you want to remove this location?")
+                                            .setPositiveButton("Yes", (dialog, which) -> {
+                                                DatabaseReference deleteRef = hazardReportRef.child(markerKeyMap.get(marker));
+                                                deleteRef.removeValue()
+                                                        .addOnSuccessListener(aVoid -> {
+                                                            Toast.makeText(MainActivity.this, "Warning flag removed successfully", Toast.LENGTH_SHORT).show();
+                                                            marker.remove();
+                                                            markerLatLngMap.remove(marker);
+                                                            markerKeyMap.remove(marker);
+                                                            slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            Toast.makeText(MainActivity.this, "Failed to remove warning flag: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                        });
+                                                Toast.makeText(MainActivity.this, "Remove warning flag successfully" + markerLatLngMap.get(marker).getHazardType(), Toast.LENGTH_SHORT).show();
+                                            })
+                                            .setNegativeButton("Cancel", (dialog, which) -> {
+                                                dialog.dismiss(); // User cancelled
+                                            })
+                                            .show();
+                                });
                             }
                             else if (Objects.equals(userType, "user"))
                             {
                                 //user check
                                 reportFlagByUser.setVisibility(View.GONE);
+                                deleteFlag.setVisibility(View.GONE);
                             }
                             Log.d("DetailInfor", "Normal click");
                             selectedLatLng = latLng;
@@ -566,11 +592,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     {
 
         HorizontalScrollView locationTypeScroll = findViewById(R.id.location_type_scroll);
-
-
         if(Objects.equals(userType, "admin"))
         {
             reportFlag.setVisibility(View.VISIBLE);
+            deleteFlag.setVisibility(View.GONE);
             reportFlagByUser.setVisibility(View.GONE);
             locationTypeScroll.setVisibility(View.GONE); //Location type scroll list
             //binding.profileButton.setVisibility(View.GONE);
@@ -589,6 +614,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else if (Objects.equals(userType, "user")) {
             reportFlagByUser.setVisibility(View.VISIBLE);
             reportFlag.setVisibility(View.GONE);
+            deleteFlag.setVisibility(View.GONE);
             binding.locationTypeScroll.setVisibility(View.VISIBLE);
             binding.profileButton.setVisibility(View.VISIBLE);
             binding.languageButton.setVisibility(View.VISIBLE);
@@ -598,11 +624,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             binding.saveButton.setVisibility(View.VISIBLE); // Hiển thị Save Button
 
             tabLayout.getTabAt(1).view.setEnabled(true);
-            tabLayout.getTabAt(1).view.setAlpha(.5f);
+            tabLayout.getTabAt(1).view.setAlpha(1f);
             tabLayout.getTabAt(2).view.setEnabled(true);
-            tabLayout.getTabAt(2).view.setAlpha(.5f);
+            tabLayout.getTabAt(2).view.setAlpha(1f);
             tabLayout.getTabAt(3).view.setEnabled(true);
-            tabLayout.getTabAt(3).view.setAlpha(.5f);
+            tabLayout.getTabAt(3).view.setAlpha(1f);
 
         }
         else {
@@ -746,6 +772,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     //admin check
                     reportFlag.setVisibility(View.VISIBLE);
+                    deleteFlag.setVisibility(View.GONE);
                 }
                 else if (Objects.equals(userType, "user"))
                 {
@@ -954,6 +981,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 reportFlagByUser.setVisibility(View.GONE);
 
                 reportFlag.setVisibility(View.GONE);
+                deleteFlag.setVisibility(View.GONE);
 
             }else{
                 getAddressFromLatLng(latLng);
@@ -1293,9 +1321,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             tabLayout.getTabAt(1).view.setEnabled(false);
             tabLayout.getTabAt(1).view.setAlpha(0.5f);
 
-            //test explore tab
+ /*           //test explore tab
             tabLayout.getTabAt(2).view.setEnabled(false);
-            tabLayout.getTabAt(2).view.setAlpha(0.5f);
+            tabLayout.getTabAt(2).view.setAlpha(0.5f);*/
 
             // Ensure we're showing the Overview tab
             tabLayout.selectTab(tabLayout.getTabAt(0));

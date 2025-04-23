@@ -120,6 +120,7 @@
     <string name="description_required">Vui lòng nhập mô tả.</string>
     <string name="MapItem">Bản đồ</string>
     <string name="REPORTHAZARD">Cảnh báo</string>
+    <string name="DELETEHAZARD">Xóa cảnh báo</string>
 
 
 </resources>
