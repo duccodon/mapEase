@@ -100,31 +100,9 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         contentTextView.setText(review.getContent());
 
         //checkReportButtonVisibility
-        // Condition 1: Check if the review belongs to the current user
-        boolean isOwnReview = review.getUserID().contentEquals(currentUserID);
-        // Condition 2: Check if a report exists for this review
-        reportRef.orderByChild("reviewId").equalTo(review.getReviewId())
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        boolean hasReport = dataSnapshot.exists(); // True if any report exists for this reviewId
-
-                        // Hide report button if either condition is true
-                        if (isOwnReview || hasReport) {
-                            reportBtn.setVisibility(View.INVISIBLE);
-                        } else {
-                            reportBtn.setVisibility(View.VISIBLE);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        // Handle errors (e.g., log or show a message)
-                        Log.e("Firebase", "Error checking reports: " + databaseError.getMessage());
-                        // Optionally, hide the button as a fallback
-                        reportBtn.setVisibility(View.INVISIBLE);
-                    }
-                });
+        // Condition: Check if the review belongs to the current user
+        if(review.getUserID().contentEquals(currentUserID))
+            reportBtn.setVisibility(View.INVISIBLE);
 
         //new handle likes
         Map<String, Boolean> likes = review.getLikes();
