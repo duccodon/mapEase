@@ -91,11 +91,7 @@ public class ReportSubmit extends AppCompatActivity {
                 report.setDescription(descriptionStr);
                 report.setCreatedAt(createdAt);
 
-                myRef.push().setValue(report);
-                Toast.makeText(getApplicationContext(), "Report successfully", Toast.LENGTH_SHORT).show();
-                finish();
-
-                /* myRef.child(reportId).setValue(report).addOnCompleteListener(new OnCompleteListener<Void>() {
+                myRef.child(reportId).setValue(report).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
@@ -105,7 +101,7 @@ public class ReportSubmit extends AppCompatActivity {
                             Toast.makeText(getApplicationContext(), "Failed to save report data: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     }
-                }); */
+                });
             }
         });
 
