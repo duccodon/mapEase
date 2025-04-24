@@ -33,7 +33,7 @@
     <string name="cancel_btn">Hủy</string>
 
     <!-- Màn hình chào mừng -->
-    <string name="splash_screen_title">Chào mừng đến với ứng dụng của tôi</string>
+    <string name="splash_screen_title">Chào mừng đến với MapEase</string>
 
     <!-- Viết đánh giá -->
     <string name="your_place">Địa điểm của bạn</string>
