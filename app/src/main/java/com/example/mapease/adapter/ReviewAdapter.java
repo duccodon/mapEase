@@ -21,6 +21,10 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.mapease.MainActivity;
 import com.example.mapease.R;
 import com.example.mapease.ReportReview;
@@ -39,10 +43,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -85,6 +93,7 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         TextView likeCountTextView = itemView.findViewById(R.id.reviewLikeCount);
         RecyclerView imagesRecycler = itemView.findViewById(R.id.reviewImagesRecycler);
         ImageButton reportBtn = itemView.findViewById(R.id.report_button);
+        TextView translateBtn = itemView.findViewById(R.id.translateButton);
 
         // Set data
         auth = FirebaseAuth.getInstance();
@@ -98,6 +107,12 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         timeTextView.setText(formatDate(review.getCreateAt()));
         setLocation(review, locationTextView);
         contentTextView.setText(review.getContent());
+
+        //translate
+        translateBtn.setOnClickListener(v -> {
+            translateReviewContent(review.getContent(), translateBtn, contentTextView);
+        });
+
 
         // Check report button visibility
         // Always reset to VISIBLE first to avoid incorrect reuse of view state
@@ -188,6 +203,60 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
 
         return itemView;
     }
+
+    private void translateReviewContent(String content, TextView translateBtn, TextView contentTextView) {
+        translateBtn.setText("Translating...");
+
+        // Replace with your Google Cloud API Key (from Firebase or GCP Console)
+        String apiKey = context.getString(R.string.translateAPIKey);
+        Log.d("translatekey", apiKey);
+        String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey;
+
+        try {
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("q", content);
+            requestBody.put("target", "en"); // Translate to English
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, requestBody,
+                    response -> {
+                        try {
+                            String translatedText = response
+                                    .getJSONObject("data")
+                                    .getJSONArray("translations")
+                                    .getJSONObject(0)
+                                    .getString("translatedText");
+
+                            contentTextView.setText(translatedText);
+                            translateBtn.setText("Translated");
+                            translateBtn.setClickable(false);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            translateBtn.setText("Translate");
+                            Toast.makeText(context, "Translation error", Toast.LENGTH_SHORT).show();
+                        }
+                    },
+                    error -> {
+                        error.printStackTrace();
+                        translateBtn.setText("Translate");
+                        Toast.makeText(context, "Failed to translate", Toast.LENGTH_SHORT).show();
+                    }) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Content-Type", "application/json");
+                    return headers;
+                }
+            };
+
+            RequestQueue queue = Volley.newRequestQueue(context);
+            queue.add(request);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+            translateBtn.setText("Translate");
+        }
+    }
+
 
     private void setUsername(TextView userTextView, String UID) {
         userRef.child(UID).addListenerForSingleValueEvent(new ValueEventListener() {

@@ -85,6 +85,19 @@
         android:lineSpacingExtra="2dp"
         tools:text="This place has amazing food and great service. Highly recommended!" />
 
+    <!-- translate -->
+    <TextView
+        android:id="@+id/translateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Translate"
+        android:textColor="#2196F3"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:clickable="true"
+        android:focusable="true" />
+
     <!-- Image Gallery -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/reviewImagesRecycler"

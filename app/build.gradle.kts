@@ -9,6 +9,7 @@ plugins {
 }
 
 val ggAPI = gradleLocalProperties(rootDir, providers).getProperty("ggMapAPIKey", "")
+val transAPI = gradleLocalProperties(rootDir, providers).getProperty("translateAPIKey", "")
 
 android {
     namespace = "com.example.mapease"
@@ -27,6 +28,11 @@ android {
             "string",
             "ggMapAPIKey",
             "\"" + ggAPI + "\""
+        )
+        resValue(
+            "string",
+            "translateAPIKey",
+            "\"" + transAPI + "\""
         )
     }
 
@@ -50,6 +56,8 @@ android {
     packagingOptions{
         exclude ("META-INF/NOTICE.md")
         exclude ("META-INF/LICENSE.md")
+        exclude ("META-INF/DEPENDENCIES")
+        exclude ("META-INF/INDEX.LIST")
     }
 }
 
@@ -107,4 +115,7 @@ dependencies {
     //send email
     implementation ("com.sun.mail:android-mail:1.6.6")
     implementation ("com.sun.mail:android-activation:1.6.7")
+    //translate
+    implementation ("com.android.volley:volley:1.2.1")
+    implementation ("com.google.cloud:google-cloud-translate:2.2.0")
 }
