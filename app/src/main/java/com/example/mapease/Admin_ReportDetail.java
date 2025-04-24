@@ -52,7 +52,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
     ArrayList<User> userList;
     Button viewReviewBtn;
     ImageView reportState;
-    int maximumReports = 5;
+    int maximumReports = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
