@@ -650,6 +650,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else if (id == R.id.yourTimeLine) {
                 return true;
             } else if (id == R.id.locationSharing) {
+                shareLocation(currentLatLng.latitude, currentLatLng.longitude);
                 return true;
             } else if (id == R.id.setting) {
                 return true;
@@ -751,7 +752,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // POI click listener
         if (getIntent().getExtras() != null && getIntent().getExtras().getString("context").equals("viewSaveLocation")) {
             fetchFromSaveLocation();
-        }else {
+        } else {
             myMap.setOnPoiClickListener(poi -> {
                 slidingPanel.setVisibility(View.VISIBLE);
                 Log.d("DetailInfor", "POI click" + poi.placeId);
@@ -2558,5 +2559,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             intent.putExtra("selectedName", selectedName);
             startActivity(intent);
         });
+    }
+
+    private void shareLocation(double latitude, double longitude){
+        String locationUrl = "https://maps.google.com/?location=" + latitude + "," + longitude;
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "Check out this location: " + locationUrl);
+        sendIntent.setType("text/plain");
+        startActivity(Intent.createChooser(sendIntent, "Share location using"));
     }
 }
