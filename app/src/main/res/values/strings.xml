@@ -131,6 +131,7 @@
     <string name="description_required">Please enter a description.</string>
     <string name="MapItem">Map</string>
     <string name="REPORTHAZARD">Report Danger</string>
+    <string name="DELETEHAZARD">delete</string>
 
 
     <string-array name="report_title">

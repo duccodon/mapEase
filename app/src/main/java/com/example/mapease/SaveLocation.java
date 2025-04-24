@@ -123,7 +123,4 @@ public class SaveLocation extends AppCompatActivity {
                 });
     }
 
-
-
-
 }

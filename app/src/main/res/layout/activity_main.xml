@@ -352,6 +352,24 @@
                     android:minHeight="0dp"
                     android:visibility="gone"
                     />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/delete_marker_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/long_button"
+                    android:drawableStart="@drawable/ic_trash"
+                    android:backgroundTint="@color/quantum_yellow300"
+                    android:text="@string/DELETEHAZARD"
+                    app:tint="@color/black"
+                    android:layout_marginEnd="10dp"
+                    android:textColor="#000000"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:drawablePadding="6dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:visibility="gone"
+                    />
             </LinearLayout>
 
             <!-- Location Image -->
