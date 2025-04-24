@@ -99,10 +99,39 @@ public class ReviewAdapter extends ArrayAdapter<Review> {
         setLocation(review, locationTextView);
         contentTextView.setText(review.getContent());
 
-        //checkReportButtonVisibility
-        // Condition: Check if the review belongs to the current user
-        if(review.getUserID().contentEquals(currentUserID))
+        // Check report button visibility
+        // Always reset to VISIBLE first to avoid incorrect reuse of view state
+        reportBtn.setVisibility(View.VISIBLE);
+
+        // Condition 1: Hide report button if the review belongs to the current user
+        if (review.getUserID().contentEquals(currentUserID)) {
             reportBtn.setVisibility(View.INVISIBLE);
+        } else {
+            // Condition 2: Check if the current user has already reported this review
+            reportRef.orderByChild("reviewId").equalTo(review.getReviewId())
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            boolean hasReported = false;
+                            for (DataSnapshot reportSnapshot : snapshot.getChildren()) {
+                                String reporterId = reportSnapshot.child("reporterId").getValue(String.class);
+                                if (reporterId != null && reporterId.equals(currentUserID)) {
+                                    hasReported = true;
+                                    break;
+                                }
+                            }
+                            // Hide report button if the user has already reported this review
+                            if (hasReported) {
+                                reportBtn.setVisibility(View.INVISIBLE);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("ReviewAdapter", "Error checking report status: " + error.getMessage());
+                        }
+                    });
+        }
 
         //new handle likes
         Map<String, Boolean> likes = review.getLikes();

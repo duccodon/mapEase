@@ -18,6 +18,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -28,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.example.mapease.model.ReportReview;
+import com.google.firebase.database.ValueEventListener;
 
 public class ReportSubmit extends AppCompatActivity {
     TextView title;
@@ -83,23 +86,46 @@ public class ReportSubmit extends AppCompatActivity {
         btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ReportReview report = new ReportReview();
-                report.setId(reportId);
-                report.setReporterId(reporterId);
-                report.setReviewId(reviewId);
-                report.setTitle(titleStr);
-                report.setDescription(descriptionStr);
-                report.setCreatedAt(createdAt);
+                // Disable the submit button to prevent multiple clicks
+                btnSubmit.setEnabled(false);
 
-                myRef.child(reportId).setValue(report).addOnCompleteListener(new OnCompleteListener<Void>() {
+                // Check if report already exists
+                myRef.child(reportId).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "Report successfully", Toast.LENGTH_SHORT).show();
-                            finish();
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            // Report already exists
+                            Toast.makeText(getApplicationContext(), "You have already reported this review", Toast.LENGTH_SHORT).show();
+                            // Re-enable the submit button
+                            btnSubmit.setEnabled(true);
                         } else {
-                            Toast.makeText(getApplicationContext(), "Failed to save report data: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            // Report does not exist, proceed to submit
+                            ReportReview report = new ReportReview();
+                            report.setId(reportId);
+                            report.setReporterId(reporterId);
+                            report.setReviewId(reviewId);
+                            report.setTitle(titleStr);
+                            report.setDescription(descriptionStr);
+                            report.setCreatedAt(createdAt);
+
+                            myRef.child(reportId).setValue(report).addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(getApplicationContext(), "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                                    finish();
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "Failed to submit report: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                    // Re-enable the submit button
+                                    btnSubmit.setEnabled(true);
+                                }
+                            });
                         }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(getApplicationContext(), "Error checking report status: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        // Re-enable the submit button
+                        btnSubmit.setEnabled(true);
                     }
                 });
             }
