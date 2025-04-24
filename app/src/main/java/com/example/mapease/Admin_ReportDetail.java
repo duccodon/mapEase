@@ -149,7 +149,6 @@ public class Admin_ReportDetail extends AppCompatActivity {
         });
 
     }
-
     private void updateReportState(int newState) {
         if (reportId == null || reportId.isEmpty()) {
             Toast.makeText(this, "Invalid report ID", Toast.LENGTH_SHORT).show();
@@ -213,8 +212,18 @@ public class Admin_ReportDetail extends AppCompatActivity {
                         reportRef.orderByChild("reviewId").equalTo(reviewIdStr).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                long reportCount = snapshot.getChildrenCount();
-                                if (reportCount >= maximumReports) {
+                                long acceptedReportCount = 0;
+                                for (DataSnapshot reportSnapshot : snapshot.getChildren()) {
+                                    Integer state = reportSnapshot.child("state").getValue(Integer.class);
+                                    if (state != null && state == 1 && !(reportSnapshot.child("id").
+                                            getValue(String.class).contentEquals(reportId))) {
+                                        acceptedReportCount++;
+                                    }
+                                }
+                                // Include the current report (just accepted) in the count
+                                acceptedReportCount++; // Since we just set this report to state == 1
+
+                                if (acceptedReportCount >= maximumReports) {
                                     DatabaseReference reviewRef = database.getReference("reviews").child(reviewIdStr);
                                     reviewRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
@@ -232,6 +241,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
                                                             reviewAuthor.setId(userSnapshot.getKey());
                                                             reviewRef.removeValue()
                                                                     .addOnSuccessListener(aVoid2 -> {
+                                                                        // Delete all reports related to the review
                                                                         reportRef.orderByChild("reviewId").equalTo(reviewIdStr)
                                                                                 .addListenerForSingleValueEvent(new ValueEventListener() {
                                                                                     @Override
@@ -242,7 +252,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
                                                                                         sendReviewDeletionEmail(reviewAuthor.getEmail(),
                                                                                                 reviewAuthor.getUsername(),
                                                                                                 reviewIdStr, reviewContent,
-                                                                                                reviewCreatedAt); // Removed locationName
+                                                                                                reviewCreatedAt);
                                                                                         Toast.makeText(Admin_ReportDetail.this,
                                                                                                 "Review and all related reports deleted successfully",
                                                                                                 Toast.LENGTH_SHORT).show();
@@ -290,7 +300,7 @@ public class Admin_ReportDetail extends AppCompatActivity {
                                     });
                                 } else {
                                     Toast.makeText(Admin_ReportDetail.this,
-                                            "Report accepted successfully. Review has " + reportCount + " report(s).",
+                                            "Report accepted successfully. Review has " + acceptedReportCount + " report(s).",
                                             Toast.LENGTH_SHORT).show();
                                     finish();
                                 }
