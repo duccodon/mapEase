@@ -1,9 +1,12 @@
 package com.example.mapease;
 
 import android.Manifest;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -74,6 +77,10 @@ import com.example.mapease.model.HazardReport;
 import com.example.mapease.model.Review;
 import com.example.mapease.model.favoriteLocation;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.ActivityRecognitionResult;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -183,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String currentLongitude = "";
     private LatLng currentLatLng = null;
     private LatLng selectedLatLng = null;
+    private LatLng centerLatLng = null;
     private String currentName = "";
     private String selectedName = "";
 
@@ -223,6 +231,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DatabaseReference hazardReportRef;
 
     public static Locale currentLocale;
+
+    private static final int REQUEST_CODE_ACTIVITY_RECOGNITION = 100;
+    private ActivityRecognitionClient activityRecognitionClient;
+    private BroadcastReceiver activityReceiver;
+    private boolean isMoving = false;
     String userType;
 
     @Override
@@ -230,11 +243,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         loadLocale();
         super.onCreate(savedInstanceState);
         currentLocale = LanguageHelper.getCurrentLocale(this);
-
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.ggMapAPIKey), currentLocale);
         }
-
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -329,7 +340,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         reportFlag.setOnClickListener(v -> showReportDialog());
     }
-
     // Bước 2: Tạo hàm showReportDialog để hiển thị lựa chọn các loại khu vực nguy hiểm
     private void showReportDialog() {
         // Sử dụng AlertDialog để tạo menu lựa chọn các loại cờ
@@ -700,7 +710,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         .addOnSuccessListener(location -> {
                                             if (location != null) {
                                                 LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f), 1000, null);
+                                                myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 18f), 1000, null);
                                                 // Update instance variables
                                                 currentLatitude = String.valueOf(location.getLatitude());
                                                 currentLongitude = String.valueOf(location.getLongitude());
@@ -708,6 +718,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                 getWeatherDetails();
                                                 getForecastDetails();
                                                 currentLatLng = userLatLng;
+                                                centerLatLng = userLatLng;
                                             } else {
                                                 Toast.makeText(MainActivity.this, "Location not available", Toast.LENGTH_SHORT).show();
                                             }
@@ -745,6 +756,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 slidingPanel.setVisibility(View.VISIBLE);
                 Log.d("DetailInfor", "POI click" + poi.placeId);
                 selectedLatLng = poi.latLng;
+                centerLatLng = poi.latLng;
                 currentLatitude = String.valueOf(poi.latLng.latitude);
                 currentLongitude = String.valueOf(poi.latLng.longitude);
                 selectedName = poi.name;
@@ -776,6 +788,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 Log.d("DetailInfor", "Normal click");
                 selectedLatLng = latLng;
+                centerLatLng = latLng;
                 currentLatitude = String.valueOf(latLng.latitude);
                 currentLongitude = String.valueOf(latLng.longitude);
 
@@ -828,6 +841,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     getForecastDetails();
 
                     selectedLatLng = place.getLocation();
+                    centerLatLng = place.getLocation();
 
                     placeName = findViewById(R.id.location_title);
                     placeAddress = findViewById(R.id.place_address);
@@ -913,10 +927,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (isFirstLocationUpdate) {
                     isFirstLocationUpdate = false;
                     isFetchingLocation = false;
+                    centerLatLng = newPosition;
                     Toast.makeText(MainActivity.this, "Fetched current location", Toast.LENGTH_SHORT).show();
                     myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPosition, 18f), 1000, null);
                 }// Không cần callback
-                //setRestrictPlacesInCountry(locationResult.getLastLocation());
             }
         };
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -1247,8 +1261,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             tabLayout.getTabAt(1).view.setAlpha(0.5f);
 
             //test explore tab
-            tabLayout.getTabAt(2).view.setEnabled(false);
-            tabLayout.getTabAt(2).view.setAlpha(0.5f);
+/*            tabLayout.getTabAt(2).view.setEnabled(false);
+            tabLayout.getTabAt(2).view.setAlpha(0.5f);*/
 
             // Ensure we're showing the Overview tab
             tabLayout.selectTab(tabLayout.getTabAt(0));
@@ -2127,8 +2141,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                             Place.Field.PHOTO_METADATAS);
 
         // Define the search area as a 1000 meter diameter circle around the current location.
-        LatLng center = currentLatLng; // currentLatLng should be the current location
-        CircularBounds circle = CircularBounds.newInstance(center, 1000); // 1000 meters radius
+        //LatLng center = centerLatLng; // currentLatLng should be the current location
+        CircularBounds circle = CircularBounds.newInstance(centerLatLng, 1000); // 1000 meters radius
 
         // Define a list of types to include.
         final List<String> includedTypes = Arrays.asList(placeType); // Place type (e.g., "restaurant", "hospital")
