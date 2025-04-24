@@ -118,7 +118,7 @@ public class EditProfile extends AppCompatActivity {
                     byte[] decodedString = Base64.decode(base64Avatar, Base64.DEFAULT);
                     Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                     editAvatar.setImageBitmap(decodedByte);
-                    avatarBase64 = base64Avatar;
+                    avatarBase64 = snapshot.child("avatar").getValue(String.class);
                 } catch (Exception e) {
                     editAvatar.setImageResource(R.drawable.profile_user);
                 }
@@ -143,11 +143,6 @@ public class EditProfile extends AppCompatActivity {
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 editAvatar.setImageBitmap(bitmap);
-
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
-                byte[] imageBytes = baos.toByteArray();
-                avatarBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -159,8 +154,14 @@ public class EditProfile extends AppCompatActivity {
         String newBio = editBio.getText().toString();
         String newUsername = editUsername.getText().toString();
 
-        if (TextUtils.isEmpty(username)) {
+        if (TextUtils.isEmpty(newUsername)) {
             editUsername.setError("Username is required");
+            editUsername.requestFocus();
+            return;
+        }
+        if (TextUtils.isEmpty(newEmail)){
+            editEmail.setError("Email is required");
+            editEmail.requestFocus();
             return;
         }
 
@@ -171,37 +172,95 @@ public class EditProfile extends AppCompatActivity {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos); // reduce size
         byte[] imageBytes = baos.toByteArray();
-        String avatarBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        String newAvatarBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
-        credential = EmailAuthProvider.getCredential(email, password.getText().toString());
-        Log.d("UID", credential.toString());
+        boolean isEmailChanged = !newEmail.equals(email);
+        boolean isUsernameChanged = !newUsername.equals(username);
+        boolean isBioChanged = !newBio.equals(bio);
 
-        user.reauthenticate(credential).addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                user.verifyBeforeUpdateEmail(newEmail)
-                        .addOnCompleteListener(updateTask -> {
-                            if (updateTask.isSuccessful()) {
-                                Toast.makeText(getApplicationContext(),
-                                        "Verification email sent to " + newEmail + ". Please verify before it becomes active.",
-                                        Toast.LENGTH_LONG).show();
+        Bitmap currentBitmap = ((BitmapDrawable) editAvatar.getDrawable()).getBitmap();
+        Bitmap originalBitmap = BitmapFactory.decodeByteArray(Base64.decode(avatarBase64, Base64.DEFAULT), 0, Base64.decode(avatarBase64, Base64.DEFAULT).length);
+        boolean isAvatarChanged = !areBitmapsEqual(currentBitmap, originalBitmap);
 
-                                userRef.child("username").setValue(newUsername);
-                                userRef.child("bio").setValue(newBio);
-                                userRef.child("email").setValue(newEmail);
-                                userRef.child("avatar").setValue(avatarBase64);
 
-                            } else {
-                                Toast.makeText(getApplicationContext(),
-                                        "Email update failed: " + updateTask.getException().getMessage(),
-                                        Toast.LENGTH_SHORT).show();
-                                Log.e("EmailUpdate", updateTask.getException().getMessage());
-                            }
-                        });
-            } else {
-                Toast.makeText(getApplicationContext(),
-                        "Reauthentication failed: " + task.getException().getMessage(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+        Log.d("testUpdateProfile", isEmailChanged + " " + isUsernameChanged + " " + isBioChanged + " " + isAvatarChanged);
+
+        // If no changes at all
+        if (!isEmailChanged && !isUsernameChanged && !isBioChanged && !isAvatarChanged) {
+            Toast.makeText(this, "No changes detected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (TextUtils.isEmpty(password.getText().toString())) {
+            password.setError("Password is required to update your profile");
+            password.requestFocus();
+            return;
+        }
+
+        if (isEmailChanged) {
+            credential = EmailAuthProvider.getCredential(email, password.getText().toString());
+            user.reauthenticate(credential).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    user.verifyBeforeUpdateEmail(newEmail).addOnCompleteListener(updateTask -> {
+                        if (updateTask.isSuccessful()) {
+                            Toast.makeText(getApplicationContext(),
+                                    "Verification email sent to " + newEmail + ". Please verify it.",
+                                    Toast.LENGTH_LONG).show();
+
+                            // Update other fields after email update
+                            updateOtherFields(newUsername, newBio, newEmail, newAvatarBase64);
+                        } else {
+                            Toast.makeText(getApplicationContext(),
+                                    "Email update failed: " + updateTask.getException().getMessage(),
+                                    Toast.LENGTH_SHORT).show();
+                            Log.e("EmailUpdate", updateTask.getException().getMessage());
+                        }
+                    });
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Reauthentication failed: " + task.getException().getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        }else{
+            updateOtherFields(newUsername, newBio, newEmail, newAvatarBase64);
+        }
+
     }
+
+    private boolean areBitmapsEqual(Bitmap b1, Bitmap b2) {
+        if (b1.getWidth() != b2.getWidth() || b1.getHeight() != b2.getHeight()) return false;
+
+        for (int x = 0; x < b1.getWidth(); x++) {
+            for (int y = 0; y < b1.getHeight(); y++) {
+                if (b1.getPixel(x, y) != b2.getPixel(x, y)) return false;
+            }
+        }
+        return true;
+    }
+
+    private void updateOtherFields(String newUsername, String newBio, String currentEmail, String updatedAvatarBase64) {
+        if (!newUsername.equals(username)) {
+            userRef.child("username").setValue(newUsername);
+        }
+        if (!newBio.equals(bio)) {
+            if (TextUtils.isEmpty(newBio)){
+                Log.d("testUpdateProfile", "OK");
+                userRef.child("bio").setValue("Did not add");
+            }else {
+                Log.e("testUpdateProfile", "No OK");
+                userRef.child("bio").setValue(newBio);
+            }
+        }
+        if (!updatedAvatarBase64.equals(avatarBase64)) {
+            userRef.child("avatar").setValue(updatedAvatarBase64);
+        }
+        if (!currentEmail.equals(email)) {
+            userRef.child("email").setValue(currentEmail); // still update stored email
+        }
+
+        Toast.makeText(EditProfile.this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
 }
