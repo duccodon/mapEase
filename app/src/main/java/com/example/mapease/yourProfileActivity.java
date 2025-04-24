@@ -1,14 +1,19 @@
 package com.example.mapease;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -48,6 +53,8 @@ public class yourProfileActivity extends AppCompatActivity {
     private TextView username, bio, contribution;
     private Button writeReviewBtn, editProfileBtn;
     private ImageButton backToHomeButton;
+    private EditText bioEdit;
+    private String originalBio = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +65,7 @@ public class yourProfileActivity extends AppCompatActivity {
         backToHomeButton = findViewById(R.id.backToHomeButton);
         writeReviewBtn = findViewById(R.id.writeReview);
         editProfileBtn = findViewById(R.id.edit_profile_btn);
+        bioEdit = findViewById(R.id.bio_edit);
 
         backToHomeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,18 +151,31 @@ public class yourProfileActivity extends AppCompatActivity {
                     String dbBio = snapshot.child("bio").getValue(String.class);
                     String dbAvatar = snapshot.child("avatar").getValue(String.class);
 
+                    originalBio = dbBio != null ? dbBio : "";
+                    bioEdit.setText(originalBio);
+
                     username.setText(dbUsername);
                     bio.setText(dbBio);
 
-                    String avatarUrl = snapshot.child("avatar").getValue(String.class);
-                    if (avatarUrl.startsWith("@drawable/")) {
-                        // Handle local drawable resources
-                        String resourceName = avatarUrl.replace("@drawable/", "");
-                        int resId = getResources().getIdentifier(resourceName, "drawable", getPackageName());
-                        avatar.setImageResource(resId != 0 ? resId : android.R.drawable.ic_menu_myplaces);
+                    if (dbAvatar != null && !dbAvatar.isEmpty()) {
+                        if (dbAvatar.startsWith("@drawable/")) {
+                            // Handle local drawable resource
+                            String resourceName = dbAvatar.replace("@drawable/", "");
+                            int resId = getResources().getIdentifier(resourceName, "drawable", getPackageName());
+                            avatar.setImageResource(resId != 0 ? resId : R.drawable.profile_user);
+                        } else {
+                            try {
+                                // Decode Base64 image
+                                byte[] decodedBytes = Base64.decode(dbAvatar, Base64.DEFAULT);
+                                Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                                avatar.setImageBitmap(decodedBitmap);
+                            } catch (IllegalArgumentException e) {
+                                e.printStackTrace();
+                                avatar.setImageResource(R.drawable.profile_user); // fallback
+                            }
+                        }
                     } else {
-                        // Handle URL images (basic implementation without Glide)
-                        new LoadImageTask(avatar).execute(avatarUrl);
+                        avatar.setImageResource(R.drawable.profile_user); // fallback
                     }
                 } else {
                     Toast.makeText(yourProfileActivity.this, "User data not found!", Toast.LENGTH_SHORT).show();
@@ -168,32 +189,57 @@ public class yourProfileActivity extends AppCompatActivity {
         });
     }
 
-    private static class LoadImageTask extends AsyncTask<String, Void, Bitmap> {
-        private final WeakReference<ImageView> imageViewReference;
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        View view = getCurrentFocus();
 
-        public LoadImageTask(ImageView imageView) {
-            imageViewReference = new WeakReference<>(imageView);
-        }
+        if (view != null && (ev.getAction() == MotionEvent.ACTION_DOWN)) {
+            if (view instanceof EditText) {
+                Rect outRect = new Rect();
+                view.getGlobalVisibleRect(outRect);
 
-        @Override
-        protected Bitmap doInBackground(String... urls) {
-            try {
-                URL url = new URL(urls[0]);
-                return BitmapFactory.decodeStream(url.openConnection().getInputStream());
-            } catch (Exception e) {
-                return null;
+                if (!outRect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                    view.clearFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+
+                    String editedBio = bioEdit.getText().toString().trim();
+                    if (!editedBio.equals(originalBio)) {
+                        showConfirmSaveDialog(editedBio);
+                    } else {
+                        Toast.makeText(yourProfileActivity.this, "No changes to save", Toast.LENGTH_SHORT).show();
+                    }
+                }
             }
         }
+        return super.dispatchTouchEvent(ev);
+    }
 
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            ImageView imageView = imageViewReference.get();
-            if (imageView != null && bitmap != null) {
-                imageView.setImageBitmap(bitmap);
-            } else if (imageView != null) {
-                imageView.setImageResource(android.R.drawable.ic_menu_myplaces);
-            }
-        }
+
+    private void showConfirmSaveDialog(String newBio) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("Confirm Bio Change");
+        builder.setMessage("Do you want to save this new bio?");
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            myRef.child(userID).child("bio").setValue(newBio)
+                    .addOnSuccessListener(unused -> {
+                        Toast.makeText(this, "Bio updated", Toast.LENGTH_SHORT).show();
+                        originalBio = newBio;
+                        bio.setText(newBio); // also update the non-edit bio TextView
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Failed to update bio", Toast.LENGTH_SHORT).show());
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            bioEdit.setText(originalBio);
+            dialog.dismiss();
+        });
+
+        builder.setCancelable(false);
+        builder.show();
     }
 
 }
