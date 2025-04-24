@@ -100,10 +100,12 @@ import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.CircularBounds;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.PlaceLikelihood;
 import com.google.android.libraries.places.api.net.FetchPlaceResponse;
 import com.google.android.libraries.places.api.net.FetchPhotoRequest;
 import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
+import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.api.net.SearchNearbyRequest;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
@@ -648,6 +650,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startActivity(new Intent(getApplicationContext(), yourProfileActivity.class));
                 return true;
             } else if (id == R.id.yourTimeLine) {
+                showCurrentTimeLocationPopup();
                 return true;
             } else if (id == R.id.locationSharing) {
                 shareLocation(currentLatLng.latitude, currentLatLng.longitude);
@@ -2568,4 +2571,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         sendIntent.setType("text/plain");
         startActivity(Intent.createChooser(sendIntent, "Share location using"));
     }
+
+    private void showCurrentTimeLocationPopup() {
+        PlacesClient placesClient = Places.createClient(this);
+        List<Place.Field> placeFields = Arrays.asList(Place.Field.NAME, Place.Field.ADDRESS);
+
+        FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            return;
+        }
+
+        Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
+        placeResponse.addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                PlaceLikelihood mostLikelyPlace = task.getResult().getPlaceLikelihoods().get(0);
+                String placeName = mostLikelyPlace.getPlace().getName();
+                String address = mostLikelyPlace.getPlace().getAddress();
+
+                String currentTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date());
+
+                String message = "🕒 " + currentTime + "\n📍 You are at:\n" + placeName + "\n" + address;
+
+                new AlertDialog.Builder(this)
+                        .setTitle("My Timeline Now")
+                        .setMessage(message)
+                        .setPositiveButton("OK", null)
+                        .show();
+            } else {
+                Toast.makeText(this, "Unable to get current place", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 }
