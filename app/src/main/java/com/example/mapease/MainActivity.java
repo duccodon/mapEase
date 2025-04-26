@@ -632,7 +632,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             binding.saveButton.setVisibility(View.VISIBLE); // Hiển thị Save Button
 
             tabLayout.getTabAt(1).view.setEnabled(true);
-            tabLayout.getTabAt(2).view.setEnabled(true);
+            //tabLayout.getTabAt(2).view.setEnabled(true);
+            tabLayout.getTabAt(2).view.setEnabled(false);
+            tabLayout.getTabAt(2).view.setAlpha(0.5f);
             tabLayout.getTabAt(3).view.setEnabled(true);
         }
         else {
@@ -750,7 +752,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }).check();
 
         //hide sliding panel before choose a place
-        slidingPanel.setVisibility(View.GONE);
+        //slidingPanel.setVisibility(View.GONE);
+        slidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
 
         // POI click listener
         if (getIntent().getExtras() != null && getIntent().getExtras().getString("context").equals("viewSaveLocation")) {
